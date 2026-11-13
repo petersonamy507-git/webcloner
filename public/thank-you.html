@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thank You</title>
+</head>
+<body style="margin:0;font-family:Georgia,serif;background:#fff;color:#111;">
+  <main style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;text-align:center;">
+    <h1 id="lead-success" style="font-size:clamp(28px,4vw,46px);line-height:1.25;max-width:920px;">Thank you for your response. We will contact you as soon as possible!</h1>
+  </main>
+  <script>
+    const message = new URLSearchParams(location.search).get('successMsg');
+    if (message) document.getElementById('lead-success').textContent = message;
+  </script>
+</body>
+</html>

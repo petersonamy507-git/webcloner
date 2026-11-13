@@ -1,0 +1,28 @@
+/** FastAPI backend routes */
+export const API = {
+  clone: '/api/clone',
+  clones: '/api/clones',
+  deleteClone: (folder) => `/api/clones?folder=${encodeURIComponent(folder)}`,
+  restoreClone: (trashId) => `/api/clones/restore?trashId=${encodeURIComponent(trashId)}`,
+  download: (folder) => `/api/download?folder=${encodeURIComponent(folder)}`,
+  pages: (folder) => `/api/pages?folder=${encodeURIComponent(folder)}`,
+  save: '/api/save',
+  upload: '/api/upload',
+  theme: (folder, refresh = false) =>
+    `/api/theme?folder=${encodeURIComponent(folder)}${refresh ? '&refresh=1' : ''}`,
+  themePost: '/api/theme',
+  createPage: '/api/create-page',
+  generatePage: '/api/generate-page',
+  aiCustomize: '/api/ai-customize',
+  aiAudit: '/api/ai-audit',
+  fixWithAi: '/api/fix-with-ai',
+  headSnippets: '/api/head-snippets',
+  history: '/api/history',
+  aiFixSelection: '/api/ai-fix-selection',
+  aiEditSelection: '/api/ai-edit-selection',
+  brands: '/api/brands',
+  applyBrand: '/api/apply-brand',
+  brandGallery: '/api/brand-gallery',
+  brandImage: '/api/brand-image',
+  replaceLogos: '/api/replace-logos',
+};

@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visual Editor — Website Cloner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/editor.css" />
+  </head>
+  <body class="editor-body">
+    <header class="editor-toolbar">
+      <!-- Only this half scrolls, so the actions on the right can open menus. -->
+      <div class="toolbar-scroll">
+      <div class="toolbar-group toolbar-identity">
+        <a href="/" class="toolbar-back" title="Back to My Sites">
+          <i class="bi bi-arrow-left"></i>
+        </a>
+        <div class="toolbar-project">
+          <span class="toolbar-project-name" id="projectName">Editing site</span>
+          <span class="toolbar-project-host" id="projectHost"></span>
+        </div>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="toolbar-group">
+        <select id="pageSelect" class="toolbar-select" title="Switch page">
+          <option value="index.html">Home</option>
+        </select>
+        <button id="addPageBtn" class="tbtn" title="Add a new page">
+          <i class="bi bi-plus-lg"></i>
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="toolbar-group" role="group" aria-label="Design tools">
+        <button id="themeBtn" class="tbtn" title="Site theme colors">
+          <i class="bi bi-palette"></i><span class="tbtn-label">Theme</span>
+        </button>
+        <button id="iconLibraryBtn" class="tbtn" title="Icon libraries">
+          <i class="bi bi-collection"></i><span class="tbtn-label">Icons</span>
+        </button>
+        <button id="headTagsBtn" class="tbtn" title="Add SEO tags and other code inside the page head">
+          <i class="bi bi-code-slash"></i><span class="tbtn-label">SEO tags</span>
+        </button>
+        <button id="moveModeBtn" class="tbtn tbtn-toggle" title="Move mode — drag elements to reposition them" aria-pressed="false">
+          <i class="bi bi-arrows-move"></i><span class="tbtn-label">Move</span>
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="toolbar-group" role="group" aria-label="AI tools">
+        <button id="fixWithAiBtn" class="tbtn tbtn-ai" title="Describe a problem and AI will fix the page">
+          <i class="bi bi-wrench-adjustable"></i><span class="tbtn-label">Fix with AI</span>
+        </button>
+        <button id="aiAssistantBtn" class="tbtn tbtn-ai" title="AI site assistant — change the logo, colors, and copy">
+          <i class="bi bi-magic"></i><span class="tbtn-label">Assistant</span>
+        </button>
+        <button id="aiPageBtn" class="tbtn tbtn-ai" title="Generate a new page with AI">
+          <i class="bi bi-stars"></i><span class="tbtn-label">AI Page</span>
+        </button>
+      </div>
+      </div>
+
+      <div class="toolbar-actions">
+      <div class="toolbar-group" role="group" aria-label="History">
+        <button id="undoBtn" type="button" class="tbtn tbtn-icon is-inactive" title="Undo (Ctrl+Z)">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+        <button id="redoBtn" type="button" class="tbtn tbtn-icon is-inactive" title="Redo (Ctrl+Shift+Z)">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+
+      <div class="toolbar-group">
+        <button id="saveAllBtn" class="tbtn tbtn-primary" title="Save every change to disk (Ctrl+S)">
+          <i class="bi bi-check2"></i><span class="tbtn-label">Save</span>
+        </button>
+        <div class="dropdown">
+          <button class="tbtn tbtn-icon" type="button" id="moreMenuBtn" data-bs-toggle="dropdown" aria-expanded="false" title="More actions">
+            <i class="bi bi-three-dots-vertical"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end toolbar-menu" aria-labelledby="moreMenuBtn">
+            <li>
+              <a id="viewSiteBtn" class="dropdown-item" href="#" target="_blank" rel="noreferrer">
+                <i class="bi bi-box-arrow-up-right"></i>Open site in a new tab
+              </a>
+            </li>
+            <li>
+              <a id="downloadZipBtn" class="dropdown-item" href="#">
+                <i class="bi bi-file-zip"></i>Download as PHP site
+              </a>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a class="dropdown-item" href="/">
+                <i class="bi bi-collection"></i>Back to My Sites
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      </div>
+    </header>
+
+    <div class="editor-layout">
+      <main class="editor-preview">
+        <div class="iframe-wrap">
+          <iframe id="previewFrame" title="Site Preview"></iframe>
+        </div>
+        <div id="saveToast" class="save-toast d-none" role="status" aria-live="polite">
+          <i class="bi bi-check-circle me-2"></i><span id="saveToastText">Saved successfully!</span>
+        </div>
+      </main>
+
+      <aside id="editSidebar" class="edit-sidebar d-none">
+        <div class="sidebar-header">
+          <div class="sidebar-header-main">
+            <h6 id="elementLabel">Element</h6>
+            <div id="scopeBadge" class="scope-badge">
+              <i class="bi bi-file-earmark me-1"></i>This page
+            </div>
+          </div>
+          <button id="closeSidebar" class="btn-close btn-close-white btn-sm"></button>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs editor-tabs px-3" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-tab="content">Content</button></li>
+          <li class="nav-item"><button class="nav-link" data-tab="style">Style</button></li>
+          <li class="nav-item"><button class="nav-link" data-tab="html">HTML</button></li>
+          <li class="nav-item"><button class="nav-link" data-tab="icons">Icons</button></li>
+          <li class="nav-item"><button class="nav-link" data-tab="advanced">More</button></li>
+        </ul>
+
+        <div class="sidebar-body">
+          <div id="brandGallery" class="brand-gallery d-none">
+            <div class="brand-gallery-title">Replace this image</div>
+            <p class="brand-gallery-hint">Choose a brand, then click a logo or portfolio image.</p>
+            <div id="brandGalleryBrands" class="brand-gallery-brands"></div>
+            <div id="brandGalleryGrid" class="brand-gallery-grid"></div>
+            <div id="brandGalleryStatus" class="brand-gallery-status"></div>
+          </div>
+
+          <div class="mb-3 p-2 rounded border border-info">
+            <div class="d-flex align-items-center justify-content-between gap-2">
+              <span class="small fw-semibold text-info"><i class="bi bi-wrench-adjustable me-1"></i>Fix with AI</span>
+              <button type="button" id="fixWithAiOpenBtn" class="btn btn-info btn-sm text-dark">Open</button>
+            </div>
+            <p class="small text-muted mb-0 mt-1">Describe a logo, header, or theme problem and AI will fix the page code.</p>
+          </div>
+
+          <div class="ai-edit-selection-card mb-3 p-2 rounded border border-info">
+            <label class="form-label small fw-semibold text-info mb-1">
+              <i class="bi bi-stars me-1"></i>Change with AI
+            </label>
+            <p id="aiEditSelectionTarget" class="small text-muted mb-2">Select text, an image, a logo, or a video in the preview.</p>
+            <textarea id="aiEditSelectionPrompt" class="form-control form-control-sm mb-2" rows="3" placeholder="Change this heading to Welcome, design a new logo, or replace this video with https://..."></textarea>
+            <div class="d-flex flex-wrap gap-1 mb-2">
+              <button type="button" class="btn btn-sm btn-outline-info ai-edit-chip" data-prompt="Rewrite this text so it is clearer and more professional. Keep the same meaning.">Text</button>
+              <button type="button" class="btn btn-sm btn-outline-info ai-edit-chip" data-prompt="Generate a new photo that fits this part of the page. Keep the same size and layout.">Image</button>
+              <button type="button" class="btn btn-sm btn-outline-info ai-edit-chip" data-prompt="Design a simple modern logo and replace this image with it. Keep the same width.">Logo</button>
+              <button type="button" class="btn btn-sm btn-outline-info ai-edit-chip" data-prompt="Replace this video with the URL I paste here: ">Video</button>
+            </div>
+            <label class="form-label small mb-1">Or upload an image, logo, or video</label>
+            <input id="aiEditSelectionFile" type="file" accept="image/*,video/*" class="form-control form-control-sm mb-2" />
+            <button type="button" id="aiEditSelectionBtn" class="btn btn-info btn-sm w-100 text-dark fw-semibold">
+              <i class="bi bi-magic me-1"></i>Apply AI Change
+            </button>
+            <div id="aiEditSelectionStatus" class="small mt-2"></div>
+          </div>
+
+          <!-- CONTENT TAB -->
+          <div id="tab-content" class="tab-panel">
+            <div id="textEditor" class="editor-section">
+              <label class="form-label small">Text Content</label>
+              <textarea id="textInput" class="form-control" rows="4"></textarea>
+            </div>
+            <div id="linkEditor" class="editor-section d-none">
+              <label class="form-label small">Link Text</label>
+              <input id="linkTextInput" type="text" class="form-control mb-2" />
+              <label class="form-label small">URL</label>
+              <input id="linkUrlInput" type="text" class="form-control mb-2" />
+              <label class="form-label small">Target</label>
+              <select id="linkTargetInput" class="form-select">
+                <option value="">Same tab</option>
+                <option value="_blank">New tab</option>
+              </select>
+            </div>
+            <div id="imageEditor" class="editor-section d-none">
+              <label class="form-label small fw-semibold text-info">
+                <i class="bi bi-link-45deg me-1"></i>External Image / Logo URL
+              </label>
+              <input
+                id="imageUrlInput"
+                type="url"
+                class="form-control mb-1"
+                placeholder="https://example.com/logo.png"
+              />
+              <p class="small text-muted mb-2">
+                Paste any external link — logos, icons, PNG, SVG, WebP all supported.
+              </p>
+
+              <div class="icon-examples mb-3">
+                <span class="small text-muted d-block mb-1">Quick examples (click to use):</span>
+                <div class="d-flex flex-wrap gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-secondary icon-example" data-url="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/telephone-fill.svg">Phone</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary icon-example" data-url="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/envelope-fill.svg">Email</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary icon-example" data-url="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/geo-alt-fill.svg">Location</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary icon-example" data-url="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/facebook.svg">Social</button>
+                </div>
+              </div>
+
+              <label class="form-label small">Or Upload</label>
+              <input id="imageFileInput" type="file" accept="image/*" class="form-control mb-2" />
+              <label class="form-label small">Alt Text</label>
+              <input id="imageAltInput" type="text" class="form-control mb-2" placeholder="Logo / Phone icon" />
+              <label class="form-label small">Width / Height</label>
+              <div class="row g-1 mb-2">
+                <div class="col-6"><input id="imageWidthInput" type="text" class="form-control form-control-sm" placeholder="Width: 180px" /></div>
+                <div class="col-6"><input id="imageHeightInput" type="text" class="form-control form-control-sm" placeholder="Height: auto" /></div>
+              </div>
+              <img id="imagePreview" class="img-preview" alt="" />
+            </div>
+
+            <div id="iconEditor" class="editor-section d-none">
+              <label class="form-label small fw-semibold text-info">
+                <i class="bi bi-type me-1"></i>Icon Class (Font Awesome / Bootstrap Icons)
+              </label>
+              <input id="iconClassInput" type="text" class="form-control mb-2" placeholder="bi bi-telephone-fill" />
+              <p class="small text-muted mb-2">
+                If the icon uses <code>&lt;i class="..."&gt;</code>, change the class here.
+              </p>
+              <div class="d-flex flex-wrap gap-1 mb-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary icon-class-example" data-class="bi bi-telephone-fill">Phone</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary icon-class-example" data-class="bi bi-envelope-fill">Email</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary icon-class-example" data-class="bi bi-geo-alt-fill">Location</button>
+              </div>
+              <label class="form-label small">Icon Color</label>
+              <div class="color-row mb-2">
+                <input id="iconColorPicker" type="color" class="form-control form-control-color" value="#ffffff" />
+                <input id="iconColorText" type="text" class="form-control form-control-sm" placeholder="#ffffff" />
+              </div>
+            </div>
+            <div id="buttonEditor" class="editor-section d-none">
+              <label class="form-label small">Button Text</label>
+              <input id="buttonTextInput" type="text" class="form-control mb-2" />
+              <label class="form-label small">Link URL (optional)</label>
+              <input id="buttonLinkInput" type="text" class="form-control" placeholder="https://..." />
+            </div>
+            <div id="videoEditor" class="editor-section d-none">
+              <label class="form-label small">Video / iframe Source</label>
+              <input id="videoSrcInput" type="text" class="form-control" />
+            </div>
+            <div id="inputEditor" class="editor-section d-none">
+              <label class="form-label small">Placeholder</label>
+              <input id="inputPlaceholder" type="text" class="form-control mb-2" />
+              <label class="form-label small">Value</label>
+              <input id="inputValue" type="text" class="form-control" />
+            </div>
+          </div>
+
+          <!-- STYLE TAB -->
+          <div id="tab-style" class="tab-panel d-none">
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label small">Text Color</label>
+                <div class="color-row">
+                  <input id="styleColor" type="color" class="form-control form-control-color" />
+                  <input id="styleColorText" type="text" class="form-control form-control-sm" placeholder="#000" />
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="form-label small">Background</label>
+                <div class="color-row">
+                  <input id="styleBg" type="color" class="form-control form-control-color" />
+                  <input id="styleBgText" type="text" class="form-control form-control-sm" placeholder="transparent" />
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="form-label small">Font Size</label>
+                <select id="styleFontSize" class="form-select form-select-sm">
+                  <option value="">Default</option>
+                  <option value="12px">12px</option>
+                  <option value="14px">14px</option>
+                  <option value="16px">16px</option>
+                  <option value="18px">18px</option>
+                  <option value="20px">20px</option>
+                  <option value="24px">24px</option>
+                  <option value="28px">28px</option>
+                  <option value="32px">32px</option>
+                  <option value="36px">36px</option>
+                  <option value="48px">48px</option>
+                  <option value="custom">Custom...</option>
+                </select>
+                <input id="styleFontSizeCustom" type="text" class="form-control form-control-sm mt-1 d-none" placeholder="e.g. 2rem" />
+              </div>
+              <div class="col-6">
+                <label class="form-label small">Font Weight</label>
+                <select id="styleFontWeight" class="form-select form-select-sm">
+                  <option value="">Default</option>
+                  <option value="300">Light</option>
+                  <option value="400">Normal</option>
+                  <option value="500">Medium</option>
+                  <option value="600">Semi Bold</option>
+                  <option value="700">Bold</option>
+                  <option value="800">Extra Bold</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label small">Text Align</label>
+                <div class="btn-group w-100" role="group">
+                  <button type="button" class="btn btn-sm btn-outline-secondary align-btn" data-align="left"><i class="bi bi-text-left"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary align-btn" data-align="center"><i class="bi bi-text-center"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary align-btn" data-align="right"><i class="bi bi-text-right"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary align-btn" data-align="justify"><i class="bi bi-justify"></i></button>
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="form-label small">Padding</label>
+                <input id="stylePadding" type="text" class="form-control form-control-sm" placeholder="10px" />
+              </div>
+              <div class="col-6">
+                <label class="form-label small">Margin</label>
+                <input id="styleMargin" type="text" class="form-control form-control-sm" placeholder="0 auto" />
+              </div>
+              <div class="col-6">
+                <label class="form-label small">Border Radius</label>
+                <input id="styleBorderRadius" type="text" class="form-control form-control-sm" placeholder="8px" />
+              </div>
+              <div class="col-6">
+                <label class="form-label small">Width</label>
+                <input id="styleWidth" type="text" class="form-control form-control-sm" placeholder="100%" />
+              </div>
+              <div class="col-6">
+                <label class="form-label small">Height</label>
+                <input id="styleHeight" type="text" class="form-control form-control-sm" placeholder="auto" />
+              </div>
+              <div class="col-6">
+                <label class="form-label small">Display</label>
+                <select id="styleDisplay" class="form-select form-select-sm">
+                  <option value="">Default</option>
+                  <option value="block">Block</option>
+                  <option value="inline-block">Inline Block</option>
+                  <option value="flex">Flex</option>
+                  <option value="grid">Grid</option>
+                  <option value="none">Hidden</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label small">Background Image URL</label>
+                <input id="styleBgImage" type="text" class="form-control form-control-sm" placeholder="url(...) or image path" />
+              </div>
+            </div>
+          </div>
+
+          <!-- HTML TAB -->
+          <div id="tab-html" class="tab-panel d-none">
+            <label class="form-label small">Inner HTML (complete control)</label>
+            <textarea id="htmlInput" class="form-control code-area" rows="12" placeholder="<p>Your HTML here</p>"></textarea>
+            <p class="small text-muted mt-2 mb-0">Edit the full element HTML — tags, classes, everything.</p>
+          </div>
+
+          <!-- ICONS TAB -->
+          <div id="tab-icons" class="tab-panel d-none">
+            <div class="icons-section-card">
+              <label class="form-label small section-label">
+                <i class="bi bi-braces me-1"></i>Custom Icon Class
+              </label>
+              <input id="freeIconClass" type="text" class="form-control mb-2" placeholder="fa-solid fa-phone / bi bi-heart / my-icon-class" />
+              <input id="freeIconText" type="text" class="form-control form-control-sm mb-3" placeholder="Text content (for Material Icons: phone)" />
+              <button type="button" id="applyFreeIconBtn" class="btn btn-warning btn-sm text-dark w-100">
+                <i class="bi bi-check2 me-1"></i>Apply Custom Class
+              </button>
+            </div>
+
+            <div id="libNotAdded" class="editor-info-box mb-3">
+              <i class="bi bi-info-circle me-2"></i>
+              <span>Import a CDN via <strong>Icon Library</strong>, or enter a class directly above.</span>
+            </div>
+
+            <div id="libAdded" class="icons-section-card">
+              <label class="form-label small section-label">Icon Picker</label>
+              <label class="form-label small">Active Library</label>
+              <select id="activeIconLib" class="form-select form-select-sm mb-3"></select>
+              <input id="iconSearch" type="text" class="form-control form-control-sm mb-3" placeholder="Search icon..." />
+              <div id="iconPickerGrid" class="icon-picker-grid mb-3"></div>
+              <div class="icons-size-color-row">
+                <div>
+                  <label class="form-label small">Icon Size</label>
+                  <input id="iconSizeInput" type="text" class="form-control form-control-sm" placeholder="24px, 2rem" value="24px" />
+                </div>
+                <div>
+                  <label class="form-label small">Icon Color</label>
+                  <div class="color-row">
+                    <input id="libIconColor" type="color" class="form-control form-control-color" value="#ffffff" />
+                    <input id="libIconColorText" type="text" class="form-control form-control-sm" value="#ffffff" />
+                  </div>
+                </div>
+              </div>
+              <p class="editor-hint mb-0 mt-3">Pick from the grid or enter your own class above.</p>
+            </div>
+          </div>
+
+          <!-- ADVANCED TAB -->
+          <div id="tab-advanced" class="tab-panel d-none">
+            <label class="form-label small">Element ID</label>
+            <input id="advId" type="text" class="form-control mb-2" />
+            <label class="form-label small">CSS Classes</label>
+            <input id="advClasses" type="text" class="form-control mb-2" placeholder="class1 class2" />
+            <label class="form-label small">Custom CSS</label>
+            <textarea id="advCustomCss" class="form-control code-area mb-3" rows="3" placeholder="border: 1px solid #ccc;"></textarea>
+            <div class="d-flex gap-2">
+              <button id="duplicateBtn" class="btn btn-sm btn-outline-primary flex-fill">
+                <i class="bi bi-copy me-1"></i>Duplicate
+              </button>
+              <button id="deleteBtn" class="btn btn-sm btn-outline-danger flex-fill">
+                <i class="bi bi-trash me-1"></i>Delete
+              </button>
+            </div>
+          </div>
+
+          <div class="ai-fix-selection-card mb-3 p-2 rounded border border-warning">
+            <label class="form-label small fw-semibold text-warning mb-1">
+              <i class="bi bi-arrow-repeat me-1"></i>Fix from Original Site
+            </label>
+            <p class="small text-muted mb-2">Compares the selected section against the live original site and fixes it.</p>
+            <textarea id="fixFromOriginalNote" class="form-control form-control-sm mb-2" rows="2" placeholder="What looks wrong? (optional) e.g. slider broken, layout shifted"></textarea>
+            <div class="d-flex flex-wrap gap-1 mb-2">
+              <button type="button" class="btn btn-sm btn-outline-warning fix-origin-chip" data-note="Layout and spacing should match the original site exactly.">Layout</button>
+              <button type="button" class="btn btn-sm btn-outline-warning fix-origin-chip" data-note="Restore slider/carousel structure and animation from original.">Slider</button>
+              <button type="button" class="btn btn-sm btn-outline-warning fix-origin-chip" data-note="Fix images, icons, and missing assets to match original.">Images</button>
+              <button type="button" class="btn btn-sm btn-outline-warning fix-origin-chip" data-note="Form fields, popup, and buttons should work like the original.">Form</button>
+              <button type="button" class="btn btn-sm btn-outline-warning fix-origin-chip" data-note="Restore CSS animation and scroll effects from original.">Animation</button>
+            </div>
+            <button type="button" id="fixFromOriginalBtn" class="btn btn-warning btn-sm w-100 text-dark fw-semibold">
+              <i class="bi bi-magic me-1"></i>Fix Selected from Original
+            </button>
+            <div id="fixFromOriginalStatus" class="small mt-2"></div>
+          </div>
+
+          <button id="applyBtn" class="btn btn-primary w-100 mt-3">
+            <i class="bi bi-check2 me-1"></i>Apply Changes
+          </button>
+          <button id="livePreviewBtn" class="btn btn-outline-secondary btn-sm w-100 mt-2">
+            <i class="bi bi-eye me-1"></i>Live Preview (without save)
+          </button>
+        </div>
+
+        <div class="sidebar-footer">
+          <p class="small text-muted mb-0">
+            Select anything in the preview, then use Change with AI for text, images, logos, and video.
+            Header and footer changes apply to all pages.
+          </p>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Icon Library Modal -->
+    <div class="modal fade" id="iconLibraryModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title"><i class="bi bi-collection me-2"></i>Import Icon Library</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Custom Import -->
+            <div class="custom-lib-form p-3 mb-3 rounded">
+              <h6 class="text-warning mb-2"><i class="bi bi-plus-circle me-1"></i>Custom Library Import (any library)</h6>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <label class="form-label small">Library Name</label>
+                  <input id="customLibName" type="text" class="form-control form-control-sm" placeholder="e.g. Flaticon, IcoMoon" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small">CDN / File URL</label>
+                  <input id="customLibCdn" type="url" class="form-control form-control-sm" placeholder="https://cdn.example.com/icons.css" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small">Type</label>
+                  <select id="customLibType" class="form-select form-select-sm">
+                    <option value="css">CSS Stylesheet</option>
+                    <option value="js">JavaScript</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small">Class Prefix</label>
+                  <input id="customLibPrefix" type="text" class="form-control form-control-sm" placeholder="bi bi- / fa-solid fa-" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small">Class Suffix (optional)</label>
+                  <input id="customLibSuffix" type="text" class="form-control form-control-sm" placeholder="-fill / -line" />
+                </div>
+                <div class="col-12">
+                  <label class="form-label small">Icon Names (optional, comma separated)</label>
+                  <textarea id="customLibIcons" class="form-control form-control-sm" rows="2" placeholder="phone, email, location, home, user"></textarea>
+                  <p class="small text-muted mb-0 mt-1">Leave empty if you only need the CDN — enter classes manually in the Icons tab.</p>
+                </div>
+                <div class="col-12">
+                  <button type="button" id="addCustomLibBtn" class="btn btn-warning btn-sm text-dark w-100">
+                    <i class="bi bi-cloud-download me-1"></i>Import Custom Library
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <h6 class="text-muted small mb-2">Popular Libraries (quick add)</h6>
+            <div class="row g-3" id="libraryCards"></div>
+            <hr class="border-secondary" />
+            <h6 class="mb-2">Installed Libraries</h6>
+            <ul id="installedLibs" class="list-group list-group-flush small"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Theme Modal -->
+    <div class="modal fade" id="themeModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary theme-modal">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title"><i class="bi bi-palette me-2"></i>Site Theme</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div id="themePreview" class="theme-live-preview mb-3" aria-hidden="true">
+              <div class="theme-preview-header">Brand header</div>
+              <div class="theme-preview-body">
+                <strong class="theme-preview-heading">Page heading</strong>
+                <p class="theme-preview-text mb-2">Body text stays readable on the page background.</p>
+                <button type="button" class="theme-preview-btn" tabindex="-1">Primary button</button>
+                <a href="#" class="theme-preview-link ms-2" tabindex="-1">Accent link</a>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <label class="form-label small mb-0">Detected palette</label>
+              <span class="small text-muted">Click a swatch to fill the selected role</span>
+            </div>
+            <div id="themePalette" class="theme-palette mb-3"></div>
+
+            <div class="theme-role-grid">
+              <button type="button" class="theme-role active" data-role="primary">
+                <span class="theme-role-meta">
+                  <span class="theme-role-label">Primary</span>
+                  <span class="theme-role-hint">Buttons &amp; CTAs</span>
+                </span>
+                <span class="theme-role-controls">
+                  <input id="themePrimary" type="color" class="form-control form-control-color theme-color-input" />
+                  <input id="themePrimaryHex" type="text" class="form-control form-control-sm theme-hex-input" maxlength="7" spellcheck="false" />
+                </span>
+              </button>
+              <button type="button" class="theme-role" data-role="secondary">
+                <span class="theme-role-meta">
+                  <span class="theme-role-label">Secondary</span>
+                  <span class="theme-role-hint">Header &amp; sections</span>
+                </span>
+                <span class="theme-role-controls">
+                  <input id="themeSecondary" type="color" class="form-control form-control-color theme-color-input" />
+                  <input id="themeSecondaryHex" type="text" class="form-control form-control-sm theme-hex-input" maxlength="7" spellcheck="false" />
+                </span>
+              </button>
+              <button type="button" class="theme-role" data-role="accent">
+                <span class="theme-role-meta">
+                  <span class="theme-role-label">Accent</span>
+                  <span class="theme-role-hint">Links &amp; highlights</span>
+                </span>
+                <span class="theme-role-controls">
+                  <input id="themeAccent" type="color" class="form-control form-control-color theme-color-input" />
+                  <input id="themeAccentHex" type="text" class="form-control form-control-sm theme-hex-input" maxlength="7" spellcheck="false" />
+                </span>
+              </button>
+              <button type="button" class="theme-role" data-role="background">
+                <span class="theme-role-meta">
+                  <span class="theme-role-label">Background</span>
+                  <span class="theme-role-hint">Page surface</span>
+                </span>
+                <span class="theme-role-controls">
+                  <input id="themeBackground" type="color" class="form-control form-control-color theme-color-input" />
+                  <input id="themeBackgroundHex" type="text" class="form-control form-control-sm theme-hex-input" maxlength="7" spellcheck="false" />
+                </span>
+              </button>
+              <button type="button" class="theme-role" data-role="text">
+                <span class="theme-role-meta">
+                  <span class="theme-role-label">Text</span>
+                  <span class="theme-role-hint">Body copy</span>
+                </span>
+                <span class="theme-role-controls">
+                  <input id="themeText" type="color" class="form-control form-control-color theme-color-input" />
+                  <input id="themeTextHex" type="text" class="form-control form-control-sm theme-hex-input" maxlength="7" spellcheck="false" />
+                </span>
+              </button>
+            </div>
+
+            <div id="themeContrast" class="theme-contrast-note small mt-3"></div>
+            <div id="themeStatus"></div>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" id="refreshThemeBtn" class="btn btn-outline-light btn-sm me-auto">
+              <i class="bi bi-arrow-repeat me-1"></i>Re-detect
+            </button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" id="applyThemeBtn" class="btn btn-info text-dark fw-semibold">Apply Theme</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Page Modal -->
+    <div class="modal fade" id="addPageModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title"><i class="bi bi-file-earmark-plus me-2"></i>Add New Page</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Page Name</label>
+              <input id="newPageName" type="text" class="form-control bg-secondary text-white border-0" placeholder="about-us" />
+              <div class="form-text text-muted">Will become about-us.html</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Page Title</label>
+              <input id="newPageTitle" type="text" class="form-control bg-secondary text-white border-0" placeholder="About Us" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Template</label>
+              <select id="newPageTemplate" class="form-select bg-secondary text-white border-0">
+                <option value="shell">Same header/footer (recommended)</option>
+                <option value="blank">Blank content area</option>
+                <option value="copy">Copy homepage</option>
+              </select>
+            </div>
+            <div id="addPageStatus"></div>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" id="createPageBtn" class="btn btn-success">Create Page</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Page Modal -->
+    <div class="modal fade" id="aiPageModal" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title"><i class="bi bi-stars me-2"></i>Generate Page with AI</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Page Name</label>
+                <input id="aiPageName" type="text" class="form-control bg-secondary text-white border-0" placeholder="services" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Page Title</label>
+                <input id="aiPageTitle" type="text" class="form-control bg-secondary text-white border-0" placeholder="Our Services" />
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="aiPageLinkPlacement">Link placement</label>
+                <input id="aiPageLinkPlacement" type="text" class="form-control bg-secondary text-white border-0" list="aiPageLinkPlacementOptions" placeholder="Type the menu name from this site, e.g. Categories Dropdown" />
+                <datalist id="aiPageLinkPlacementOptions">
+                  <option value="Main Navigation"></option>
+                  <option value="Categories Dropdown"></option>
+                  <option value="Services Dropdown"></option>
+                  <option value="Footer"></option>
+                  <option value="Header + Footer"></option>
+                </datalist>
+                <div class="form-text text-white-50">Write exactly where the link should go (same name as on the site). Example: <strong>Categories Dropdown</strong>. Leave empty for main header only.</div>
+              </div>
+              <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label mb-0" for="aiPagePrompt">Service or page description</label>
+                  <button type="button" id="aiPageDefaultPrompt" class="btn btn-sm btn-outline-light">Use default example</button>
+                </div>
+                <textarea id="aiPagePrompt" class="form-control bg-secondary text-white border-0" rows="8" placeholder="Describe the service or page to create. Design always follows this cloned project's existing theme."></textarea>
+                <div class="form-text text-white-50">Describe what the page is about. Visual design, components, navigation, and structure always follow this cloned project's existing theme.</div>
+              </div>
+            </div>
+            <div id="aiPageStatus"></div>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" id="generateAiPageBtn" class="btn btn-warning text-dark">
+              <i class="bi bi-stars me-1"></i>Generate Page
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Assistant Modal -->
+    <div class="modal fade" id="aiCustomizeModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title"><i class="bi bi-magic me-2"></i>AI Site Assistant</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p class="small text-muted mb-3">
+              Upload a new logo or describe changes in plain English. AI will update logo, theme colors, buttons, and more across your whole site.
+            </p>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label">New Logo (optional)</label>
+                <input id="aiCustomizeLogoFile" type="file" accept="image/*" class="form-control bg-secondary text-white border-0" />
+                <img id="aiCustomizeLogoPreview" class="ai-logo-preview d-none mt-2" alt="Logo preview" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Or Logo URL</label>
+                <input id="aiCustomizeLogoUrl" type="url" class="form-control bg-secondary text-white border-0" placeholder="https://example.com/logo.png" />
+              </div>
+            </div>
+
+            <label class="form-label">What do you want to change?</label>
+            <textarea
+              id="aiCustomizePrompt"
+              class="form-control bg-secondary text-white border-0 mb-2"
+              rows="4"
+              placeholder="Example: Use my new logo and match all buttons and headers to its red and blue colors. Make the footer darker."
+            ></textarea>
+
+            <div class="d-flex flex-wrap gap-1 mb-3">
+              <button type="button" class="btn btn-sm btn-outline-secondary ai-prompt-chip" data-prompt="Update only the existing logo colors to match the website's current theme colors, and adjust only the logo width and height in the header/navbar for proper visual balance. Keep the original logo design, text, shape, proportions, and aspect ratio unchanged. Do not modify the header layout, website colors, typography, spacing, components, content, or functionality. Ensure the logo looks correct and responsive on desktop, tablet, and mobile. Make the smallest possible code changes and change nothing unrelated.">
+                Logo colors and size
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary ai-prompt-chip" data-prompt="Update the logo and match the whole site theme to the logo colors.">
+                Match logo colors
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary ai-prompt-chip" data-prompt="Make the site look more modern with softer colors and rounded buttons.">
+                Modern look
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary ai-prompt-chip" data-prompt="Use a professional dark blue and white color scheme for headers, buttons, and links.">
+                Professional blue
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary ai-prompt-chip" data-prompt="Change primary buttons to green and update header background to match.">
+                Green buttons
+              </button>
+            </div>
+
+            <div id="aiCustomizeStatus"></div>
+            <ul id="aiCustomizeSuggestions" class="small text-info mt-2 d-none"></ul>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" id="aiCustomizeBtn" class="btn btn-primary">
+              <i class="bi bi-magic me-1"></i>Apply with AI
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="headTagsModal" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content head-tags-modal">
+          <div class="modal-header">
+            <h5 class="modal-title">SEO tags</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <label class="head-tags-label" for="headTagsInput">Snippet</label>
+            <textarea id="headTagsInput" class="head-tags-input" rows="12" spellcheck="false" placeholder="Paste a meta tag, Google Tag Manager, or gtag script."></textarea>
+            <p class="head-tags-note">One snippet is kept for the whole site. Apply again to replace it. Leave the box empty and apply to remove it.</p>
+            <div id="headTagsStatus" class="head-tags-status"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+            <button type="button" id="headTagsApplyBtn" class="btn btn-info text-dark fw-semibold">Apply to head</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Full Audit Modal (auto-runs on open) -->
+    <div class="modal fade" id="fixWithAiModal" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title"><i class="bi bi-wrench-adjustable me-2"></i>Fix with AI</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p class="small text-muted">
+              The fix is applied across the whole project. If you selected a logo, that image is sent so the model can read its colors, then reposition it and recolor the theme.
+            </p>
+            <p id="fixWithAiImageNote" class="small text-info"></p>
+            <textarea
+              id="fixWithAiPrompt"
+              class="form-control bg-secondary text-white border-0 mb-3"
+              rows="4"
+              placeholder="Example: The logo is out of position after I changed it. Align it in the header and match the theme to the logo."
+            ></textarea>
+            <div id="fixWithAiExamples" class="d-flex flex-wrap gap-2 mb-2"></div>
+            <div id="fixWithAiStatus" class="small mt-2"></div>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+            <button type="button" id="fixWithAiRunBtn" class="btn btn-info text-dark fw-semibold">
+              <i class="bi bi-magic me-1"></i>Fix project
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="aiAuditModal" tabindex="-1" data-bs-backdrop="static">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title"><i class="bi bi-shield-check me-2"></i>AI Full Website Audit &amp; Fix</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="text-center py-3 mb-2">
+              <div class="spinner-border text-danger mb-3" role="status" id="aiAuditSpinner"></div>
+              <p id="aiAuditProgress" class="small text-muted mb-0">Inspecting every page, fixing images, links, sliders, SEO, responsive layout, forms, and all functionality…</p>
+            </div>
+            <div id="aiAuditSummary" class="alert alert-info py-2 small d-none"></div>
+            <div id="aiAuditResults" class="ai-audit-results mb-2"></div>
+            <div id="aiAuditStatus"></div>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEO Modal -->
+    <div class="modal fade" id="seoModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title">Page SEO</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Page Title</label>
+              <input id="seoTitle" type="text" class="form-control bg-secondary text-white border-0" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Meta Description</label>
+              <textarea id="seoDescription" class="form-control bg-secondary text-white border-0" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" id="applySeoBtn" class="btn btn-primary">Apply SEO</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/src/editor.js"></script>
+  </body>
+</html>

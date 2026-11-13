@@ -1,0 +1,9 @@
+node_modules/
+dist/
+cloned/
+.cloner-history/
+.DS_Store
+*.log
+.env
+.env.*
+.cloner-trash/
