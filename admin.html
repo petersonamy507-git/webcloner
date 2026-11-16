@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin — Website Cloner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <nav class="app-nav">
+      <a class="app-brand" href="/">
+        <i class="bi bi-globe2"></i>
+        <span>Website Cloner</span>
+      </a>
+      <div class="app-nav-links">
+        <a href="/"><i class="bi bi-collection me-1"></i>My Sites</a>
+      </div>
+    </nav>
+
+    <main class="admin-shell">
+      <h1 class="admin-title">Administration</h1>
+      <div class="admin-tabs" role="tablist">
+        <button class="admin-tab" data-tab="entities" id="tabEntities" role="tab">Workspaces</button>
+        <button class="admin-tab" data-tab="users" role="tab">Users</button>
+        <button class="admin-tab" data-tab="activity" role="tab">Activity</button>
+      </div>
+      <div class="admin-status d-none" id="adminStatus" role="status"></div>
+
+      <!-- Workspaces -->
+      <section class="admin-panel" data-panel="entities">
+        <form class="admin-form" id="entityForm">
+          <h2>New workspace</h2>
+          <div class="admin-form-row">
+            <input class="form-control" id="entityName" placeholder="Name, e.g. Acme Corp" required />
+            <input class="form-control" id="entitySlug" placeholder="Workspace ID (optional, e.g. acme)" />
+            <button class="btn btn-primary" type="submit"><i class="bi bi-plus-lg me-1"></i>Create</button>
+          </div>
+        </form>
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>ID</th><th>Users</th><th>Sites</th><th>Status</th><th></th></tr></thead>
+          <tbody id="entityRows"></tbody>
+        </table>
+      </section>
+
+      <!-- Users -->
+      <section class="admin-panel" data-panel="users">
+        <form class="admin-form" id="userForm">
+          <h2>New user</h2>
+          <div class="admin-form-row">
+            <input class="form-control" id="userEmail" type="email" placeholder="Email" required />
+            <input class="form-control" id="userName" placeholder="Name" />
+            <select class="form-select" id="userRole"></select>
+            <select class="form-select" id="userEntity"></select>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-person-plus me-1"></i>Add</button>
+          </div>
+          <p class="admin-hint">The new user gets a one-time link to set their own password. Send it to them.</p>
+        </form>
+        <div class="admin-link-box d-none" id="linkBox">
+          <span id="linkLabel">Set-password link</span>
+          <input class="form-control" id="linkValue" readonly />
+          <button class="btn btn-outline-light btn-sm" type="button" id="copyLinkBtn"><i class="bi bi-clipboard me-1"></i>Copy</button>
+        </div>
+        <div class="admin-filter" id="userFilterWrap">
+          <label for="userFilter">Workspace</label>
+          <select class="form-select form-select-sm" id="userFilter"></select>
+        </div>
+        <table class="admin-table">
+          <thead><tr><th>User</th><th>Role</th><th>Workspace</th><th>Last sign-in</th><th>Status</th><th></th></tr></thead>
+          <tbody id="userRows"></tbody>
+        </table>
+      </section>
+
+      <!-- Activity -->
+      <section class="admin-panel" data-panel="activity">
+        <form class="audit-filters" id="activityFilters">
+          <div id="activityFilterWrap">
+            <label for="activityFilter">Workspace</label>
+            <select class="form-select form-select-sm" id="activityFilter"></select>
+          </div>
+          <div>
+            <label for="activityCategory">Type</label>
+            <select class="form-select form-select-sm" id="activityCategory">
+              <option value="">Everything</option>
+              <option value="auth">Sign-ins</option>
+              <option value="site">Site changes</option>
+              <option value="ai">AI edits</option>
+              <option value="asset">Assets</option>
+              <option value="admin">Users &amp; workspaces</option>
+            </select>
+          </div>
+          <div>
+            <label for="activityUser">User</label>
+            <input class="form-control form-control-sm" id="activityUser" placeholder="email contains…" />
+          </div>
+          <div>
+            <label for="activitySite">Site</label>
+            <input class="form-control form-control-sm" id="activitySite" placeholder="folder contains…" />
+          </div>
+          <div>
+            <label for="activityFrom">From</label>
+            <input class="form-control form-control-sm" id="activityFrom" type="date" />
+          </div>
+          <div>
+            <label for="activityTo">To</label>
+            <input class="form-control form-control-sm" id="activityTo" type="date" />
+          </div>
+          <div class="audit-filter-actions">
+            <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Filter</button>
+            <button class="btn btn-sm btn-ghost" type="button" id="activityExport"><i class="bi bi-download me-1"></i>CSV</button>
+          </div>
+        </form>
+        <table class="admin-table">
+          <thead><tr><th>When</th><th>User</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
+          <tbody id="activityRows"></tbody>
+        </table>
+        <div class="text-center mt-3">
+          <button class="btn btn-sm btn-ghost d-none" type="button" id="activityMore">Load more</button>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/admin.js"></script>
+  </body>
+</html>

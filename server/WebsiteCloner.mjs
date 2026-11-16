@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import fs from 'fs';
+import { rangeProgress, reportProgress } from './progress.mjs';
 import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
@@ -420,6 +421,7 @@ export class WebsiteCloner {
 
   async clone(options = {}) {
     const maxPages = options.maxPages || MAX_PAGES;
+    reportProgress(10, 'Downloading the page');
     const home = await this.fetchPage(this.pageUrl);
 
     this.pageOrigin = new URL(home.finalUrl).origin;
@@ -430,6 +432,7 @@ export class WebsiteCloner {
       homeFinalUrl: home.finalUrl,
       origin: this.pageOrigin,
       maxPages,
+      onPage: (done, total) => rangeProgress(15, 50, done, total, `Downloading pages (${done} found)`),
     });
 
     const pageMap = buildPageMap([...pageEntries.keys()], this.pageOrigin);

@@ -1,3 +1,4 @@
+import './auth.js';
 import { ICON_LIBRARIES } from './icon-libraries.js';
 import { initSiteTools } from './site-tools.js';
 import { initAiCustomize } from './ai-customize.js';
@@ -7,6 +8,9 @@ import { initHeadTags } from './head-tags.js';
 import { initAiFixSelection } from './ai-fix-selection.js';
 import { initAiEditSelection } from './ai-edit-selection.js';
 import { initProjectHistory } from './project-history.js';
+import { initAssetLibrary } from './asset-library.js';
+import { initAiComposer } from './ai-composer.js';
+import { initVersionHistory } from './version-history.js';
 import { API } from './api.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -44,6 +48,8 @@ showProjectIdentity();
 
 let currentPage = 'index.html';
 let selectedElement = null;
+let assetLibrary = null;
+let aiComposer = null;
 let pendingGlobalEdits = [];
 let seoModal;
 let iconLibraryModal;
@@ -315,15 +321,28 @@ function toSiteUrl(apiUrl) {
   return apiUrl.startsWith(prefix) ? apiUrl.slice(prefix.length) : apiUrl;
 }
 
-async function uploadImageData(base64, ext) {
-  const res = await fetch(API.upload, {
+/** Upload into the workspace library, then copy it into this site. Returns the /cloned/ URL. */
+async function uploadToLibrary(file) {
+  const form = new FormData();
+  form.append('files', file);
+  const res = await fetch(API.assets, { method: 'POST', body: form });
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.error || 'Upload failed');
+  const use = await fetch(API.useAsset(data.assets[0].id), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ folder, data: base64, ext }),
+    body: JSON.stringify({ folder, page: currentPage, placement: 'upload' }),
   });
-  const data = await res.json();
-  if (!data.success) throw new Error(data.error || 'Upload failed');
-  return toSiteUrl(data.url);
+  const used = await use.json();
+  if (!use.ok || !used.success) throw new Error(used.error || 'Upload failed');
+  return used.url;
+}
+
+async function uploadImageData(base64, ext) {
+  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const safeExt = String(ext || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+  const url = await uploadToLibrary(new File([bytes], `dropped-image.${safeExt}`));
+  return toSiteUrl(url);
 }
 
 function setMoveMode(enabled) {
@@ -512,24 +531,15 @@ document.getElementById('iconColorPicker').addEventListener('input', (e) => {
 document.getElementById('imageFileInput').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  const ext = file.name.split('.').pop() || 'png';
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const base64 = reader.result.split(',')[1];
-    try {
-      const res = await fetch(API.upload, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folder, data: base64, ext }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        document.getElementById('imageUrlInput').value = data.url;
-        document.getElementById('imagePreview').src = data.url;
-      } else alert(data.error || 'Upload failed');
-    } catch { alert('Image upload failed'); }
-  };
-  reader.readAsDataURL(file);
+  try {
+    const url = await uploadToLibrary(file);
+    document.getElementById('imageUrlInput').value = url;
+    document.getElementById('imagePreview').src = url;
+  } catch (err) {
+    alert(err.message || 'Image upload failed');
+  } finally {
+    e.target.value = '';
+  }
 });
 
 const brandGallery = document.getElementById('brandGallery');
@@ -1226,6 +1236,8 @@ window.addEventListener('message', async (e) => {
   if (e.data?.type === 'CLONER_SELECT') {
     try {
       openSidebar(e.data.data);
+      assetLibrary?.refreshSelection();
+      aiComposer?.selectionChanged();
     } catch (err) {
       console.error('Failed to open editor sidebar:', err);
     }
@@ -1270,7 +1282,39 @@ window.addEventListener('message', async (e) => {
   }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+function initEditor() {
+  assetLibrary = initAssetLibrary({
+    folder,
+    previewFrame,
+    getSelected: () => selectedElement,
+    getPage: () => currentPage,
+    assetSrcForPage,
+    saveCurrentPage: async () => savePage(currentPage, await getFrameHtml()),
+    reloadPreview: () => loadPreview(currentPage),
+    showSaveToast,
+  });
+  assetLibrary.bind();
+  aiComposer = initAiComposer({
+    folder,
+    previewFrame,
+    getSelected: () => selectedElement,
+    getPage: () => currentPage,
+    reloadPreview: () => loadPreview(currentPage),
+    showSaveToast,
+  });
+  aiComposer.bind();
+  const versionHistory = initVersionHistory({
+    folder,
+    closeOtherPanels: () => document.getElementById('assetPanel').classList.remove('open'),
+    onRestored: () => { loadPages(); loadPreview(currentPage); showSaveToast('Version restored.'); },
+  });
+  versionHistory.bind();
+  document.getElementById('assetLibraryBtn').addEventListener('click', () => versionHistory.close());
+  fetch(API.siteOpened, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folder }),
+  }).catch(() => {});
   loadCustomLibraries();
   populateLibSelect();
   const seoModalEl = document.getElementById('seoModal');
@@ -1339,4 +1383,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   syncAiEditSelection = aiEdit.sync;
   aiEdit.bind();
-});
+}
+
+// auth.js resolves the session first, so DOMContentLoaded may already have fired.
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initEditor);
+else initEditor();

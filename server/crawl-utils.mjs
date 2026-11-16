@@ -475,7 +475,7 @@ export async function includeOriginalThankYou({ pageEntries, pageMap, origin, ho
 }
 
 /** BFS crawl: discover + fetch pages until maxPages or queue empty */
-export async function crawlSitePages({ homeHtml, homeFinalUrl, origin, maxPages = MAX_PAGES }) {
+export async function crawlSitePages({ homeHtml, homeFinalUrl, origin, maxPages = MAX_PAGES, onPage }) {
   const pageEntries = new Map();
   const homeNorm = normalizeCrawlUrl(homeFinalUrl);
   if (!homeNorm) return pageEntries;
@@ -506,6 +506,7 @@ export async function crawlSitePages({ homeHtml, homeFinalUrl, origin, maxPages 
 
       seen.add(norm);
       pageEntries.set(norm, { html: sub.html, finalUrl: sub.finalUrl });
+      onPage?.(pageEntries.size, maxPages);
 
       if (pageEntries.size >= maxPages) break;
 

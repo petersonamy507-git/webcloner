@@ -16,6 +16,8 @@ import { customizeSiteWithAI } from './ai-customize.mjs';
 import { auditAndFixClonedSite } from './ai-audit.mjs';
 import { restructureToPhpStack } from './php-restructure.mjs';
 import { restructureToLaravelStack } from './laravel-restructure.mjs';
+import { aiEditSite } from './ai-edit.mjs';
+import { reportProgress } from './progress.mjs';
 import { applyHeadSnippets, readHeadSnippets } from './head-snippets.mjs';
 import { saveCloneMeta } from './site-origin.mjs';
 import { editSelectionWithAI, fixSelectionFromOriginal } from './ai-fix-selection.mjs';
@@ -63,7 +65,7 @@ async function handleClone(input) {
   try {
     if (mode !== 'static' && (await canUsePuppeteer())) {
       try {
-        result = await puppeteerClone(url, folderName, { maxPages });
+        result = await puppeteerClone(url, folderName, { maxPages, screenshotDir: input.screenshotDir || '' });
       } catch (err) {
         console.warn('Puppeteer failed, falling back to static:', err.message);
         const cloner = new WebsiteCloner(url, folderName);
@@ -85,6 +87,7 @@ async function handleClone(input) {
   const outDir = siteDir(result.folder);
   const normalizedUrl = (url.startsWith('http') ? url : `https://${url}`).replace(/\/$/, '');
   const siteOrigin = new URL(normalizedUrl).origin;
+  reportProgress(85, 'Repairing assets and fidelity');
   try {
     saveCloneMeta(outDir, { sourceUrl: normalizedUrl, clonedAt: new Date().toISOString() });
     await repairCorruptedAssets(outDir, siteOrigin);
@@ -93,6 +96,7 @@ async function handleClone(input) {
   } catch { /* non-fatal */ }
 
   let phpStructure = null;
+  reportProgress(90, 'Building the PHP export');
   try {
     phpStructure = restructureToPhpStack(outDir);
   } catch (err) {
@@ -113,6 +117,7 @@ async function handleClone(input) {
     console.warn('Invoice bands skipped:', err.message);
   }
 
+  reportProgress(95, 'Clone finished');
   return {
     success: true,
     url: input.url,
@@ -251,6 +256,18 @@ async function handleHeadSnippets(input) {
   return applyHeadSnippets(dir, input.snippet);
 }
 
+async function handleAiEdit(input) {
+  const dir = siteDir(input.folder);
+  if (!fs.existsSync(dir)) throw new Error('Clone folder not found.');
+  return aiEditSite(dir, {
+    page: input.page || 'index.html',
+    prompt: input.prompt || '',
+    images: Array.isArray(input.images) ? input.images : [],
+    selection: input.selection || null,
+    assets: Array.isArray(input.assets) ? input.assets : [],
+  });
+}
+
 async function handleAiEditSelection(input) {
   const dir = siteDir(input.folder);
   if (!fs.existsSync(dir)) throw new Error('Clone folder not found.');
@@ -303,6 +320,7 @@ const handlers = {
   'ai-audit': handleAiAudit,
   'ai-fix-selection': handleAiFixSelection,
   'ai-edit-selection': handleAiEditSelection,
+  'ai-edit': handleAiEdit,
   'php-restructure': handlePhpRestructure,
   'laravel-restructure': handleLaravelRestructure,
   'head-snippets': handleHeadSnippets,

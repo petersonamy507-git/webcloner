@@ -18,6 +18,7 @@ const WRITE_ENDPOINTS = [
   [API.fixWithAi, 'Fix with AI'],
   [API.aiFixSelection, 'section fix'],
   [API.aiEditSelection, 'AI edit'],
+  [API.aiEdit, 'AI edit'],
   [API.headSnippets, 'SEO tags'],
   [API.replaceLogos, 'logo change'],
   [API.applyBrand, 'brand change'],

@@ -39,6 +39,12 @@
         <button id="themeBtn" class="tbtn" title="Site theme colors">
           <i class="bi bi-palette"></i><span class="tbtn-label">Theme</span>
         </button>
+        <button id="assetLibraryBtn" class="tbtn" title="Your workspace's logos, images, videos and fonts">
+          <i class="bi bi-images"></i><span class="tbtn-label">Assets</span>
+        </button>
+        <button id="historyPanelBtn" class="tbtn" title="Version history — see every change and restore an earlier version">
+          <i class="bi bi-clock-history"></i><span class="tbtn-label">History</span>
+        </button>
         <button id="iconLibraryBtn" class="tbtn" title="Icon libraries">
           <i class="bi bi-collection"></i><span class="tbtn-label">Icons</span>
         </button>
@@ -53,6 +59,9 @@
       <div class="toolbar-divider"></div>
 
       <div class="toolbar-group" role="group" aria-label="AI tools">
+        <button id="aiComposerBtn" class="tbtn tbtn-ai" title="Ask AI to edit — paste a screenshot and describe the change">
+          <i class="bi bi-chat-square-text"></i><span class="tbtn-label">Ask AI</span>
+        </button>
         <button id="fixWithAiBtn" class="tbtn tbtn-ai" title="Describe a problem and AI will fix the page">
           <i class="bi bi-wrench-adjustable"></i><span class="tbtn-label">Fix with AI</span>
         </button>
@@ -862,6 +871,72 @@
         </div>
       </div>
     </div>
+
+    <aside class="asset-panel" id="assetPanel" aria-label="Workspace asset library">
+      <div class="asset-panel-head">
+        <span><i class="bi bi-images me-1"></i>Workspace assets</span>
+        <button type="button" class="asset-panel-close" id="assetPanelClose" title="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="asset-target" id="assetTarget"></div>
+      <div class="asset-tools">
+        <input type="search" class="asset-search" id="assetSearch" placeholder="Search by file name" />
+        <button type="button" class="asset-upload-btn" id="assetUploadBtn"><i class="bi bi-upload me-1"></i>Upload</button>
+        <input type="file" id="assetFileInput" multiple hidden
+          accept=".png,.jpg,.jpeg,.webp,.gif,.avif,.ico,.svg,.mp4,.m4v,.mov,.webm,.woff,.woff2,.ttf,.otf" />
+      </div>
+      <div class="asset-kinds">
+        <button type="button" class="active" data-kind="">All</button>
+        <button type="button" data-kind="image">Images</button>
+        <button type="button" data-kind="svg">SVG</button>
+        <button type="button" data-kind="video">Videos</button>
+        <button type="button" data-kind="font">Fonts</button>
+      </div>
+      <label class="asset-site-only"><input type="checkbox" id="assetSiteOnly" /> Only assets used in this site</label>
+      <div class="asset-status" id="assetStatus" role="status"></div>
+      <div class="asset-grid" id="assetGrid"></div>
+      <p class="asset-drop-hint">Drop files here to upload. Everyone in your workspace can reuse them.</p>
+    </aside>
+
+    <aside class="asset-panel history-panel" id="historyPanel" aria-label="Version history">
+      <div class="asset-panel-head">
+        <span><i class="bi bi-clock-history me-1"></i>Version history</span>
+        <button type="button" class="asset-panel-close" id="historyPanelClose" title="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <p class="asset-drop-hint">A version is saved automatically after every change. Click a file to see exactly what changed.</p>
+      <div class="asset-status" id="historyStatus" role="status"></div>
+      <div class="asset-grid" id="historyList"></div>
+    </aside>
+    <div class="history-diff d-none" id="historyDiff" role="dialog" aria-label="File changes">
+      <div class="history-diff-head">
+        <span class="hist-diff-title"></span>
+        <button type="button" class="asset-panel-close" id="historyDiffClose" title="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <pre></pre>
+    </div>
+
+    <section class="ai-composer" id="aiComposer" hidden aria-label="Ask AI to edit">
+      <div class="aic-head">
+        <span class="aic-title"><i class="bi bi-chat-square-text me-1"></i>Ask AI to edit</span>
+        <span class="aic-context" id="aicContext"></span>
+        <button type="button" class="aic-icon" id="aicClose" title="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="aic-attachments d-none" id="aicAttachments"></div>
+      <textarea id="aicPrompt" rows="3" placeholder="Describe the change… Paste a screenshot with Ctrl/Cmd+V, e.g. “Make this hero dark, use my logo, orange button, smooth fade-in.”"></textarea>
+      <div class="aic-actions">
+        <button type="button" class="aic-icon" id="aicAttach" title="Attach a screenshot file"><i class="bi bi-paperclip"></i></button>
+        <div class="dropup">
+          <button type="button" class="aic-icon" data-bs-toggle="dropdown" title="Take a screenshot of the preview"><i class="bi bi-camera"></i></button>
+          <ul class="dropdown-menu dropdown-menu-dark">
+            <li><button type="button" class="dropdown-item" data-capture="viewport"><i class="bi bi-window me-2"></i>Visible area</button></li>
+            <li><button type="button" class="dropdown-item" data-capture="section"><i class="bi bi-layout-text-window me-2"></i>Selected section</button></li>
+            <li><button type="button" class="dropdown-item" data-capture="element"><i class="bi bi-bounding-box me-2"></i>Selected element</button></li>
+          </ul>
+        </div>
+        <span class="aic-status" id="aicStatus" role="status"></span>
+        <button type="button" class="aic-send" id="aicSend" title="Apply (Ctrl/Cmd+Enter)"><i class="bi bi-stars me-1"></i>Apply</button>
+      </div>
+      <input type="file" id="aicFile" accept="image/png,image/jpeg,image/webp" multiple hidden />
+    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="/src/editor.js"></script>

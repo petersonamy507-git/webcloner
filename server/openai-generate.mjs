@@ -27,8 +27,11 @@ export function openAiChatBody({ messages, maxTokens = 4000, json = false, model
   return body;
 }
 
+// Keys pasted from formatted text often keep wrapping quotes or backticks.
+const cleanKey = (value) => String(value || '').trim().replace(/^['"`]+|['"`]+$/g, '');
+
 export function loadEnvKey() {
-  const key = process.env.OPENAI_API_KEY;
+  const key = cleanKey(process.env.OPENAI_API_KEY);
   if (key) return key;
 
   const envPath = path.join(ROOT, '.env');
@@ -37,8 +40,7 @@ export function loadEnvKey() {
     .split('\n')
     .find((l) => l.startsWith('OPENAI_API_KEY='));
   if (!line) return '';
-  const value = line.split('=').slice(1).join('=').trim();
-  return value.replace(/^['"]|['"]$/g, '');
+  return cleanKey(line.split('=').slice(1).join('='));
 }
 
 function stripCodeFences(text) {

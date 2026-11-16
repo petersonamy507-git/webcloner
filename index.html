@@ -70,7 +70,7 @@
                       class="form-control"
                       id="folderName"
                       placeholder="my-cloned-site"
-                      pattern="[a-zA-Z0-9_-]+"
+                      pattern="[a-zA-Z0-9_\-]+"
                     />
                     <div class="form-text">
                       Leave empty to auto-generate a folder name.
@@ -115,6 +115,10 @@
                       class="progress-bar progress-bar-striped progress-bar-animated"
                       style="width: 0%"
                     ></div>
+                  </div>
+                  <div class="clone-progress-foot">
+                    <span>It keeps running if you leave this page. Find it under Recent clones.</span>
+                    <button type="button" class="btn btn-sm btn-ghost" id="cancelCloneBtn">Cancel</button>
                   </div>
                 </div>
 
@@ -166,6 +170,9 @@
                     </div>
                   </div>
 
+                  <div class="clone-checks d-none" id="resultChecks"></div>
+                  <div class="clone-shots d-none" id="resultShots"></div>
+
                   <div class="mt-3" id="brandSection">
                     <label for="brandSelect" class="form-label fw-semibold mb-1">Select brand</label>
                     <select id="brandSelect" class="form-select">
@@ -208,6 +215,13 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <div class="col-lg-8 mt-5 d-none" id="cloneJobsWrap">
+            <section class="clone-jobs" id="cloneJobs">
+              <h2 class="library-title">Recent clones</h2>
+              <div id="cloneJobList"></div>
+            </section>
           </div>
 
           <div class="col-lg-8 mt-5">

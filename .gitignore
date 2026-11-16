@@ -7,3 +7,4 @@ cloned/
 .env
 .env.*
 .cloner-trash/
+workspace/

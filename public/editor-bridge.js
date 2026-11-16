@@ -186,6 +186,7 @@
       info.alt = img.getAttribute('alt') || '';
       info.width = img.getAttribute('width') || img.style.width || '';
       info.height = img.getAttribute('height') || img.style.height || '';
+      info.inHeader = Boolean(el.closest('header, nav, .navbar, .header'));
     } else if (type === 'icon') {
       info.iconClass = el.className?.toString?.() || '';
       info.iconColor = el.style.color || '';
@@ -693,6 +694,9 @@
         if (msg.src) {
           img.setAttribute('src', msg.src);
           img.removeAttribute('srcset');
+          // Lazy-load scripts copy these into src later, which would bring the old image back.
+          ['data-src', 'data-imgurl', 'data-lazy-src', 'data-original', 'data-lazy', 'data-srcset']
+            .forEach((attr) => { if (img.hasAttribute(attr)) img.setAttribute(attr, attr === 'data-srcset' ? '' : msg.src); });
           const picture = img.closest('picture');
           if (picture) picture.querySelectorAll('source').forEach((source) => source.removeAttribute('srcset'));
         }
@@ -800,6 +804,42 @@
     }
 
     if (msg.type === 'CLONER_APPLY') applyEdit(msg);
+
+    // Insert a library image or video next to (or inside) the selected element.
+    if (msg.type === 'CLONER_INSERT_MEDIA') {
+      const anchor = msg.id ? document.querySelector(`[data-cloner-id="${msg.id}"]`) : null;
+      if (!anchor || !msg.src) return;
+      requestUndoSnapshot();
+      let media;
+      if (msg.media === 'video') {
+        media = document.createElement('video');
+        media.setAttribute('controls', '');
+        media.setAttribute('playsinline', '');
+        media.setAttribute('preload', 'metadata');
+      } else {
+        media = document.createElement('img');
+        media.setAttribute('alt', msg.alt || '');
+        media.setAttribute('loading', 'lazy');
+      }
+      media.setAttribute('src', msg.src);
+      media.style.setProperty('max-width', '100%');
+      media.style.setProperty('height', 'auto');
+      const position = ['beforebegin', 'afterend', 'afterbegin', 'beforeend'].includes(msg.position) ? msg.position : 'afterend';
+      anchor.insertAdjacentElement(position, media);
+      assignIds();
+      selectElement(media);
+    }
+
+    // Make an uploaded font available on the page (idempotent per family).
+    if (msg.type === 'CLONER_ADD_FONT') {
+      if (!msg.family || !msg.src) return;
+      const family = String(msg.family).replace(/['"\\<>]/g, '');
+      if (document.querySelector(`style[data-cloner-font="${CSS.escape(family)}"]`)) return;
+      const style = document.createElement('style');
+      style.setAttribute('data-cloner-font', family);
+      style.textContent = `@font-face{font-family:'${family}';src:url("${String(msg.src).replace(/["\\]/g, '')}");font-display:swap;}`;
+      document.head.appendChild(style);
+    }
 
     if (msg.type === 'CLONER_REPLACE_OUTER') {
       const el = msg.id ? document.querySelector(`[data-cloner-id="${msg.id}"]`) : null;

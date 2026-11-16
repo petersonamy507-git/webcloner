@@ -1,6 +1,9 @@
 /** FastAPI backend routes */
 export const API = {
   clone: '/api/clone',
+  cloneJobs: '/api/clone-jobs',
+  cloneJob: (id) => `/api/clone-jobs/${id}`,
+  cancelCloneJob: (id) => `/api/clone-jobs/${id}/cancel`,
   clones: '/api/clones',
   deleteClone: (folder) => `/api/clones?folder=${encodeURIComponent(folder)}`,
   restoreClone: (trashId) => `/api/clones/restore?trashId=${encodeURIComponent(trashId)}`,
@@ -25,4 +28,12 @@ export const API = {
   brandGallery: '/api/brand-gallery',
   brandImage: '/api/brand-image',
   replaceLogos: '/api/replace-logos',
+  aiEdit: '/api/ai-edit',
+  versions: (folder) => `/api/versions?folder=${encodeURIComponent(folder)}`,
+  versionDiff: (id, file) => `/api/versions/${id}/diff?file=${encodeURIComponent(file)}`,
+  restoreVersion: (id) => `/api/versions/${id}/restore`,
+  siteOpened: '/api/sites/opened',
+  assets: '/api/assets',
+  asset: (id) => `/api/assets/${id}`,
+  useAsset: (id) => `/api/assets/${id}/use`,
 };

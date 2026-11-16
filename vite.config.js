@@ -94,5 +94,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // src/auth.js uses top-level await to hold each page until the session is known.
+    target: 'es2022',
+    rollupOptions: {
+      input: Object.fromEntries(
+        ['index', 'editor', 'login', 'reset-password', 'admin'].map((page) => [page, path.join(ROOT, `${page}.html`)]),
+      ),
+    },
   },
 });

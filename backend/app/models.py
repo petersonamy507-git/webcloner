@@ -117,6 +117,14 @@ class AiFixSelectionRequest(BaseModel):
     useAI: bool = True
 
 
+class AiEditRequest(BaseModel):
+    folder: str
+    page: str = "index.html"
+    prompt: str = ""
+    images: list[str] = Field(default_factory=list)
+    selection: Optional[dict[str, Any]] = None
+
+
 class AiEditSelectionRequest(BaseModel):
     folder: str
     page: str = "index.html"

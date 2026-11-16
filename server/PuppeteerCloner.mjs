@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { rangeProgress, reportProgress } from './progress.mjs';
 import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
@@ -169,6 +170,37 @@ async function captureHomepage(page, url) {
   }
 }
 
+const DEVICES = [
+  { name: 'desktop', width: 1440, height: 900, isMobile: false },
+  { name: 'tablet', width: 768, height: 1024, isMobile: true },
+  { name: 'mobile', width: 390, height: 844, isMobile: true },
+];
+const MAX_SHOT_HEIGHT = 3600;
+
+/** Desktop, tablet and mobile screenshots of the original page, for reference and comparison. */
+async function captureDeviceScreenshots(page, dir) {
+  fs.mkdirSync(dir, { recursive: true });
+  for (const [index, device] of DEVICES.entries()) {
+    reportProgress(21 + index * 3, `Capturing ${device.name} screenshot`);
+    try {
+      await page.setViewport({ width: device.width, height: device.height, isMobile: device.isMobile, hasTouch: device.isMobile, deviceScaleFactor: 1 });
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await new Promise((r) => setTimeout(r, 900));
+      const height = await page.evaluate(() => Math.max(document.documentElement.scrollHeight, document.body?.scrollHeight || 0));
+      await page.screenshot({
+        path: path.join(dir, `${device.name}.jpg`),
+        type: 'jpeg',
+        quality: 78,
+        clip: { x: 0, y: 0, width: device.width, height: Math.max(device.height, Math.min(height, MAX_SHOT_HEIGHT)) },
+        captureBeyondViewport: true,
+      });
+    } catch (err) {
+      console.warn(`${device.name} screenshot skipped:`, err.message);
+    }
+  }
+  await page.setViewport({ width: 1440, height: 900 });
+}
+
 export async function puppeteerClone(url, folderName, options = {}) {
   let puppeteer;
   try {
@@ -213,18 +245,23 @@ export async function puppeteerClone(url, folderName, options = {}) {
     attachAssetSaver(page, outputDir, pageOrigin, saved, stats);
 
     // Phase 1: Browser capture homepage only (fast)
+    reportProgress(8, 'Opening the site in a real browser');
     const { html: homeHtml, finalUrl: homeFinalUrl } = await captureHomepage(page, pageUrl);
+    reportProgress(20, 'Home page captured');
+    if (options.screenshotDir) await captureDeviceScreenshots(page, options.screenshotDir);
     await browser.close();
     browser = null;
 
     pageOrigin = new URL(homeFinalUrl).origin;
 
     // Phase 2+3: BFS discover and fetch all site pages
+    reportProgress(30, maxPages > 1 ? 'Finding the site\'s pages' : 'Preparing the page');
     const pageEntries = await crawlSitePages({
       homeHtml,
       homeFinalUrl,
       origin: pageOrigin,
       maxPages,
+      onPage: (done, total) => rangeProgress(30, 55, done, total, `Downloading pages (${done} found)`),
     });
 
     const pageMap = buildPageMap([...pageEntries.keys()], pageOrigin);
@@ -240,6 +277,7 @@ export async function puppeteerClone(url, folderName, options = {}) {
       homeFinalUrl,
     });
 
+    reportProgress(58, 'Downloading images, styles, scripts and fonts');
     // Phase 4: Single batch post-process (assets downloaded once)
     const pagesForProcess = [...pageEntries.entries()].map(([crawlUrl, { html, finalUrl }]) => ({
       html,
@@ -253,6 +291,7 @@ export async function puppeteerClone(url, folderName, options = {}) {
       preSaved: sanitizeSavedMap(saved),
     });
 
+    reportProgress(80, 'Saving pages');
     // Phase 5: Rewrite internal links and save
     for (const { sourcePath, html } of processed) {
       const crawlUrl = [...pageEntries.keys()].find((url) => {

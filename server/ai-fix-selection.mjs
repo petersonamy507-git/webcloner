@@ -23,7 +23,7 @@ function repairNestedDocumentTags(html) {
     .replace(/<\/body><\/html>/gi, '');
 }
 
-function stripEditorAttrs(html) {
+export function stripEditorAttrs(html) {
   if (!html) return html;
   return html
     .replace(/\s*data-cloner-id="[^"]*"/g, '')
@@ -129,7 +129,7 @@ function findTarget($, selection) {
   return null;
 }
 
-function extractSectionHtml(html, selection) {
+export function extractSectionHtml(html, selection) {
   const $ = cheerio.load(repairNestedDocumentTags(html), { decodeEntities: false });
   const target = findTarget($, selection);
   if (!target?.length) return null;
