@@ -510,6 +510,17 @@
   color: #fff;
 }
 
+.brand-gallery-search {
+  width: 100%;
+  margin-bottom: 0.55rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: #0b1220;
+  color: #e2e8f0;
+  font-size: 0.78rem;
+}
+
 .brand-gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1042,50 +1053,120 @@
 }
 .ai-composer.dragging { outline: 2px dashed var(--tb-accent); outline-offset: 3px; }
 .ai-composer.busy textarea { opacity: 0.6; }
-.aic-head { display: flex; align-items: center; gap: 0.6rem; }
-.aic-title { font-weight: 600; white-space: nowrap; }
-.aic-context { flex: 0 1 auto; min-width: 0; overflow: hidden; }
-.aic-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  max-width: 100%;
-  padding: 0.12rem 0.25rem 0.12rem 0.55rem;
-  border-radius: 999px;
-  background: rgba(59, 130, 246, 0.15);
-  color: #bcd4ff;
-  font-size: 0.75rem;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+/* Working: an indeterminate bar along the top edge and a spinner before the status text. */
+.ai-composer.busy { overflow: hidden; }
+.ai-composer.busy::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, var(--tb-accent), transparent);
+  animation: aic-loading 1.1s ease-in-out infinite;
 }
-.aic-chip button { border: 0; background: transparent; color: inherit; padding: 0 0.2rem; line-height: 1; }
+@keyframes aic-loading { to { left: 100%; } }
+.ai-composer.busy .aic-status:not(:empty)::before {
+  content: '';
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-right: 0.45rem;
+  vertical-align: -0.12rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: aic-spin 0.75s linear infinite;
+}
+@keyframes aic-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .ai-composer.busy::before, .ai-composer.busy .aic-status:not(:empty)::before { animation-duration: 3s; }
+}
 .aic-icon {
-  border: 1px solid transparent;
-  border-radius: 8px;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
   background: transparent;
   color: var(--tb-muted);
-  padding: 0.3rem 0.5rem;
+  padding: 0;
 }
-.aic-icon:hover { color: var(--tb-text); background: rgba(148, 163, 184, 0.12); }
-.ai-composer textarea {
-  width: 100%;
+.aic-icon:hover { color: var(--tb-text); background: rgba(148, 163, 184, 0.14); }
+
+/* What the AI will change: the selected element, or the whole page. */
+.aic-target {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.4rem 0.45rem;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.aic-target.is-selected { background: rgba(59, 130, 246, 0.1); border-color: rgba(96, 165, 250, 0.35); }
+.aic-target-thumb {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.14);
+  color: #bcd4ff;
+  font-size: 1.05rem;
+}
+.aic-target-thumb img { width: 100%; height: 100%; object-fit: cover; background: #fff; }
+.aic-target.is-page .aic-target-thumb { color: var(--tb-muted); }
+.aic-target-body { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.aic-target-kind { font-size: 0.68rem; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; color: #93c5fd; }
+.aic-target.is-page .aic-target-kind { color: var(--tb-muted); }
+.aic-target-text { font-size: 0.82rem; color: var(--tb-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aic-target.is-page .aic-target-text { color: var(--tb-muted); }
+.aic-target-btn {
+  flex: none;
+  border: 1px solid var(--tb-border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tb-muted);
+  font-size: 0.74rem;
+  padding: 0.25rem 0.65rem;
+}
+.aic-target-btn:hover { color: var(--tb-text); border-color: var(--tb-accent); }
+
+/* One rounded field: attach, screenshot, prompt, Apply. */
+.aic-field {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.2rem;
+  padding: 0.3rem;
+  border: 1px solid var(--tb-border-strong);
+  border-radius: 13px;
+  background: #0b1220;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.aic-field:focus-within { border-color: var(--tb-accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18); }
+.ai-composer .aic-field textarea {
   flex: 1;
   min-width: 0;
   resize: none;
-  height: 38px;
-  min-height: 38px;
+  height: 34px;
+  min-height: 34px;
   max-height: 160px;
   overflow-y: auto;
-  line-height: 1.4;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--tb-border-strong);
-  border-radius: 10px;
-  background: #0b1220;
+  padding: 0.45rem 0.4rem;
+  border: 0;
+  background: transparent;
   color: var(--tb-text);
   font: inherit;
+  line-height: 1.4;
 }
-.ai-composer textarea:focus { outline: none; border-color: var(--tb-accent); }
+.ai-composer .aic-field textarea:focus { outline: none; }
 .aic-attachments { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .aic-thumb { position: relative; width: 92px; height: 64px; border-radius: 8px; overflow: hidden; border: 1px solid var(--tb-border-strong); }
 .aic-thumb img { width: 100%; height: 100%; object-fit: cover; }
@@ -1104,30 +1185,36 @@
   color: #fff;
   font-size: 0.8rem;
 }
-.aic-row { display: flex; align-items: flex-end; gap: 0.3rem; }
-.aic-row .aic-icon, .aic-row .aic-send { height: 38px; flex: none; }
-.aic-hint {
-  margin-left: auto;
-  min-width: 0;
-  color: var(--tb-muted);
-  font-size: 0.72rem;
+
+/* Quick ideas for the current selection. */
+.aic-suggest { display: flex; gap: 0.35rem; overflow-x: auto; scrollbar-width: none; }
+.aic-suggest::-webkit-scrollbar { display: none; }
+.aic-suggest button {
+  flex: none;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.08);
+  color: #cbd5e1;
+  font-size: 0.74rem;
+  padding: 0.22rem 0.65rem;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
-.aic-hint.is-move { color: #fcd34d; }
-.aic-status { color: var(--tb-muted); font-size: 0.78rem; overflow-wrap: anywhere; }
+.aic-suggest button:hover { border-color: var(--tb-accent); color: #fff; }
+.ai-composer.busy .aic-suggest { opacity: 0.5; pointer-events: none; }
+
+.aic-status { color: var(--tb-muted); font-size: 0.78rem; overflow-wrap: anywhere; padding: 0 0.2rem; }
 .aic-status:empty { display: none; }
-@media (max-width: 900px) { .aic-hint { display: none; } }
 .aic-status.ok { color: #7ee2a8; }
 .aic-status.error { color: #ff9ca0; }
 .aic-send {
+  flex: none;
+  height: 34px;
   border: 0;
   border-radius: 9px;
-  padding: 0.4rem 0.9rem;
+  padding: 0 0.95rem;
   background: var(--tb-accent);
   color: #fff;
-  font-weight: 550;
+  font-weight: 600;
   white-space: nowrap;
 }
 .aic-send:hover:not(:disabled) { background: var(--tb-accent-hover); }
@@ -1174,3 +1261,35 @@
 .history-diff pre .del { color: #ff9ca0; background: rgba(242, 84, 91, 0.08); display: inline-block; width: 100%; }
 .history-diff pre .hunk { color: #93c5fd; }
 @media (max-width: 768px) { .history-diff { left: 16px; } }
+
+/* Autosave status in the toolbar (replaces the Save button). */
+.save-state {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--tb-muted);
+  white-space: nowrap;
+}
+.save-state.saved { color: #7ee2a8; }
+.save-state.pending { color: var(--tb-muted); }
+.save-state.saving { color: #bcd4ff; }
+.save-state.error { color: #ff9ca0; }
+
+/* Ask AI: Change / Add section switch and where the new section goes. */
+.aic-modes { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.aic-mode-switch, .aic-pos { display: inline-flex; align-items: center; gap: 0.25rem; }
+.aic-mode-switch { padding: 2px; border-radius: 9px; background: rgba(148, 163, 184, 0.12); }
+.aic-mode-switch button, .aic-pos button {
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--tb-muted);
+  font-size: 0.75rem;
+  padding: 0.22rem 0.6rem;
+}
+.aic-mode-switch button.active { background: var(--tb-accent); color: #fff; }
+.aic-pos button { border: 1px solid rgba(148, 163, 184, 0.25); }
+.aic-pos button.active { border-color: var(--tb-accent); color: #fff; background: rgba(59, 130, 246, 0.18); }
+.aic-pos-note { color: var(--tb-muted); font-size: 0.72rem; }

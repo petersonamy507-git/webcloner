@@ -54,8 +54,14 @@ function escapeHtml(text) {
   ));
 }
 
+let canLock = false;
+let allClones = [];
+const entityFilter = document.getElementById('libraryEntityFilter');
+
 function cardHtml(clone) {
   const editUrl = `/editor.html?folder=${encodeURIComponent(clone.folder)}`;
+  // A locked site is view-only for regular users; admins keep every action.
+  const editable = !clone.locked || canLock;
   const name = escapeHtml(clone.title || clone.folder);
   const thumb = clone.thumbnail
     ? `<img src="${escapeHtml(clone.thumbnail)}" alt="" loading="lazy" />`
@@ -63,30 +69,38 @@ function cardHtml(clone) {
 
   return `
     <article class="site-card" data-folder="${escapeHtml(clone.folder)}">
-      <a class="site-thumb" href="${editUrl}" aria-label="Edit ${name}">
+      ${editable
+    ? `<a class="site-thumb" href="${editUrl}" aria-label="Edit ${name}">
         ${thumb}
         <span class="site-thumb-overlay"><i class="bi bi-pencil-square"></i>Edit site</span>
-      </a>
+      </a>`
+    : `<div class="site-thumb">${thumb}</div>`}
       <div class="site-card-body">
-        <h3 class="site-name" title="${escapeHtml(clone.sourceUrl || clone.folder)}">${name}</h3>
+        <h3 class="site-name" title="${escapeHtml(clone.sourceUrl || clone.folder)}">${name}${clone.locked ? ' <span class="site-lock-badge" title="Locked by an admin"><i class="bi bi-lock-fill"></i>Locked</span>' : ''}</h3>
         <p class="site-meta">
           ${clone.pageCount} page${clone.pageCount === 1 ? '' : 's'}
           <span class="dot">·</span>${formatBytes(clone.bytes)}
           <span class="dot">·</span>${escapeHtml(formatWhen(clone.updatedAt))}
+          ${clone.entityName ? `<span class="dot">·</span><span class="site-entity">${escapeHtml(clone.entityName)}</span>` : ''}
+          ${clone.createdBy ? `<span class="dot">·</span><span class="site-owner" title="Cloned by ${escapeHtml(clone.createdBy)}">by ${escapeHtml(clone.createdBy.split('@')[0])}</span>` : ''}
+          ${clone.githubUrl ? `<span class="dot">·</span><a class="site-gh-link" href="${escapeHtml(clone.githubUrl)}" target="_blank" rel="noopener" title="${escapeHtml(clone.githubRepo)}"><i class="bi bi-github me-1"></i>On GitHub</a>` : ''}
         </p>
         <div class="site-actions">
-          <a class="btn btn-primary btn-sm" href="${editUrl}">
+          ${editable ? `<a class="btn btn-primary btn-sm" href="${editUrl}">
             <i class="bi bi-pencil-square me-1"></i>Edit
-          </a>
+          </a>` : ''}
           <a class="btn btn-ghost btn-sm" href="/cloned/${encodeURIComponent(clone.folder)}/index.html" target="_blank" rel="noreferrer" title="Open the site in a new tab">
             <i class="bi bi-box-arrow-up-right"></i>
           </a>
-          <a class="btn btn-ghost btn-sm" href="${API.download(clone.folder)}" title="Download as a PHP site">
-            <i class="bi bi-file-zip"></i>
-          </a>
-          <button type="button" class="btn btn-ghost btn-sm btn-danger-ghost" data-action="delete" title="Delete this site">
+          ${clone.githubUrl ? '' : `<button type="button" class="btn btn-ghost btn-sm" data-github-push="${escapeHtml(clone.folder)}" title="Push this site to GitHub (once)">
+            <i class="bi bi-github"></i>
+          </button>`}
+          ${canLock ? `<button type="button" class="btn btn-ghost btn-sm" data-action="lock" data-locked="${clone.locked ? '1' : ''}" title="${clone.locked ? 'Unlock: let users edit and delete this site' : 'Lock: users can no longer edit or delete this site'}">
+            <i class="bi ${clone.locked ? 'bi-lock-fill' : 'bi-unlock'}"></i>
+          </button>` : ''}
+          ${editable ? `<button type="button" class="btn btn-ghost btn-sm btn-danger-ghost" data-action="delete" title="Delete this site">
             <i class="bi bi-trash3"></i>
-          </button>
+          </button>` : ''}
         </div>
       </div>
     </article>`;
@@ -99,12 +113,36 @@ export async function loadLibrary() {
     const res = await fetch(API.clones);
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Could not load your sites.');
-    render(data.clones || []);
+    canLock = Boolean(data.canLock);
+    allClones = data.clones || [];
+    setupEntityFilter(Boolean(data.allEntities));
+    render(filteredClones());
   } catch (err) {
     grid.innerHTML = `<div class="library-error"><i class="bi bi-exclamation-triangle me-2"></i>${escapeHtml(err.message)}</div>`;
     empty?.classList.add('d-none');
   }
 }
+
+/** The super admin sees every entity's sites, with a filter to narrow them to one entity. */
+function setupEntityFilter(enabled) {
+  if (!entityFilter) return;
+  entityFilter.classList.toggle('d-none', !enabled);
+  if (!enabled) return;
+  const chosen = entityFilter.value;
+  const names = [...new Set(allClones.map((c) => c.entityName).filter(Boolean))].sort();
+  entityFilter.innerHTML = `<option value="">All entities (${allClones.length})</option>${names.map((n) => {
+    const count = allClones.filter((c) => c.entityName === n).length;
+    return `<option value="${escapeHtml(n)}">${escapeHtml(n)} (${count})</option>`;
+  }).join('')}`;
+  if (names.includes(chosen)) entityFilter.value = chosen;
+}
+
+function filteredClones() {
+  const name = entityFilter && !entityFilter.classList.contains('d-none') ? entityFilter.value : '';
+  return name ? allClones.filter((c) => c.entityName === name) : allClones;
+}
+
+entityFilter?.addEventListener('change', () => render(filteredClones()));
 
 function render(clones) {
   loading?.classList.add('d-none');
@@ -125,7 +163,26 @@ function render(clones) {
   }
 }
 
-grid?.addEventListener('click', (e) => {
+grid?.addEventListener('click', async (e) => {
+  const lockBtn = e.target.closest('[data-action="lock"]');
+  if (lockBtn) {
+    const folder = lockBtn.closest('.site-card')?.dataset.folder;
+    lockBtn.disabled = true;
+    try {
+      const res = await fetch(API.lockClone, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder, locked: !lockBtn.dataset.locked }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Could not change the lock.');
+      await loadLibrary();
+    } catch (err) {
+      alert(err.message);
+      lockBtn.disabled = false;
+    }
+    return;
+  }
   const button = e.target.closest('[data-action="delete"]');
   if (!button) return;
   const card = button.closest('.site-card');
@@ -163,6 +220,8 @@ confirmDeleteBtn?.addEventListener('click', async () => {
     deleteModal?.hide();
     await loadLibrary();
     showUndoToast(name, data.trashId);
+    if (undoToastText && data.github?.deleted) undoToastText.textContent = `${name} deleted, and its GitHub repo ${data.github.repo}.`;
+    if (undoToastText && data.github?.error) undoToastText.textContent = `${name} deleted. ${data.github.error}`;
   } catch (err) {
     if (deleteNameEl) deleteNameEl.textContent = err.message;
   } finally {

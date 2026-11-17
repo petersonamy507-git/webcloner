@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import SESSION_COOKIE, SESSION_HOURS
-from app.db import ActivityLog, AuthSession, Entity, Project, User, get_db, utcnow
+from app.db import ActivityLog, AuthSession, Entity, Project, SiteSettings, User, get_db, utcnow
 
 MIN_PASSWORD_LENGTH = 10
 _SCRYPT = {"n": 2**14, "r": 8, "p": 1}
@@ -170,6 +170,19 @@ def project_for(db: Session, principal: Principal, folder: str, include_deleted:
     if not sees_all_sites(principal) and project.created_by != principal.user.id:
         raise HTTPException(404, "Site not found.")
     return project
+
+
+def is_admin_user(principal: Principal) -> bool:
+    return principal.user.role in ("super_admin", "entity_admin")
+
+
+def require_editable(db: Session, principal: Principal, project: Project) -> None:
+    """A site an admin has locked can't be edited or deleted by regular users."""
+    if is_admin_user(principal):
+        return
+    settings = db.get(SiteSettings, project.id)
+    if settings and settings.locked:
+        raise HTTPException(403, "An admin has locked this site, so it can't be edited or deleted.")
 
 
 def log_activity(

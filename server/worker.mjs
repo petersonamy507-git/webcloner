@@ -18,7 +18,7 @@ import { auditAndFixClonedSite } from './ai-audit.mjs';
 import { attachLeadPhpToSite, restructureToPhpStack } from './php-restructure.mjs';
 import { restructureToLaravelStack } from './laravel-restructure.mjs';
 import { buildPhpExport } from './php-export.mjs';
-import { aiEditSite } from './ai-edit.mjs';
+import { aiEditSite, aiInsertSection } from './ai-edit.mjs';
 import { reportProgress } from './progress.mjs';
 import { applyHeadSnippets, readHeadSnippets } from './head-snippets.mjs';
 import { saveCloneMeta } from './site-origin.mjs';
@@ -279,6 +279,16 @@ async function handleHeadSnippets(input) {
 async function handleAiEdit(input) {
   const dir = siteDir(input.folder);
   if (!fs.existsSync(dir)) throw new Error('Clone folder not found.');
+  if (['before', 'after', 'end'].includes(input.insert)) {
+    return aiInsertSection(dir, {
+      page: input.page || 'index.html',
+      prompt: input.prompt || '',
+      images: Array.isArray(input.images) ? input.images : [],
+      selection: input.selection || null,
+      assets: Array.isArray(input.assets) ? input.assets : [],
+      position: input.insert,
+    });
+  }
   return aiEditSite(dir, {
     page: input.page || 'index.html',
     prompt: input.prompt || '',

@@ -184,12 +184,12 @@ function pageExcerptFor(html, hasSelection) {
   return body.length > limit ? `${body.slice(0, limit)}\n<!-- …page continues, truncated… -->` : body;
 }
 
-async function askModel(apiKey, userText, images) {
+async function askModel(apiKey, userText, images, system = systemPrompt()) {
   const content = [{ type: 'text', text: userText }, ...images.map((url) => ({ type: 'image_url', image_url: { url, detail: 'high' } }))];
   const data = await openAiChat(apiKey, {
     json: true,
     maxTokens: 8000,
-    messages: [{ role: 'system', content: systemPrompt() }, { role: 'user', content }],
+    messages: [{ role: 'system', content: system }, { role: 'user', content }],
   });
   const raw = data.choices?.[0]?.message?.content || '{}';
   try {
@@ -314,6 +314,21 @@ function mirrorToPhp(siteDir, originals, changed) {
   return mirrored;
 }
 
+const SIZE_WORDS = /\b(size|resize|width|height|wide|wider|narrow|tall|taller|short|bigger|smaller|larger|full[- ]?width|full[- ]?screen|stretch|shrink|enlarge|scale|crop|aspect|square|circle|round)\b/i;
+
+/**
+ * When an image is changed by AI, it keeps the box it had on the page (same width, capped
+ * at 100% for small screens, and the same proportions), unless the request or the AI's own
+ * CSS is about its size.
+ */
+function imageSizeLock(sel, note, css) {
+  if (!sel || !/^(img|picture)$/i.test(sel.tag || '') || !sel.selectorPath) return '';
+  const w = Math.round(Number(sel.width)), h = Math.round(Number(sel.height));
+  if (!(w > 0 && h > 0) || SIZE_WORDS.test(note) || /\b(width|height|aspect-ratio)\s*:/i.test(css || '')) return '';
+  const target = /^picture$/i.test(sel.tag) ? `${sel.selectorPath} img` : sel.selectorPath;
+  return `/* keep the image at its previous size */\n${target} { width: min(${w}px, 100%); height: auto; aspect-ratio: ${w} / ${h}; object-fit: cover; }`;
+}
+
 export async function aiEditSite(siteDir, { page = 'index.html', prompt = '', images = [], selection = null, assets = [] }) {
   const note = String(prompt || '').trim();
   if (!note) throw new Error('Describe the change you want.');
@@ -388,6 +403,8 @@ export async function aiEditSite(siteDir, { page = 'index.html', prompt = '', im
     fs.writeFileSync(full, text);
   }
   const filesChanged = [...result.files.keys()];
+  const sizeLock = imageSizeLock(sel, note, result.css);
+  if (sizeLock) result.css = `${sizeLock}\n${result.css || ''}`.trim();
   if (result.css) {
     const cssPath = path.join(siteDir, EDIT_CSS);
     fs.mkdirSync(path.dirname(cssPath), { recursive: true });
@@ -407,3 +424,203 @@ export async function aiEditSite(siteDir, { page = 'index.html', prompt = '', im
     generatedImage,
   };
 }
+
+
+// ── Add a new section anywhere on a page ─────────────────────────────────────
+
+const VOID_TAGS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
+
+/** Where an element that starts at `start` ends in the raw file (balanced same-name tags). */
+function elementEnd(html, start) {
+  const open = /^<([a-zA-Z][\w-]*)\b[^>]*>/.exec(html.slice(start));
+  if (!open) return -1;
+  const tag = open[1].toLowerCase();
+  if (VOID_TAGS.has(tag) || open[0].endsWith('/>')) return start + open[0].length;
+  const re = new RegExp(`<(/?)${tag}\\b[^>]*>`, 'gi');
+  re.lastIndex = start;
+  let depth = 0;
+  for (let m = re.exec(html); m; m = re.exec(html)) {
+    if (m[1]) depth -= 1;
+    else if (!m[0].endsWith('/>')) depth += 1;
+    if (depth === 0) return m.index + m[0].length;
+  }
+  return -1;
+}
+
+/** The selected block's byte range in the file, or null when it can't be found exactly. */
+function anchorRange(html, sel) {
+  if (!sel) return null;
+  const serialized = extractSectionHtml(html, sel) || stripEditorAttrs(sel.outerHTML || '');
+  if (!serialized) return null;
+  const exact = html.indexOf(serialized);
+  if (exact !== -1) return { start: exact, end: exact + serialized.length };
+  for (const len of [240, 160, 100, 60]) {
+    const probe = serialized.slice(0, len);
+    if (probe.length < 30) continue;
+    const at = html.indexOf(probe);
+    if (at !== -1 && html.indexOf(probe, at + 1) === -1) {
+      const end = elementEnd(html, at);
+      if (end > at) return { start: at, end };
+    }
+  }
+  return null;
+}
+
+/** Without a selection: just before the footer, or at the end of <body>. */
+function endOfPageOffset(html) {
+  const bodyAt = html.search(/<body\b/i);
+  const footer = html.slice(Math.max(bodyAt, 0)).search(/<footer\b/i);
+  if (bodyAt !== -1 && footer !== -1) return bodyAt + footer;
+  const close = html.search(/<\/body>/i);
+  return close !== -1 ? close : html.length;
+}
+
+function sectionSystemPrompt(scope) {
+  return `You design one new section for an existing website. It must look like it was always part of that site.
+
+Return JSON only:
+{
+  "summary": "one sentence describing the section you added",
+  "html": "the section's inner HTML (it is placed inside <section class=\\"${scope}\\">…</section> for you)",
+  "css": "CSS for the section; every selector must start with .${scope}",
+  "generateImage": null
+}
+
+Rules:
+- Match the site: reuse the fonts, colors, spacing, button and heading styles you see in the NEARBY SECTION, its CSS and the screenshots. Reusing the site's existing classes (container, row, buttons, headings) is good.
+- Write real, specific content for this site (its business, products, tone), not placeholder text like "Lorem ipsum".
+- Every CSS selector must begin with .${scope} so nothing else on the site changes (inside @media too). @keyframes names must start with ${scope}-.
+- Make it responsive (stack columns on small screens).
+- Never use <script>, inline event handlers (onclick=...), javascript: links, iframes, objects or embeds. Forms may post to "/leads/".
+- Images: use one from SITE IMAGES with {{site:ID}}, a workspace asset with {{asset:ID}}, or create one with "generateImage": { "prompt": "...", "size": "1024x1024" | "1536x1024" | "1024x1536" } and write {{generated}} where its URL goes (at most one generated image).
+- If the request can't be done safely, return empty html and explain in summary.`;
+}
+
+function cssScopeErrors(css, scope) {
+  const errors = [];
+  const flat = String(css || '').replace(/@keyframes[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/gi, '');
+  for (const m of flat.matchAll(/([^{}]+)\{/g)) {
+    const selectorList = m[1].trim();
+    if (!selectorList || selectorList.startsWith('@')) continue;
+    for (const selector of selectorList.split(',')) {
+      if (!selector.trim().startsWith(`.${scope}`)) errors.push(`CSS selector "${selector.trim().slice(0, 60)}" must start with .${scope}.`);
+    }
+  }
+  return errors.slice(0, 5);
+}
+
+/**
+ * Add a new AI-designed section above or below the selected block, or at the end of the
+ * page. The insertion point is found by the server, so the AI only writes the new section.
+ */
+export async function aiInsertSection(siteDir, { page = 'index.html', prompt = '', images = [], selection = null, assets = [], position = 'after' }) {
+  const note = String(prompt || '').trim();
+  if (!note) throw new Error('Describe the section you want to add.');
+  const apiKey = loadEnvKey();
+  if (!apiKey) throw new Error('OPENAI_API_KEY is not set in .env.');
+  const pageTarget = resolveInSite(siteDir, page);
+  if (!pageTarget || !/\.html?$/i.test(pageTarget.rel) || !fs.existsSync(pageTarget.full)) throw new Error('Page not found.');
+
+  const html = fs.readFileSync(pageTarget.full, 'utf8');
+  const sel = selection && (selection.outerHTML || selection.elementId || selection.tag) ? selection : null;
+  let offset;
+  let nearby = '';
+  if (sel && position !== 'end') {
+    const range = anchorRange(html, sel);
+    if (!range) throw new Error('Couldn\'t find the selected part in the page file. Select a nearby section and try again.');
+    offset = position === 'before' ? range.start : range.end;
+    nearby = html.slice(range.start, Math.min(range.end, range.start + 7000));
+  } else {
+    offset = endOfPageOffset(html);
+    nearby = html.slice(Math.max(0, offset - 7000), offset);
+  }
+
+  const scope = `cloner-ai-section-${Date.now().toString(36)}`;
+  const themeFile = path.join(siteDir, 'theme.json');
+  const theme = fs.existsSync(themeFile) ? fs.readFileSync(themeFile, 'utf8').slice(0, 1500) : '';
+  const siteImages = siteImageCatalog(siteDir, pageTarget.rel);
+  const userText = (failures = []) => [
+    `Add this section: ${note}`,
+    `It goes ${sel && position !== 'end' ? (position === 'before' ? 'directly above' : 'directly below') + ' the NEARBY SECTION' : 'at the end of the page, before the footer'} on ${pageTarget.rel}.`,
+    `NEARBY SECTION (style reference, exactly as in the file):\n${nearby}`,
+    `Existing CSS for nearby elements (read-only):\n${relatedCss(siteDir, sel) || 'none found'}`,
+    theme ? `Site theme colors:\n${theme}` : '',
+    `SOURCE ${pageTarget.rel} (excerpt of the page):\n${pageExcerptFor(html, true)}`,
+    assets.length ? `Workspace assets you may use:\n${assets.map((a) => `- {{asset:${a.id}}} ${a.kind} "${a.fileName}"`).join('\n')}` : 'Workspace assets: none.',
+    siteImages.length ? `SITE IMAGES (use with {{site:ID}}):\n${siteImages.map((img) => `- {{site:${img.id}}} ${img.sitePath}${img.alt ? ` alt="${img.alt.slice(0, 80)}"` : ''}`).join('\n')}` : 'SITE IMAGES: none.',
+    failures.length ? `Your previous answer could not be used:\n${failures.map((f) => `- ${f}`).join('\n')}\nReturn the full corrected answer.` : '',
+  ].filter(Boolean).join('\n\n');
+
+  const assetsById = new Map(assets.map((a) => [Number(a.id), a]));
+  const generatedPath = `images/ai/generated-${Date.now()}.webp`;
+  const build = (plan) => {
+    const errors = [];
+    const used = new Set();
+    const extra = { siteImages, generatedPath: plan?.generateImage?.prompt ? generatedPath : '' };
+    const inner = resolveAssets(String(plan?.html || ''), pageTarget.rel, assetsById, used, errors, extra).trim();
+    const css = resolveAssets(String(plan?.css || ''), EDIT_CSS, assetsById, used, errors, extra).trim();
+    if (!inner) errors.push('"html" is empty.');
+    if (countUnsafe(inner)) errors.push('The section contains a script, event handler, iframe or javascript: link, which isn\'t allowed.');
+    if (/<\/?(html|head|body)\b/i.test(inner)) errors.push('Return only the section\'s inner HTML, not a whole page.');
+    if (css && (countUnsafe(css) || /@import|expression\s*\(|<\//i.test(css))) errors.push('The CSS contains @import, expressions or markup.');
+    if ((css.match(/\{/g) || []).length !== (css.match(/\}/g) || []).length) errors.push('The CSS has unbalanced braces.');
+    errors.push(...cssScopeErrors(css, scope));
+    return { errors, inner, css, used, extra };
+  };
+
+  let plan = await askModel(apiKey, userText(), images, sectionSystemPrompt(scope));
+  let built = build(plan);
+  if (built.errors.length) {
+    plan = await askModel(apiKey, userText(built.errors), images, sectionSystemPrompt(scope));
+    built = build(plan);
+  }
+  if (built.errors.length) throw new Error(`The AI's section couldn't be added safely, so nothing was changed. ${built.errors[0]}`);
+
+  let generatedImage = null;
+  if (built.extra.generatedUsed) {
+    const size = IMAGE_SIZES.includes(plan.generateImage.size) ? plan.generateImage.size : '1536x1024';
+    let png;
+    try {
+      png = await generateImagePng(apiKey, plan.generateImage.prompt, size, { format: 'webp' });
+    } catch (err) {
+      throw new Error(`Couldn't create the section's image, so nothing was changed. ${err.message}`);
+    }
+    const dest = path.join(siteDir, generatedPath);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, png);
+    generatedImage = generatedPath;
+  }
+  for (const id of built.used) {
+    const asset = assetsById.get(id);
+    const dest = path.join(siteDir, asset.sitePath);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    if (!fs.existsSync(dest)) fs.copyFileSync(asset.source, dest);
+  }
+
+  const section = `\n<section class="cloner-ai-section ${scope}">\n${built.inner}\n</section>\n`;
+  const updated = html.slice(0, offset) + section + html.slice(offset);
+  if (!cheerio.load(updated)('body').length) throw new Error('Adding the section would break the page, so nothing was changed.');
+  fs.writeFileSync(pageTarget.full, updated);
+  const filesChanged = [pageTarget.rel];
+  if (built.css) {
+    const cssPath = path.join(siteDir, EDIT_CSS);
+    fs.mkdirSync(path.dirname(cssPath), { recursive: true });
+    fs.appendFileSync(cssPath, `\n/* AI section ${new Date().toISOString()}: ${note.replace(/\*\//g, '').slice(0, 120)} */\n${built.css}\n`);
+    linkEditCss(siteDir);
+    filesChanged.push(EDIT_CSS);
+  }
+  const phpMirrored = mirrorToPhp(siteDir, new Map([[pageTarget.rel, html]]), new Map([[pageTarget.rel, updated]]));
+  return {
+    success: true,
+    changed: true,
+    summary: plan.summary || 'Section added.',
+    filesChanged,
+    phpMirrored,
+    assetsUsed: [...built.used],
+    generatedImage,
+    insertedSection: scope,
+  };
+}
+
+/** Placement helpers, exposed for tests. */
+export const _sectionInternals = { elementEnd, anchorRange, endOfPageOffset, cssScopeErrors };

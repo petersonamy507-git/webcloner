@@ -77,6 +77,17 @@ function guardInPage(action) {
   };
   const hide = (el) => { saveStyle(el); el.setAttribute('data-cloner-hidden', '1'); el.style.setProperty('display', 'none', 'important'); };
 
+  if (action === 'snapshot-dismissed') {
+    // For pages whose scripts are removed (frozen): keep the page as it is now, after the
+    // popups were answered or closed. Nothing could ever close a restored popup again.
+    const copy = document.documentElement.cloneNode(true);
+    copy.querySelectorAll('[data-cloner-hidden]').forEach((el) => el.remove());
+    for (const el of [copy, ...copy.querySelectorAll('[data-cloner-style],[data-cloner-class],[data-cloner-overlay],[data-cloner-parent],[data-cloner-next]')]) {
+      for (const a of ['style', 'class', 'hidden', 'overlay', 'parent', 'next']) el.removeAttribute(`data-cloner-${a}`);
+    }
+    return copy.outerHTML;
+  }
+
   if (action === 'snapshot') {
     // The DOM as the site rendered it, minus anything the guard changed.
     const copy = document.documentElement.cloneNode(true);
@@ -522,8 +533,8 @@ export async function waitForContentSettled(page, { timeout = 12000, quiet = 150
 }
 
 /** Rendered DOM with every guard change undone (hidden overlays come back). */
-export async function snapshotHtml(page) {
-  return page.evaluate(guardInPage, 'snapshot');
+export async function snapshotHtml(page, { keepDismissed = false } = {}) {
+  return page.evaluate(guardInPage, keepDismissed ? 'snapshot-dismissed' : 'snapshot');
 }
 
 /**

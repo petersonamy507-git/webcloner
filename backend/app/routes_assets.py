@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import Principal, current_principal, log_activity, project_for, require_entity, sees_all_sites
+from app.auth import Principal, current_principal, log_activity, project_for, require_editable, require_entity, sees_all_sites
 from app.config import CLONED_DIR, WORKSPACE_DIR
 from app.db import Asset, Entity, Project, get_db, utcnow
 
@@ -222,6 +222,7 @@ def use_asset(asset_id: int, body: UseAssetRequest, request: Request,
     """Copy a library asset into a site so the page can reference it."""
     asset = load_asset(db, principal, asset_id)
     project = project_for(db, principal, body.folder)
+    require_editable(db, principal, project)
     # Super admins may bring any entity's asset into any site; everyone else stays in their own workspace.
     if project.entity_id != asset.entity_id and not principal.is_super_admin:
         raise HTTPException(404, "Asset not found.")

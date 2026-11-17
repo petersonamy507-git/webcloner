@@ -16,7 +16,8 @@ from sqlalchemy.orm import Session
 
 from app.auth import Principal, current_principal, log_activity, require_entity, sanitize_folder, sees_all_sites
 from app.config import CLONED_DIR, WORKSPACE_DIR
-from app.db import CloneJob, Project, SessionLocal, User, get_db, utcnow
+from app.db import CloneJob, Project, SessionLocal, SiteSettings, User, get_db, utcnow
+from app.services import github_push
 from app.models import CloneRequest
 from app.routes_versions import safe_record_version
 from app.services.node_worker import run_node_worker
@@ -77,6 +78,13 @@ def folder_conflict(db: Session, entity_id: int, folder: str, principal: Princip
     if running:
         return "A clone into that folder is already in progress."
     return None
+
+
+def github_repo_is_this_sites(db: Session, folder: str) -> bool:
+    """Re-cloning a site that already pushed to its own repo is fine."""
+    project = db.execute(select(Project).where(Project.folder == folder)).scalar_one_or_none()
+    settings = db.get(SiteSettings, project.id) if project else None
+    return bool(settings and settings.github_pushed_at)
 
 
 def register_clone(db: Session, actor, entity_id: int, folder: str, url: str, mode: str, result: dict) -> Project:
@@ -222,6 +230,11 @@ async def start_clone_job(body: CloneRequest, request: Request,
     conflict = folder_conflict(db, entity_id, folder, principal)
     if conflict:
         raise HTTPException(409, conflict)
+    if body.folderName and not github_repo_is_this_sites(db, folder):
+        taken = await asyncio.to_thread(github_push.repo_name_taken, folder)
+        if taken.get("taken"):
+            raise HTTPException(409, f"A GitHub repository named \"{taken['repo'].split('/')[-1]}\" already exists "
+                                     f"({taken['repo']}). Choose another folder name.")
     active = db.execute(
         select(func.count(CloneJob.id)).where(CloneJob.entity_id == entity_id, CloneJob.status.in_(ACTIVE))
     ).scalar_one()

@@ -95,6 +95,19 @@ class Project(Base):
     deleted_at = Column(DateTime, nullable=True)
 
 
+class SiteSettings(Base):
+    """Per-site flags: an admin lock, and the one-time GitHub push."""
+
+    __tablename__ = "site_settings"
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
+    locked = Column(Boolean, nullable=False, default=False)
+    locked_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    locked_at = Column(DateTime, nullable=True)
+    github_repo = Column(String(255), nullable=False, default="")
+    github_url = Column(String(512), nullable=False, default="")
+    github_pushed_at = Column(DateTime, nullable=True)
+
+
 class Asset(Base):
     """A file in a workspace's asset library, stored under workspace/entities/<entity_id>/assets/."""
 

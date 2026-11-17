@@ -1,4 +1,5 @@
-import './auth.js';
+import { currentUser } from './auth.js';
+import { bindDownloadLinks } from './github-status.js';
 import { ICON_LIBRARIES } from './icon-libraries.js';
 import { initSiteTools } from './site-tools.js';
 import { initAiCustomize } from './ai-customize.js';
@@ -24,7 +25,24 @@ const elementLabel = document.getElementById('elementLabel');
 const scopeBadge = document.getElementById('scopeBadge');
 const viewSiteBtn = document.getElementById('viewSiteBtn');
 const downloadZipBtn = document.getElementById('downloadZipBtn');
-if (downloadZipBtn) downloadZipBtn.href = API.download(folder);
+if (downloadZipBtn) downloadZipBtn.dataset.githubPush = folder;
+
+/** Site flags: hide "Push to GitHub" after its one push; a locked site is view-only for users. */
+let siteReadOnly = false;
+fetch(`${API.githubStatus}?folder=${encodeURIComponent(folder)}`)
+  .then((res) => res.json())
+  .then((data) => {
+    if (data.pushedRepo && downloadZipBtn) downloadZipBtn.closest('li')?.classList.add('d-none');
+    if (data.canEdit === false) {
+      siteReadOnly = true;
+      const state = document.getElementById('saveState');
+      if (state) {
+        state.className = 'save-state error';
+        state.innerHTML = '<i class="bi bi-lock-fill me-1"></i>Locked by an admin — view only';
+      }
+    }
+  })
+  .catch(() => {});
 
 /** Name the site in the toolbar so it is clear which clone is open. */
 async function showProjectIdentity() {
@@ -100,6 +118,7 @@ function dropPendingEdits(page) {
 
 function pushHistoryStep(step) {
   if (isRestoring) return;
+  if (step.kind === 'dom') scheduleAutosave();
   undoStack.push(step);
   if (undoStack.length > MAX_UNDO) undoStack.shift();
   redoStack.length = 0;
@@ -409,10 +428,15 @@ function showContentSections(type) {
 
 let syncAiEditSelection = () => {};
 
+/** The Assets and History panels share the screen with the element sidebar: one at a time. */
+function leftPanelOpen() {
+  return ['assetPanel', 'historyPanel'].some((id) => document.getElementById(id)?.classList.contains('open'));
+}
+
 function openSidebar(data) {
   selectedElement = data;
   styleUndoCaptured = false;
-  editSidebar.classList.remove('d-none');
+  if (!leftPanelOpen()) editSidebar.classList.remove('d-none');
   elementLabel.textContent = data.label;
   syncAiEditSelection(data);
 
@@ -426,6 +450,8 @@ function openSidebar(data) {
 
   showContentSections(data.type);
   showBrandGallery(data.type === 'image');
+  const textOnly = !['link', 'image', 'icon', 'button', 'video', 'input'].includes(data.type);
+  document.getElementById('applyBtn')?.classList.toggle('d-none', textOnly);
 
   // Content fields
   document.getElementById('textInput').value = data.text || '';
@@ -555,6 +581,8 @@ const brandGalleryGrid = document.getElementById('brandGalleryGrid');
 const brandGalleryStatus = document.getElementById('brandGalleryStatus');
 let brandGalleries = [];
 let activeBrandId = '';
+const entityImageCache = new Map();
+const brandGallerySearch = document.getElementById('brandGallerySearch');
 
 function assetSrcForPage(page, assetPath) {
   const parts = String(page || 'index.html').split('?')[0].split('/').filter(Boolean);
@@ -568,17 +596,76 @@ function setBrandGalleryStatus(message, isError = false) {
   brandGalleryStatus.classList.toggle('error', isError);
 }
 
+/** Entities whose asset libraries this user may pick from: all of them for a super admin, else their own. */
+function galleryEntities() {
+  if (currentUser.role === 'super_admin' && currentUser.entities?.length) {
+    return currentUser.entities.filter((e) => e.slug !== 'default' && e.status === 'active');
+  }
+  const own = currentUser.activeEntity || currentUser.entity;
+  return own ? [own] : [];
+}
+
 async function loadBrandGalleries() {
   if (brandGalleries.length) return brandGalleries;
-  const res = await fetch(API.brandGallery);
-  const data = await res.json();
-  if (!res.ok || !data.success) throw new Error(data.error || 'Could not load brand images.');
-  brandGalleries = data.brands || [];
+  const entities = galleryEntities().map((e) => ({ id: `entity:${e.id}`, name: e.name, entityId: e.id, type: 'entity' }));
+  let brands = [];
+  try {
+    const res = await fetch(API.brandGallery);
+    const data = await res.json();
+    if (res.ok && data.success) brands = (data.brands || []).map((b) => ({ ...b, type: 'brand' }));
+  } catch { /* brand folders are optional */ }
+  brandGalleries = [...entities, ...brands];
   return brandGalleries;
+}
+
+/** An entity's images and SVGs from its asset library (cached per entity). */
+async function loadEntityImages(source) {
+  if (entityImageCache.has(source.entityId)) return entityImageCache.get(source.entityId);
+  const params = new URLSearchParams({ folder });
+  if (currentUser.role === 'super_admin') params.set('entityId', String(source.entityId));
+  const res = await fetch(`${API.assets}?${params}`);
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.error || 'Could not load this entity\'s assets.');
+  const images = (data.assets || []).filter((a) => a.kind === 'image' || a.kind === 'svg');
+  entityImageCache.set(source.entityId, images);
+  return images;
+}
+
+async function renderEntityImages(source) {
+  if (!brandGalleryGrid) return;
+  brandGalleryGrid.innerHTML = '';
+  setBrandGalleryStatus('Loading assets…');
+  let images;
+  try {
+    images = await loadEntityImages(source);
+  } catch (err) {
+    setBrandGalleryStatus(err.message, true);
+    return;
+  }
+  if (activeBrandId !== source.id) return; // another source was picked meanwhile
+  const q = (brandGallerySearch?.value || '').trim().toLowerCase();
+  const shown = q ? images.filter((a) => a.fileName.toLowerCase().includes(q)) : images;
+  setBrandGalleryStatus(shown.length ? `${shown.length} image${shown.length === 1 ? '' : 's'}` : (q ? 'No images match.' : 'This entity has no images yet.'));
+  for (const asset of shown) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'brand-thumb';
+    button.title = asset.fileName;
+    const img = document.createElement('img');
+    img.alt = '';
+    img.loading = 'lazy';
+    img.src = asset.url;
+    button.appendChild(img);
+    if (/logo/i.test(asset.fileName)) button.insertAdjacentHTML('beforeend', '<span>Logo</span>');
+    button.addEventListener('click', () => replaceWithEntityAsset(asset, button));
+    brandGalleryGrid.appendChild(button);
+  }
 }
 
 function renderBrandImages(brand) {
   if (!brandGalleryGrid) return;
+  brandGallerySearch?.classList.toggle('d-none', brand?.type !== 'entity');
+  if (brand?.type === 'entity') { renderEntityImages(brand); return; }
   brandGalleryGrid.innerHTML = '';
   for (const image of brand?.images || []) {
     const button = document.createElement('button');
@@ -601,9 +688,10 @@ function renderBrandButtons() {
     button.classList.toggle('active', brand.id === activeBrandId);
     button.addEventListener('click', () => {
       activeBrandId = brand.id;
+      if (brandGallerySearch) brandGallerySearch.value = '';
       renderBrandButtons();
-      renderBrandImages(brand);
       setBrandGalleryStatus('');
+      renderBrandImages(brand);
     });
     brandGalleryBrands.appendChild(button);
   }
@@ -618,7 +706,7 @@ async function showBrandGallery(visible) {
   try {
     await loadBrandGalleries();
     if (!brandGalleries.length) {
-      setBrandGalleryStatus('No brand images found.', true);
+      setBrandGalleryStatus('No entity or brand images found.', true);
       return;
     }
     if (!brandGalleries.some((brand) => brand.id === activeBrandId)) {
@@ -628,6 +716,60 @@ async function showBrandGallery(visible) {
     renderBrandImages(brandGalleries.find((brand) => brand.id === activeBrandId));
   } catch (err) {
     setBrandGalleryStatus(err.message, true);
+  }
+}
+
+async function replaceWithEntityAsset(asset, button) {
+  if (!selectedElement || selectedElement.type !== 'image') {
+    setBrandGalleryStatus('Click an image on the page first.', true);
+    return;
+  }
+  const asLogo = Boolean(selectedElement.inHeader) && /logo/i.test(asset.fileName);
+  button.disabled = true;
+  setBrandGalleryStatus('Replacing image...');
+  try {
+    const res = await fetch(API.useAsset(asset.id), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folder, page: currentPage, placement: asLogo ? 'logo' : 'replace' }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || 'Could not use this image.');
+    const src = assetSrcForPage(currentPage, data.path);
+    if (asLogo) {
+      const swap = await fetch(API.replaceLogos, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder, logoPath: data.path, oldSrc: selectedElement.src || '' }),
+      });
+      const swapped = await swap.json();
+      if (!swap.ok || !swapped.success) throw new Error(swapped.error || 'Could not update the logo.');
+      selectedElement.src = src;
+      document.getElementById('imageUrlInput').value = src;
+      document.getElementById('imagePreview').src = data.url;
+      loadPreview(currentPage);
+      showSaveToast();
+      setBrandGalleryStatus(`Logo updated across the project (${swapped.logosReplaced} places).`);
+      return;
+    }
+    previewFrame.contentWindow.postMessage({
+      type: 'CLONER_APPLY',
+      id: selectedElement.id,
+      editType: 'image',
+      src,
+      alt: selectedElement.alt || asset.fileName.replace(/\.[^.]+$/, ''),
+    }, '*');
+    selectedElement.src = src;
+    document.getElementById('imageUrlInput').value = src;
+    document.getElementById('imagePreview').src = data.url;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    await savePage(currentPage, await getFrameHtml());
+    showSaveToast();
+    setBrandGalleryStatus(`Image replaced with ${asset.fileName}.`);
+  } catch (err) {
+    setBrandGalleryStatus(err.message, true);
+  } finally {
+    button.disabled = false;
   }
 }
 
@@ -764,6 +906,7 @@ function buildApplyMessage() {
 
 async function sendApply(msg) {
   previewFrame.contentWindow.postMessage(msg, '*');
+  scheduleAutosave();
   if (selectedElement?.isGlobal) pendingGlobalEdits.push({ ...msg, tag: selectedElement.tag });
 }
 
@@ -785,6 +928,37 @@ const styleInputs = [
   'stylePadding', 'styleMargin', 'styleBorderRadius',
   'styleWidth', 'styleHeight', 'styleDisplay', 'styleBgImage',
 ];
+let colorApplyTimer;
+function applyTextColorNow() {
+  clearTimeout(colorApplyTimer);
+  colorApplyTimer = setTimeout(() => {
+    if (!selectedElement) return;
+    sendApply({
+      type: 'CLONER_APPLY',
+      id: selectedElement.id,
+      editType: 'style-only',
+      styles: { color: document.getElementById('styleColorText').value },
+    });
+  }, 150);
+}
+['styleColor', 'styleColorText'].forEach((id) => {
+  document.getElementById(id)?.addEventListener('input', () => {
+    if (!selectedElement || activeTab === 'style') return;
+    styleUndoCaptured = true;
+    applyTextColorNow();
+  });
+});
+
+// Text applies as you type (no Apply button for text elements).
+let textApplyTimer;
+document.getElementById('textInput')?.addEventListener('input', () => {
+  clearTimeout(textApplyTimer);
+  textApplyTimer = setTimeout(() => {
+    const msg = buildApplyMessage();
+    if (msg) sendApply(msg);
+  }, 350);
+});
+
 styleInputs.forEach((id) => {
   const el = document.getElementById(id);
   if (!el) return;
@@ -832,21 +1006,56 @@ document.getElementById('applySeoBtn')?.addEventListener('click', async () => {
   seoModal.hide();
 });
 
-/* ── Save ── */
-document.getElementById('saveAllBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('saveAllBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+/* ── Autosave: every change is written to disk shortly after it happens ── */
+const AUTOSAVE_DELAY = 1000;
+let autosaveTimer = null;
+let autosaving = false;
+let autosaveAgain = false;
+
+function setSaveState(state, detail = '') {
+  const el = document.getElementById('saveState');
+  if (!el) return;
+  el.className = `save-state ${state}`;
+  el.title = detail;
+  el.innerHTML = state === 'saving'
+    ? '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Saving…'
+    : state === 'pending'
+      ? '<i class="bi bi-pencil me-1"></i>Unsaved changes'
+      : state === 'error'
+        ? '<i class="bi bi-exclamation-triangle me-1"></i>Not saved — retrying'
+        : '<i class="bi bi-cloud-check me-1"></i>All changes saved';
+}
+
+function scheduleAutosave(delay = AUTOSAVE_DELAY) {
+  if (isRestoring || siteReadOnly) return;
+  setSaveState('pending');
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(runAutosave, delay);
+}
+
+async function runAutosave() {
+  autosaveTimer = null;
+  if (!bridgeReady) { scheduleAutosave(); return; }
+  if (autosaving) { autosaveAgain = true; return; }
+  autosaving = true;
+  setSaveState('saving');
   try {
-    await savePage(currentPage, await getFrameHtml());
+    const html = await getFrameHtml();
+    if (html) await savePage(currentPage, html);
     if (pendingGlobalEdits.length) await applyGlobalEdits();
-    showSaveToast();
+    setSaveState('saved');
   } catch (err) {
-    alert('Save failed: ' + err.message);
+    setSaveState('error', err.message);
+    autosaveAgain = true;
   } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-save me-1"></i>Save All';
+    autosaving = false;
+    if (autosaveAgain) { autosaveAgain = false; scheduleAutosave(autosaveTimer ? AUTOSAVE_DELAY : 3000); }
   }
+}
+
+// Leaving with a save still pending would lose the last edit.
+window.addEventListener('beforeunload', (event) => {
+  if (autosaveTimer || autosaving) event.preventDefault();
 });
 
 function getFrameHtml() {
@@ -1187,7 +1396,7 @@ document.getElementById('addCustomLibBtn').addEventListener('click', addCustomLi
 
 document.getElementById('applyFreeIconBtn').addEventListener('click', applyFreeIconClass);
 
-document.getElementById('iconLibraryBtn').addEventListener('click', () => {
+document.getElementById('iconLibraryBtn')?.addEventListener('click', () => {
   renderLibraryCards();
   updateInstalledList();
   iconLibraryModal.show();
@@ -1266,10 +1475,11 @@ window.addEventListener('message', async (e) => {
   }
   if (e.data?.type === 'CLONER_ELEMENT_MOVED') {
     updateUndoButtons();
-    showSaveToast();
+    scheduleAutosave();
   }
-  if (e.data?.type === 'CLONER_INLINE_EDIT' && e.data.data.isGlobal) {
-    pendingGlobalEdits.push({ editType: 'html', innerHTML: e.data.data.innerHTML, tag: selectedElement?.tag });
+  if (e.data?.type === 'CLONER_INLINE_EDIT') {
+    if (e.data.data.isGlobal) pendingGlobalEdits.push({ editType: 'html', innerHTML: e.data.data.innerHTML, tag: selectedElement?.tag });
+    scheduleAutosave();
   }
   if (e.data?.type === 'CLONER_LIBRARY_ADDED') {
     installedLibs.add(e.data.libId);
@@ -1316,7 +1526,7 @@ function initEditor() {
     onRestored: () => { loadPages(); loadPreview(currentPage); showSaveToast('Version restored.'); },
   });
   versionHistory.bind();
-  document.getElementById('assetLibraryBtn').addEventListener('click', () => versionHistory.close());
+  document.getElementById('assetLibraryBtn')?.addEventListener('click', () => versionHistory.close());
   fetch(API.siteOpened, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1395,3 +1605,26 @@ function initEditor() {
 // auth.js resolves the session first, so DOMContentLoaded may already have fired.
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initEditor);
 else initEditor();
+
+let brandSearchTimer;
+brandGallerySearch?.addEventListener('input', () => {
+  clearTimeout(brandSearchTimer);
+  brandSearchTimer = setTimeout(() => {
+    const source = brandGalleries.find((b) => b.id === activeBrandId);
+    if (source?.type === 'entity') renderEntityImages(source);
+  }, 200);
+});
+
+// Opening Assets or History hides the element sidebar; closing them brings it back
+// for the selected element.
+const sidePanelObserver = new MutationObserver(() => {
+  if (leftPanelOpen()) editSidebar.classList.add('d-none');
+  else if (selectedElement) editSidebar.classList.remove('d-none');
+});
+['assetPanel', 'historyPanel'].forEach((id) => {
+  const panel = document.getElementById(id);
+  if (panel) sidePanelObserver.observe(panel, { attributes: true, attributeFilter: ['class'] });
+});
+
+// Downloads also push the project to GitHub; show that push's progress.
+bindDownloadLinks();

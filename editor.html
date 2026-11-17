@@ -33,45 +33,6 @@
         </button>
       </div>
 
-      <div class="toolbar-divider"></div>
-
-      <div class="toolbar-group" role="group" aria-label="Design tools">
-        <button id="themeBtn" class="tbtn" title="Site theme colors">
-          <i class="bi bi-palette"></i><span class="tbtn-label">Theme</span>
-        </button>
-        <button id="assetLibraryBtn" class="tbtn" title="Your workspace's logos, images, videos and fonts">
-          <i class="bi bi-images"></i><span class="tbtn-label">Assets</span>
-        </button>
-        <button id="historyPanelBtn" class="tbtn" title="Version history — see every change and restore an earlier version">
-          <i class="bi bi-clock-history"></i><span class="tbtn-label">History</span>
-        </button>
-        <button id="iconLibraryBtn" class="tbtn" title="Icon libraries">
-          <i class="bi bi-collection"></i><span class="tbtn-label">Icons</span>
-        </button>
-        <button id="headTagsBtn" class="tbtn" title="Add SEO tags and other code inside the page head">
-          <i class="bi bi-code-slash"></i><span class="tbtn-label">SEO tags</span>
-        </button>
-        <button id="moveModeBtn" class="tbtn tbtn-toggle" title="Move mode — drag elements to reposition them" aria-pressed="false">
-          <i class="bi bi-arrows-move"></i><span class="tbtn-label">Move</span>
-        </button>
-      </div>
-
-      <div class="toolbar-divider"></div>
-
-      <div class="toolbar-group" role="group" aria-label="AI tools">
-        <button id="aiComposerBtn" class="tbtn tbtn-ai" title="Ask AI to edit — paste a screenshot and describe the change">
-          <i class="bi bi-chat-square-text"></i><span class="tbtn-label">Ask AI</span>
-        </button>
-        <button id="fixWithAiBtn" class="tbtn tbtn-ai" title="Describe a problem and AI will fix the page">
-          <i class="bi bi-wrench-adjustable"></i><span class="tbtn-label">Fix with AI</span>
-        </button>
-        <button id="aiAssistantBtn" class="tbtn tbtn-ai" title="AI site assistant — change the logo, colors, and copy">
-          <i class="bi bi-magic"></i><span class="tbtn-label">Assistant</span>
-        </button>
-        <button id="aiPageBtn" class="tbtn tbtn-ai" title="Generate a new page with AI">
-          <i class="bi bi-stars"></i><span class="tbtn-label">AI Page</span>
-        </button>
-      </div>
       </div>
 
       <div class="toolbar-actions">
@@ -85,9 +46,7 @@
       </div>
 
       <div class="toolbar-group">
-        <button id="saveAllBtn" class="tbtn tbtn-primary" title="Save every change to disk (Ctrl+S)">
-          <i class="bi bi-check2"></i><span class="tbtn-label">Save</span>
-        </button>
+        <span id="saveState" class="save-state" role="status" aria-live="polite"><i class="bi bi-cloud-check me-1"></i>All changes saved</span>
         <div class="dropdown">
           <button class="tbtn tbtn-icon" type="button" id="moreMenuBtn" data-bs-toggle="dropdown" aria-expanded="false" title="More actions">
             <i class="bi bi-three-dots-vertical"></i>
@@ -99,9 +58,9 @@
               </a>
             </li>
             <li>
-              <a id="downloadZipBtn" class="dropdown-item" href="#">
-                <i class="bi bi-file-zip"></i>Download as PHP site
-              </a>
+              <button type="button" id="downloadZipBtn" class="dropdown-item">
+                <i class="bi bi-github"></i>Push to GitHub
+              </button>
             </li>
             <li><hr class="dropdown-divider" /></li>
             <li>
@@ -121,13 +80,10 @@
           <iframe id="previewFrame" title="Site Preview"></iframe>
         </div>
         <section class="ai-composer" id="aiComposer" aria-label="Ask AI to edit">
-          <div class="aic-head">
-            <span class="aic-title"><i class="bi bi-chat-square-text me-1"></i>Ask AI</span>
-            <span class="aic-context" id="aicContext"></span>
-            <span class="aic-hint" id="editorHint">Click an element to edit it · Double-click to type inline · Drop an image to replace one</span>
-          </div>
+          <div class="aic-target" id="aicContext"></div>
+          <div class="aic-modes" id="aicModes" role="group" aria-label="What to do"></div>
           <div class="aic-attachments d-none" id="aicAttachments"></div>
-          <div class="aic-row">
+          <div class="aic-field">
             <button type="button" class="aic-icon" id="aicAttach" title="Attach a screenshot file"><i class="bi bi-paperclip"></i></button>
             <div class="dropup">
               <button type="button" class="aic-icon" data-bs-toggle="dropdown" title="Take a screenshot of the preview"><i class="bi bi-camera"></i></button>
@@ -137,10 +93,12 @@
                 <li><button type="button" class="dropdown-item" data-capture="element"><i class="bi bi-bounding-box me-2"></i>Selected element</button></li>
               </ul>
             </div>
-            <textarea id="aicPrompt" rows="1" placeholder="Describe the change… paste a screenshot with Ctrl/Cmd+V"></textarea>
+            <textarea id="aicPrompt" rows="1" placeholder="Tell AI what to change… (paste a screenshot with Ctrl/Cmd+V)"></textarea>
             <button type="button" class="aic-send" id="aicSend" title="Apply (Ctrl/Cmd+Enter)"><i class="bi bi-stars me-1"></i>Apply</button>
           </div>
+          <div class="aic-suggest" id="aicSuggest"></div>
           <span class="aic-status" id="aicStatus" role="status"></span>
+          <span class="d-none" id="editorHint"></span>
           <input type="file" id="aicFile" accept="image/png,image/jpeg,image/webp" multiple hidden />
         </section>
         <div id="saveToast" class="save-toast d-none" role="status" aria-live="polite">
@@ -160,7 +118,7 @@
         </div>
 
         <!-- Tabs -->
-        <ul class="nav nav-tabs editor-tabs px-3" role="tablist">
+        <ul class="nav nav-tabs editor-tabs px-3 d-none" role="tablist">
           <li class="nav-item"><button class="nav-link active" data-tab="content">Content</button></li>
           <li class="nav-item"><button class="nav-link" data-tab="style">Style</button></li>
           <li class="nav-item"><button class="nav-link" data-tab="html">HTML</button></li>
@@ -171,13 +129,14 @@
         <div class="sidebar-body">
           <div id="brandGallery" class="brand-gallery d-none">
             <div class="brand-gallery-title">Replace this image</div>
-            <p class="brand-gallery-hint">Choose a brand, then click a logo or portfolio image.</p>
+            <p class="brand-gallery-hint">Choose an entity or brand, then click an image to put it here.</p>
             <div id="brandGalleryBrands" class="brand-gallery-brands"></div>
+            <input type="search" id="brandGallerySearch" class="brand-gallery-search d-none" placeholder="Search this entity's images" />
             <div id="brandGalleryGrid" class="brand-gallery-grid"></div>
             <div id="brandGalleryStatus" class="brand-gallery-status"></div>
           </div>
 
-          <div class="mb-3 p-2 rounded border border-info">
+          <div class="mb-3 p-2 rounded border border-info d-none">
             <div class="d-flex align-items-center justify-content-between gap-2">
               <span class="small fw-semibold text-info"><i class="bi bi-wrench-adjustable me-1"></i>Fix with AI</span>
               <button type="button" id="fixWithAiOpenBtn" class="btn btn-info btn-sm text-dark">Open</button>
@@ -185,7 +144,7 @@
             <p class="small text-muted mb-0 mt-1">Describe a logo, header, or theme problem and AI will fix the page code.</p>
           </div>
 
-          <div class="ai-edit-selection-card mb-3 p-2 rounded border border-info">
+          <div class="ai-edit-selection-card mb-3 p-2 rounded border border-info d-none">
             <label class="form-label small fw-semibold text-info mb-1">
               <i class="bi bi-stars me-1"></i>Change with AI
             </label>
@@ -210,6 +169,13 @@
             <div id="textEditor" class="editor-section">
               <label class="form-label small">Text Content</label>
               <textarea id="textInput" class="form-control" rows="4"></textarea>
+            </div>
+            <div id="textColorEditor" class="editor-section">
+              <label class="form-label small">Text Color</label>
+              <div class="color-row">
+                <input id="styleColor" type="color" class="form-control form-control-color" />
+                <input id="styleColorText" type="text" class="form-control form-control-sm" placeholder="#000" />
+              </div>
             </div>
             <div id="linkEditor" class="editor-section d-none">
               <label class="form-label small">Link Text</label>
@@ -298,13 +264,6 @@
           <!-- STYLE TAB -->
           <div id="tab-style" class="tab-panel d-none">
             <div class="row g-2">
-              <div class="col-6">
-                <label class="form-label small">Text Color</label>
-                <div class="color-row">
-                  <input id="styleColor" type="color" class="form-control form-control-color" />
-                  <input id="styleColorText" type="text" class="form-control form-control-sm" placeholder="#000" />
-                </div>
-              </div>
               <div class="col-6">
                 <label class="form-label small">Background</label>
                 <div class="color-row">
@@ -455,7 +414,7 @@
             </div>
           </div>
 
-          <div class="ai-fix-selection-card mb-3 p-2 rounded border border-warning">
+          <div class="ai-fix-selection-card mb-3 p-2 rounded border border-warning d-none">
             <label class="form-label small fw-semibold text-warning mb-1">
               <i class="bi bi-arrow-repeat me-1"></i>Fix from Original Site
             </label>
@@ -477,12 +436,12 @@
           <button id="applyBtn" class="btn btn-primary w-100 mt-3">
             <i class="bi bi-check2 me-1"></i>Apply Changes
           </button>
-          <button id="livePreviewBtn" class="btn btn-outline-secondary btn-sm w-100 mt-2">
+          <button id="livePreviewBtn" class="btn btn-outline-secondary btn-sm w-100 mt-2 d-none">
             <i class="bi bi-eye me-1"></i>Live Preview (without save)
           </button>
         </div>
 
-        <div class="sidebar-footer">
+        <div class="sidebar-footer d-none">
           <p class="small text-muted mb-0">
             Select anything in the preview, then use Change with AI for text, images, logos, and video.
             Header and footer changes apply to all pages.

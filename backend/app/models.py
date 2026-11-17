@@ -126,6 +126,7 @@ class AiEditRequest(BaseModel):
     prompt: str = ""
     images: list[str] = Field(default_factory=list)
     selection: Optional[dict[str, Any]] = None
+    insert: Optional[str] = None  # "before" | "after" | "end": add a new section instead of editing
 
 
 class AiEditSelectionRequest(BaseModel):

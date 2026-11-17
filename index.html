@@ -72,32 +72,20 @@
                       placeholder="my-cloned-site"
                       pattern="[a-zA-Z0-9_\-]+"
                     />
-                    <div class="form-text">
-                      Leave empty to auto-generate a folder name.
+                    <div class="form-text" id="folderNameHelp">
+                      Leave empty to auto-generate a folder name. It is also the GitHub repository name.
                     </div>
+                    <div class="invalid-feedback d-block" id="folderNameError" hidden></div>
                   </div>
 
                   <div class="mb-3">
                     <label for="cloneMode" class="form-label fw-semibold">What to clone</label>
                     <select id="cloneMode" class="form-select">
-                      <option value="landing" selected>Landing Page — only this URL</option>
-                      <option value="website">Website — complete site, all pages</option>
+                      <option value="website" selected>Website — complete site, all pages</option>
+                      <option value="landing">Landing Page — only this URL</option>
                     </select>
-                    <div class="form-text" id="cloneModeHelp">
-                      Clones only the page at the URL you entered, including its HTML, CSS, JavaScript, images, and fonts.
-                    </div>
+                    <div class="form-text" id="cloneModeHelp"></div>
                   </div>
-
-                  <details class="clone-session mb-3">
-                    <summary>Site needs a sign-in? Add your session (optional)</summary>
-                    <label for="sessionCookies" class="form-label small mt-2 mb-1">Cookies from a tab where you are signed in to this site</label>
-                    <textarea id="sessionCookies" class="form-control form-control-sm font-monospace" rows="3" autocomplete="off" spellcheck="false"
-                      placeholder="name=value; name2=value2   or a JSON cookie export"></textarea>
-                    <div class="form-text">
-                      Only for sites you are allowed to access. The cloner uses it for this clone only, sends it only to that site, and never saves it.
-                      Popups, cookie banners and permission prompts are handled automatically; sign-in pages, CAPTCHAs and paywalls are not bypassed.
-                    </div>
-                  </details>
 
                   <button
                     type="submit"
@@ -128,7 +116,7 @@
                     ></div>
                   </div>
                   <div class="clone-progress-foot">
-                    <span>It keeps running if you leave this page. You can start another clone now; every clone shows under Recent clones.</span>
+                    <span>It keeps running if you leave this page. You can start another clone now; finished sites appear under My Sites.</span>
                     <button type="button" class="btn btn-sm btn-ghost" id="cancelCloneBtn">Cancel</button>
                   </div>
                 </div>
@@ -185,20 +173,6 @@
                   <div class="clone-access d-none" id="resultAccess"></div>
                   <div class="clone-shots d-none" id="resultShots"></div>
 
-                  <div class="mt-3" id="brandSection">
-                    <label for="brandSelect" class="form-label fw-semibold mb-1">Select brand</label>
-                    <select id="brandSelect" class="form-select">
-                      <option value="">Choose a brand…</option>
-                    </select>
-                    <div class="form-text" id="brandHelp">
-                      Replaces the logo, portfolio, name, email, phone, and address in this clone with the brand you select.
-                    </div>
-                    <button type="button" class="btn btn-primary mt-2" id="applyBrandBtn" disabled>
-                      Apply brand
-                    </button>
-                    <div id="brandStatus" class="small mt-2"></div>
-                  </div>
-
                   <div class="d-flex gap-2 mt-3 flex-wrap">
                     <a
                       id="editPreviewBtn"
@@ -215,14 +189,9 @@
                     >
                       <i class="bi bi-eye me-1"></i> Preview
                     </a>
-                    <a
-                      id="downloadBtn"
-                      href="#"
-                      class="btn btn-outline-secondary"
-                      download
-                    >
-                      <i class="bi bi-file-zip me-1"></i> Download PHP site
-                    </a>
+                    <button type="button" id="downloadBtn" class="btn btn-outline-secondary">
+                      <i class="bi bi-github me-1"></i> Push to GitHub
+                    </button>
                   </div>
                 </div>
               </div>
@@ -231,7 +200,7 @@
 
           <div class="col-lg-8 mt-5 d-none" id="cloneJobsWrap">
             <section class="clone-jobs" id="cloneJobs">
-              <h2 class="library-title">Recent clones</h2>
+              <h2 class="library-title">Cloning now</h2>
               <div id="cloneJobList"></div>
             </section>
           </div>
@@ -243,6 +212,7 @@
                   <h2 class="library-title">My Sites</h2>
                   <p class="library-subtitle" id="librarySubtitle">Every site you clone stays here, ready to edit.</p>
                 </div>
+                <select class="form-select form-select-sm library-entity-filter d-none" id="libraryEntityFilter" aria-label="Show sites from"></select>
                 <button type="button" class="btn btn-ghost btn-sm" id="refreshLibraryBtn" title="Refresh the list">
                   <i class="bi bi-arrow-repeat me-1"></i>Refresh
                 </button>
@@ -272,8 +242,9 @@
             <div class="confirm-icon"><i class="bi bi-trash3"></i></div>
             <h3 class="confirm-title">Delete this site?</h3>
             <p class="confirm-text">
-              <strong id="deleteCloneName"></strong> will be removed from My Sites.
-              You can put it back straight afterwards.
+              <strong id="deleteCloneName"></strong> will be removed from My Sites, and its
+              GitHub repository will be deleted permanently. You can put the site back straight
+              afterwards, but not the GitHub repository; the next push creates a new one.
             </p>
           </div>
           <div class="modal-footer">

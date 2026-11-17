@@ -536,16 +536,28 @@
     reader.readAsDataURL(file);
   }, false);
 
+  /** Keep an image's on-page box when its file is replaced, so the layout doesn't change. */
+  function keepImageBox(img, box = img) {
+    const r = box.getBoundingClientRect();
+    if (!(r.width > 0 && r.height > 0)) return;
+    img.style.setProperty('width', `min(${Math.round(r.width)}px, 100%)`);
+    img.style.setProperty('height', 'auto');
+    img.style.setProperty('aspect-ratio', `${Math.round(r.width)} / ${Math.round(r.height)}`);
+    img.style.setProperty('object-fit', 'cover');
+  }
+
   function insertImageAtPoint(url, clientX, clientY, replaceId) {
     if (replaceId) {
       const existing = document.querySelector(`[data-cloner-id="${replaceId}"]`);
       if (existing) {
         if (existing.tagName === 'IMG') {
+          keepImageBox(existing);
           existing.setAttribute('src', url);
           selectElement(existing);
           return existing;
         }
         const img = document.createElement('img');
+        keepImageBox(img, existing);
         img.src = url;
         img.alt = '';
         img.style.maxWidth = '100%';
@@ -685,6 +697,7 @@
       if (msg.editType === 'image') {
         const img = el.tagName === 'PICTURE' ? (el.querySelector('img') || el) : el;
         if (msg.src) {
+          if (msg.src !== img.getAttribute('src') && !msg.width && !msg.height) keepImageBox(img);
           img.setAttribute('src', msg.src);
           img.removeAttribute('srcset');
           // Lazy-load scripts copy these into src later, which would bring the old image back.

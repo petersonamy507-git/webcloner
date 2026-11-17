@@ -129,7 +129,7 @@ export function initVersionHistory({ folder, onRestored, closeOtherPanels }) {
   }
 
   function bind() {
-    document.getElementById('historyPanelBtn').addEventListener('click', () => {
+    document.getElementById('historyPanelBtn')?.addEventListener('click', () => {
       const open = !panel.classList.contains('open');
       if (open) closeOtherPanels();
       panel.classList.toggle('open', open);

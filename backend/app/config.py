@@ -29,6 +29,12 @@ COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "0") == "1"
 CORS_ORIGINS = [o.strip() for o in os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
 APP_BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:5173")
 
+# Downloads also push the PHP project to a private GitHub repo: in GITHUB_ORG when set,
+# otherwise on the token owner's own account. The token must be able to create and push repos.
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "").strip()
+GITHUB_ORG = os.environ.get("GITHUB_ORG", "").strip()
+GITHUB_API = os.environ.get("GITHUB_API", "https://api.github.com").rstrip("/")
+
 MIME_TYPES = {
     ".html": "text/html",
     ".css": "text/css",

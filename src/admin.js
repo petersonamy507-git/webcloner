@@ -261,7 +261,7 @@ const ACTION_LABELS = {
   'site.save': 'Saved page', 'site.upload': 'Uploaded image', 'site.download': 'Downloaded site',
   'site.theme': 'Changed theme', 'site.history_restore': 'Undid a change',
   'site.open': 'Opened editor', 'site.version_restore': 'Restored a version', 'site.create_page': 'Added page',
-  'site.ai.edit': 'AI edit (Ask AI)', 'site.ai.edit_failed': 'AI edit failed', 'site.ai.fix': 'Fix with AI',
+  'site.ai.edit': 'AI edit (Ask AI)', 'site.github_push': 'Pushed to GitHub', 'site.github_push_request': 'Push to GitHub started', 'site.lock': 'Locked site', 'site.unlock': 'Unlocked site', 'site.ai.edit_failed': 'AI edit failed', 'site.ai.fix': 'Fix with AI',
   'site.ai.customize': 'AI Assistant', 'site.ai.audit': 'AI audit', 'site.ai.edit_selection': 'AI element edit',
   'site.ai.fix_selection': 'AI section fix', 'site.ai.generate_page': 'AI page',
   'asset.upload': 'Uploaded asset', 'asset.use': 'Used asset', 'asset.delete': 'Deleted asset',

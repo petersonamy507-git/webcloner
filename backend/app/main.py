@@ -1,13 +1,16 @@
+import asyncio
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import Principal, current_principal, log_activity, project_for, require_entity, sanitize_folder, sees_all_sites
+from app.auth import Principal, client_ip, current_principal, is_admin_user, log_activity, project_for, require_editable, require_entity, sanitize_folder, sees_all_sites
 from app.bootstrap import bootstrap
 from app.config import CLONED_DIR, CORS_ORIGINS, MIME_TYPES, ROOT, WORKSPACE_DIR
-from app.db import CloneJob, Project, get_db, utcnow
+from app.db import CloneJob, Entity, Project, SiteSettings, User, get_db, utcnow
+from app.services import github_push
 from app.models import (
     AiAuditRequest,
     AiEditSelectionRequest,
@@ -86,10 +89,25 @@ async def http_error(request: Request, exc: HTTPException):
     return fail(str(exc.detail), exc.status_code)
 
 
+# Actions that don't change the site, so a locked site still allows them.
+READ_ACTIONS = {"site.open", "site.download", "site.github_push_request"}
+
+
+def site_settings(db: Session, project: Project) -> SiteSettings:
+    settings = db.get(SiteSettings, project.id)
+    if not settings:
+        settings = SiteSettings(project_id=project.id, locked=False, github_repo="", github_url="")
+        db.add(settings)
+        db.flush()
+    return settings
+
+
 def site_action(db: Session, principal: Principal, folder: str, action: str, request: Request,
                 details: dict | None = None) -> Project:
     """Ownership check for a site, plus an activity record for the change."""
     project = project_for(db, principal, folder)
+    if action not in READ_ACTIONS:
+        require_editable(db, principal, project)
     log_activity(db, principal, action, project.folder, details, request, entity_id=project.entity_id)
     db.commit()
     return project
@@ -183,9 +201,12 @@ async def clone_website(body: CloneRequest, request: Request,
 @app.get("/api/clones")
 async def list_clones(principal: Principal = Depends(current_principal), db: Session = Depends(get_db)):
     entity_id = principal.entity_id
-    if not entity_id:
+    every_entity = principal.is_super_admin  # the super admin sees every entity's sites
+    if not entity_id and not every_entity:
         return {"success": True, "clones": []}
-    visible = select(Project.folder).where(Project.entity_id == entity_id, Project.deleted_at.is_(None))
+    visible = select(Project.folder).where(Project.deleted_at.is_(None))
+    if not every_entity:
+        visible = visible.where(Project.entity_id == entity_id)
     if not sees_all_sites(principal):
         visible = visible.where(Project.created_by == principal.user.id)
     owned = set(db.execute(visible).scalars())
@@ -193,15 +214,59 @@ async def list_clones(principal: Principal = Depends(current_principal), db: Ses
     data["clones"] = [c for c in data.get("clones", []) if c.get("folder") in owned]
     # The desktop screenshot of the original site makes a better card image than a guessed site image.
     shots: dict[str, int] = {}
-    for job in db.execute(
-        select(CloneJob).where(CloneJob.entity_id == entity_id, CloneJob.status == "succeeded").order_by(CloneJob.id)
-    ).scalars():
+    jobs = select(CloneJob).where(CloneJob.status == "succeeded").order_by(CloneJob.id)
+    if not every_entity:
+        jobs = jobs.where(CloneJob.entity_id == entity_id)
+    for job in db.execute(jobs).scalars():
         if "desktop" in (job.screenshots or []):
             shots[job.folder] = job.id
     for clone in data["clones"]:
         if clone.get("folder") in shots:
             clone["thumbnail"] = f"/api/clone-jobs/{shots[clone['folder']]}/screenshot/desktop"
+    ids = dict(db.execute(select(Project.folder, Project.id).where(Project.folder.in_(owned))).all())
+    flags = {s.project_id: s for s in db.execute(select(SiteSettings).where(SiteSettings.project_id.in_(ids.values()))).scalars()}
+    # Which entity each site belongs to, and (for admins) who cloned it.
+    info = {row.folder: row for row in db.execute(
+        select(Project.folder, Entity.name.label("entity_name"), User.email.label("creator"))
+        .join(Entity, Entity.id == Project.entity_id)
+        .outerjoin(User, User.id == Project.created_by)
+        .where(Project.folder.in_(owned))
+    )}
+    for clone in data["clones"]:
+        row = info.get(clone.get("folder"))
+        clone["entityName"] = row.entity_name if row else ""
+        if sees_all_sites(principal):
+            clone["createdBy"] = (row.creator if row else "") or ""
+    for clone in data["clones"]:
+        s = flags.get(ids.get(clone.get("folder")))
+        clone["locked"] = bool(s and s.locked)
+        clone["githubRepo"] = s.github_repo if s and s.github_pushed_at else ""
+        clone["githubUrl"] = s.github_url if s and s.github_pushed_at else ""
+    data["canLock"] = is_admin_user(principal)
+    data["allEntities"] = every_entity
     return data
+
+
+class LockRequest(BaseModel):
+    folder: str
+    locked: bool
+
+
+@app.post("/api/clones/lock")
+async def lock_clone(body: LockRequest, request: Request,
+                     principal: Principal = Depends(current_principal), db: Session = Depends(get_db)):
+    """Admins lock a site so regular users can't edit or delete it."""
+    if not is_admin_user(principal):
+        return fail("Only admins can lock or unlock sites.", 403)
+    project = project_for(db, principal, body.folder)
+    settings = site_settings(db, project)
+    settings.locked = body.locked
+    settings.locked_by = principal.user.id if body.locked else None
+    settings.locked_at = utcnow() if body.locked else None
+    log_activity(db, principal, "site.lock" if body.locked else "site.unlock", project.folder,
+                 request=request, entity_id=project.entity_id)
+    db.commit()
+    return {"success": True, "locked": settings.locked}
 
 
 @app.delete("/api/clones")
@@ -210,11 +275,19 @@ async def delete_clone(request: Request, folder: str = Query(""),
     if not folder:
         return fail("A clone folder name is required.", 400)
     project = project_for(db, principal, folder)
+    require_editable(db, principal, project)
     result = await worker("delete-clone", folder=project.folder)
     project.deleted_at = utcnow()
-    log_activity(db, principal, "site.delete", project.folder, request=request, entity_id=project.entity_id)
+    # The site's GitHub repo goes with it (permanently on GitHub).
+    github = await asyncio.to_thread(github_push.delete_repo, project.entity_id, project.folder)
+    settings = db.get(SiteSettings, project.id)
+    if settings and github.get("deleted"):  # the repo is gone, so a restored site can be pushed again
+        settings.github_repo, settings.github_url, settings.github_pushed_at = "", "", None
+    log_activity(db, principal, "site.delete", project.folder,
+                 {"githubRepoDeleted": github.get("repo") if github.get("deleted") else None}, request=request,
+                 entity_id=project.entity_id)
     db.commit()
-    return result
+    return {**result, "github": github}
 
 
 @app.post("/api/clones/restore")
@@ -254,6 +327,87 @@ async def download_zip(request: Request, folder: str = Query(""), format: str = 
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+_github_tasks: set = set()
+
+
+def start_github_push(db: Session, principal: Principal, project: Project, export_dir, request: Request) -> None:
+    """Push the export to the org's GitHub repo in the background; the zip download doesn't wait."""
+    if not github_push.is_configured():
+        return
+    entity = db.get(Entity, project.entity_id)
+    entity_slug = entity.slug if entity else ""
+    folder, entity_id, source_url, project_id = project.folder, project.entity_id, project.source_url or "", project.id
+    # Captured now: the request's session is closed by the time the push finishes.
+    user_id, ip = principal.user.id, client_ip(request)
+
+    async def run():
+        result = await github_push.push_export(entity_id, entity_slug, folder, export_dir, source_url)
+        from app.db import ActivityLog, SessionLocal
+        try:
+            with SessionLocal() as session:
+                session.add(ActivityLog(entity_id=entity_id, user_id=user_id, action="site.github_push", target=folder,
+                                        details={k: result.get(k) for k in ("state", "repo", "commit", "error")}, ip=ip))
+                if result.get("state") == "pushed":  # one push per site: the button goes away
+                    settings = session.get(SiteSettings, project_id) or SiteSettings(project_id=project_id, locked=False)
+                    settings.github_repo, settings.github_url = result.get("repo", ""), result.get("url", "")
+                    settings.github_pushed_at = utcnow()
+                    session.merge(settings)
+                session.commit()
+        except Exception:  # noqa: BLE001 — the audit entry must not hide the push result
+            pass
+
+    task = asyncio.create_task(run())
+    _github_tasks.add(task)
+    task.add_done_callback(_github_tasks.discard)
+
+
+class GithubPushRequest(BaseModel):
+    folder: str
+
+
+@app.post("/api/github-push")
+async def github_push_site(body: GithubPushRequest, request: Request,
+                           principal: Principal = Depends(current_principal), db: Session = Depends(get_db)):
+    """Build the PHP project and push it to GitHub (no local download). The push runs in the
+    background; /api/github-status reports its progress."""
+    if not github_push.is_configured():
+        return fail("GitHub isn't set up yet: add GITHUB_TOKEN to the .env file in the project folder.", 400)
+    project = project_for(db, principal, body.folder)
+    settings = db.get(SiteSettings, project.id)
+    if settings and settings.github_pushed_at:
+        return fail(f"This site is already on GitHub ({settings.github_repo}).", 409)
+    project = site_action(db, principal, body.folder, "site.github_push_request", request)
+    if not site_dir(project.folder).exists():
+        return fail("Clone not found.", 404)
+    out = WORKSPACE_DIR / "entities" / str(project.entity_id) / "exports" / project.folder / "php"
+    try:
+        await worker("php-export", folder=project.folder, outDir=str(out))
+    except FileNotFoundError as e:
+        return fail(str(e), 404)
+    start_github_push(db, principal, project, out, request)
+    return {"success": True, "started": True}
+
+
+@app.get("/api/github-name")
+async def github_name(name: str = Query(""), principal: Principal = Depends(current_principal)):
+    """Is a GitHub repo for this folder name still free? (Used by the clone form.)"""
+    folder = sanitize_folder(name)
+    if not folder:
+        return {"success": True, "taken": None}
+    return {"success": True, **(await asyncio.to_thread(github_push.repo_name_taken, folder))}
+
+
+@app.get("/api/github-status")
+async def github_status(folder: str = Query(""), principal: Principal = Depends(current_principal),
+                        db: Session = Depends(get_db)):
+    project = project_for(db, principal, folder)
+    settings = db.get(SiteSettings, project.id)
+    pushed = {"pushedRepo": settings.github_repo, "pushedUrl": settings.github_url} if settings and settings.github_pushed_at else {}
+    locked = bool(settings and settings.locked)
+    return {"success": True, **github_push.status_for(project.folder), **pushed,
+            "locked": locked, "canEdit": not locked or is_admin_user(principal)}
 
 
 # ── Editor ──

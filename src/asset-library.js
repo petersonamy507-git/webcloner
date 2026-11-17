@@ -263,7 +263,7 @@ export function initAssetLibrary({
 
   function bind() {
     setupEntity();
-    document.getElementById('assetLibraryBtn').addEventListener('click', () => {
+    document.getElementById('assetLibraryBtn')?.addEventListener('click', () => {
       const open = panel.classList.toggle('open');
       if (open) { describeTarget(); load(); }
     });

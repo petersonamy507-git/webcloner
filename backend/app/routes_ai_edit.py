@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import Principal, current_principal, log_activity, project_for
+from app.auth import Principal, current_principal, log_activity, project_for, require_editable
 from app.config import WORKSPACE_DIR
 from app.db import Asset, get_db, utcnow
 from app.models import AiEditRequest
@@ -60,6 +60,7 @@ def save_screenshots(entity_id: int, shots: list[tuple[str, bytes]]) -> list[str
 async def ai_edit(body: AiEditRequest, request: Request,
                   principal: Principal = Depends(current_principal), db: Session = Depends(get_db)):
     project = project_for(db, principal, body.folder)
+    require_editable(db, principal, project)
     prompt = (body.prompt or "").strip()
     if not prompt:
         raise HTTPException(400, "Describe the change you want.")
@@ -94,6 +95,7 @@ async def ai_edit(body: AiEditRequest, request: Request,
         result = await run_node_worker(
             "ai-edit", folder=project.folder, page=body.page, prompt=prompt,
             images=body.images, selection=selection, assets=assets,
+            insert=body.insert if body.insert in ("before", "after", "end") else None,
         )
     except RuntimeError as e:
         log_activity(db, principal, "site.ai.edit_failed", project.folder,

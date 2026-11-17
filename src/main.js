@@ -1,4 +1,5 @@
 import { renderAccountMenu } from './auth.js';
+import { bindDownloadLinks } from './github-status.js';
 import { API } from './api.js';
 import { loadLibrary } from './clone-library.js';
 
@@ -30,6 +31,7 @@ function updateModeHelp() {
 }
 
 cloneMode?.addEventListener('change', updateModeHelp);
+updateModeHelp();
 loadBrands();
 
 async function loadBrands() {
@@ -147,6 +149,7 @@ const RESTRICTED_LABELS = {
   paywall: 'a paywall',
   'age-gate': 'an age check',
   forbidden: 'access permission (HTTP 403)',
+  'bot-check': 'the site\'s bot protection on some pages',
 };
 
 function renderAccess(access) {
@@ -194,7 +197,7 @@ function showResult(job) {
   document.getElementById('resultFiles').textContent = data.filesDownloaded ?? '—';
   document.getElementById('resultSize').textContent = data.totalSize || '—';
   document.getElementById('previewBtn').href = data.previewUrl || `/cloned/${job.folder}/index.html`;
-  document.getElementById('downloadBtn').href = data.downloadUrl || API.download(job.folder);
+  document.getElementById('downloadBtn').dataset.githubPush = job.folder;
   document.getElementById('editPreviewBtn').href = `/editor.html?folder=${encodeURIComponent(job.folder)}`;
   clonedFolder = job.folder;
   if (brandStatus) brandStatus.textContent = '';
@@ -266,13 +269,18 @@ function jobRow(job) {
     </div>`;
 }
 
+let runningJobCount = 0;
+
 async function loadJobs() {
   clearTimeout(jobsTimer);
   try {
     const { jobs } = await getJson(API.cloneJobs);
-    jobsWrap.classList.toggle('d-none', !jobs.length);
-    jobList.innerHTML = jobs.map(jobRow).join('');
+    // Only clones in progress are listed; finished sites appear under My Sites.
     const running = jobs.filter((j) => j.status === 'queued' || j.status === 'running');
+    jobsWrap.classList.toggle('d-none', !running.length);
+    jobList.innerHTML = running.map(jobRow).join('');
+    if (running.length < runningJobCount) loadLibrary();
+    runningJobCount = running.length;
     if (running.length) jobsTimer = setTimeout(loadJobs, 2000);
     return jobs;
   } catch {
@@ -288,11 +296,52 @@ jobList?.addEventListener('click', (event) => {
   }
 });
 
+/* The folder name is also the GitHub repo name, and an existing repo is never reused. */
+const folderInput = document.getElementById('folderName');
+const folderError = document.getElementById('folderNameError');
+let folderTaken = '';
+let folderCheckTimer;
+
+function setFolderError(message) {
+  folderTaken = message;
+  folderInput?.classList.toggle('is-invalid', Boolean(message));
+  if (folderError) {
+    folderError.textContent = message;
+    folderError.hidden = !message;
+  }
+}
+
+async function checkFolderName() {
+  const name = folderInput?.value.trim() || '';
+  if (!name) { setFolderError(''); return; }
+  try {
+    const res = await fetch(`${API.githubName}?name=${encodeURIComponent(name)}`);
+    const data = await res.json();
+    if ((folderInput?.value.trim() || '') !== name) return; // typed on meanwhile
+    setFolderError(data.taken
+      ? `A GitHub repository named "${data.repo.split('/').pop()}" already exists (${data.repo}). Choose another folder name.`
+      : '');
+  } catch {
+    setFolderError('');
+  }
+}
+
+folderInput?.addEventListener('input', () => {
+  clearTimeout(folderCheckTimer);
+  setFolderError('');
+  folderCheckTimer = setTimeout(checkFolderName, 500);
+});
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   hideAll();
   const url = document.getElementById('websiteUrl').value.trim();
   const folderName = document.getElementById('folderName').value.trim();
+  if (folderTaken) {
+    showError(folderTaken);
+    folderInput?.focus();
+    return;
+  }
   const sessionField = document.getElementById('sessionCookies');
   const sessionCookies = sessionField?.value.trim() || '';
   if (!url) {
@@ -306,12 +355,13 @@ form.addEventListener('submit', async (e) => {
     const { job } = await getJson(API.cloneJobs, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, folderName, mode: cloneMode.value, ...(sessionCookies ? { sessionCookies } : {}) }),
+      body: JSON.stringify({ url, folderName, mode: cloneMode?.value || 'website', ...(sessionCookies ? { sessionCookies } : {}) }),
     });
     if (sessionField) sessionField.value = ''; // don't keep it on screen
     // Ready for the next site straight away; this one keeps running in the background.
     document.getElementById('websiteUrl').value = '';
     document.getElementById('folderName').value = '';
+    setFolderError('');
     loadJobs();
     watchJob(job.id);
   } catch (err) {
@@ -328,3 +378,6 @@ loadJobs().then((jobs) => {
   const running = jobs.find((j) => j.status === 'running' || j.status === 'queued');
   if (running && !activeJobId) watchJob(running.id);
 });
+
+// Downloads also push the project to GitHub; show that push's progress.
+bindDownloadLinks();

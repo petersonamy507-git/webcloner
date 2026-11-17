@@ -93,23 +93,137 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
     return wholePage ? null : getSelected();
   }
 
-  function renderContext() {
-    const sel = scopeElement();
-    contextEl.innerHTML = '';
-    const chip = document.createElement('span');
-    chip.className = 'aic-chip';
-    if (sel) {
-      chip.textContent = `Editing: ${sel.label || sel.tag}`;
-      const clear = document.createElement('button');
-      clear.type = 'button';
-      clear.title = 'Edit the whole page instead';
-      clear.innerHTML = '<i class="bi bi-x"></i>';
-      clear.addEventListener('click', () => { wholePage = true; renderContext(); });
-      chip.appendChild(clear);
-    } else {
-      chip.textContent = getSelected() ? 'Editing: whole page' : 'Editing: whole page · click an element to focus on it';
+  const suggestEl = document.getElementById('aicSuggest');
+  const modesEl = document.getElementById('aicModes');
+  let mode = 'change';       // 'change' an element, or 'add' a new section
+  let insertPos = 'after';   // where a new section goes relative to the selected section
+  const ADD_SUGGESTIONS = [
+    'Testimonials with three customer quotes',
+    'FAQ with five common questions',
+    'Call-to-action banner with a button',
+    'Pricing table with three plans',
+    'Contact form with name, email and message',
+    'Features grid with icons',
+  ];
+  const PLACEHOLDERS = {
+    change: 'Tell AI what to change… (paste a screenshot with Ctrl/Cmd+V)',
+    add: 'Describe the section to add, e.g. “testimonials with three customer quotes”',
+  };
+
+  /** The section-sized block around the selection (a heading or button counts as its section). */
+  function selectedBlock() {
+    const sel = getSelected();
+    const live = sel && previewFrame.contentDocument?.querySelector(`[data-cloner-id="${sel.id}"]`);
+    return live ? sectionOf(live) : null;
+  }
+
+  function renderModes() {
+    const block = selectedBlock();
+    const where = block
+      ? `<span class="aic-pos">
+          <button type="button" data-pos="before" class="${insertPos === 'before' ? 'active' : ''}"><i class="bi bi-arrow-bar-up me-1"></i>Above</button>
+          <button type="button" data-pos="after" class="${insertPos === 'after' ? 'active' : ''}"><i class="bi bi-arrow-bar-down me-1"></i>Below</button>
+          <span class="aic-pos-note">the selected section</span>
+        </span>`
+      : '<span class="aic-pos"><span class="aic-pos-note">at the end of the page · or select a section to place it above or below</span></span>';
+    modesEl.innerHTML = `
+      <span class="aic-mode-switch">
+        <button type="button" data-mode="change" class="${mode === 'change' ? 'active' : ''}"><i class="bi bi-pencil me-1"></i>Change</button>
+        <button type="button" data-mode="add" class="${mode === 'add' ? 'active' : ''}"><i class="bi bi-plus-square me-1"></i>Add section</button>
+      </span>
+      ${mode === 'add' ? where : ''}`;
+    promptEl.placeholder = PLACEHOLDERS[mode];
+  }
+
+  const TYPE_INFO = {
+    image: { icon: 'bi-image', name: 'Image' },
+    text: { icon: 'bi-type', name: 'Text' },
+    link: { icon: 'bi-link-45deg', name: 'Link' },
+    button: { icon: 'bi-hand-index', name: 'Button' },
+    icon: { icon: 'bi-emoji-smile', name: 'Icon' },
+    video: { icon: 'bi-play-btn', name: 'Video' },
+    input: { icon: 'bi-input-cursor-text', name: 'Form field' },
+  };
+  const SUGGESTIONS = {
+    image: ['Replace it with a similar, higher-quality photo', 'Add rounded corners and a soft shadow', 'Make it fill the full width'],
+    text: ['Rewrite it to sound more professional', 'Make it bigger and bolder', 'Use the brand color for it'],
+    link: ['Make this link stand out more', 'Underline it only on hover'],
+    button: ['Make this button stand out more', 'Round the corners and add a hover effect', 'Change the text to “Get started”'],
+    page: ['Modernize the hero section', 'Improve spacing and font sizes', 'Make the page feel more premium'],
+  };
+
+  const escapeText = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  /** What the selected element looks like: an image thumbnail or a short text excerpt. */
+  function previewOf(sel) {
+    const live = previewFrame.contentDocument?.querySelector(`[data-cloner-id="${sel.id}"]`);
+    if (sel.type === 'image') {
+      const img = live?.tagName === 'IMG' ? live : live?.querySelector('img');
+      return { thumb: img?.currentSrc || img?.src || '', text: (img?.getAttribute('alt') || sel.alt || '').trim() };
     }
-    contextEl.appendChild(chip);
+    const text = (live?.innerText || sel.text || '').replace(/\s+/g, ' ').trim();
+    return { thumb: '', text: text.length > 80 ? `${text.slice(0, 80)}…` : text };
+  }
+
+  function renderSuggestions(kind) {
+    suggestEl.innerHTML = '';
+    for (const idea of mode === 'add' ? ADD_SUGGESTIONS : (SUGGESTIONS[kind] || SUGGESTIONS.page)) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.textContent = idea;
+      chip.addEventListener('click', () => {
+        promptEl.value = idea;
+        promptEl.dispatchEvent(new Event('input'));
+        promptEl.focus();
+      });
+      suggestEl.appendChild(chip);
+    }
+  }
+
+  function renderContext() {
+    renderModes();
+    if (mode === 'add') {
+      const block = selectedBlock();
+      const label = block ? (block.getAttribute('id') ? `#${block.getAttribute('id')}` : `<${block.tagName.toLowerCase()}>`) : '';
+      const text = block ? (block.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 80) : '';
+      contextEl.className = 'aic-target is-selected';
+      contextEl.innerHTML = `
+        <span class="aic-target-thumb"><i class="bi bi-plus-square"></i></span>
+        <span class="aic-target-body">
+          <span class="aic-target-kind">${block ? `New section ${insertPos === 'before' ? 'above' : 'below'} ${escapeText(label)}` : 'New section at the end of the page'}</span>
+          <span class="aic-target-text">${block ? escapeText(text || 'selected section') : 'Before the footer. Select a section first to choose another place.'}</span>
+        </span>`;
+      renderSuggestions('add');
+      return;
+    }
+    const sel = scopeElement();
+    if (!sel) {
+      const picked = getSelected();
+      contextEl.className = 'aic-target is-page';
+      contextEl.innerHTML = `
+        <span class="aic-target-thumb"><i class="bi bi-window"></i></span>
+        <span class="aic-target-body">
+          <span class="aic-target-kind">Whole page</span>
+          <span class="aic-target-text">${picked ? 'AI will edit the whole page.' : 'Click any element in the preview to change just that part.'}</span>
+        </span>
+        ${picked ? '<button type="button" class="aic-target-btn" data-scope="selection"><i class="bi bi-cursor me-1"></i>Back to selection</button>' : ''}`;
+      contextEl.querySelector('[data-scope="selection"]')?.addEventListener('click', () => { wholePage = false; renderContext(); });
+      renderSuggestions('page');
+      return;
+    }
+    const info = TYPE_INFO[sel.type] || TYPE_INFO.text;
+    const { thumb, text } = previewOf(sel);
+    contextEl.className = 'aic-target is-selected';
+    contextEl.innerHTML = `
+      <span class="aic-target-thumb">${thumb ? `<img src="${escapeText(thumb)}" alt="" />` : `<i class="bi ${info.icon}"></i>`}</span>
+      <span class="aic-target-body">
+        <span class="aic-target-kind">Editing ${escapeText(info.name.toLowerCase())}${sel.isGlobal ? ' · all pages' : ''}</span>
+        <span class="aic-target-text">${escapeText(text || sel.label || sel.tag)}</span>
+      </span>
+      <button type="button" class="aic-target-btn" data-scope="page" title="Edit the whole page instead"><i class="bi bi-arrows-fullscreen me-1"></i>Whole page</button>`;
+    contextEl.querySelector('[data-scope="page"]').addEventListener('click', () => { wholePage = true; renderContext(); });
+    renderSuggestions(SUGGESTIONS[sel.type] ? sel.type : 'text');
   }
 
   function renderAttachments() {
@@ -212,10 +326,66 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
     }
   }
 
+  /** Add a new section above/below the selected section, or at the end of the page. */
+  async function sendAddSection(prompt) {
+    const block = selectedBlock();
+    let selection = null;
+    if (block) {
+      let selectorPath = '';
+      try { selectorPath = uniqueSelector(block); } catch { selectorPath = ''; }
+      selection = {
+        tag: block.tagName.toLowerCase(),
+        elementId: block.getAttribute('id') || '',
+        classes: [...block.classList].filter((c) => !c.startsWith('cloner')).join(' '),
+        outerHTML: block.outerHTML,
+        selectorPath,
+      };
+    }
+    busy = true;
+    sendBtn.disabled = true;
+    root.classList.add('busy');
+    const idleLabel = sendBtn.innerHTML;
+    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Adding…';
+    promptEl.readOnly = true;
+    setStatus('Designing the new section to match the site… (up to a minute if an image is created)');
+    try {
+      const res = await fetch(API.aiEdit, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          folder,
+          page: getPage(),
+          prompt,
+          images: attachments.map((a) => a.dataUrl),
+          selection,
+          insert: block ? insertPos : 'end',
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.error || 'The AI could not add this section.');
+      setStatus(`${data.summary || 'Section added.'} — saved to ${(data.filesChanged || []).join(', ')}`, 'ok');
+      promptEl.value = '';
+      fitPrompt();
+      attachments = [];
+      renderAttachments();
+      reloadPreview();
+      showSaveToast('New section added.');
+    } catch (err) {
+      setStatus(err.message, 'error');
+    } finally {
+      busy = false;
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = idleLabel;
+      promptEl.readOnly = false;
+      root.classList.remove('busy');
+    }
+  }
+
   async function send() {
     const prompt = promptEl.value.trim();
     if (busy) return;
-    if (!prompt) return setStatus('Describe the change you want.', 'error');
+    if (!prompt) return setStatus(mode === 'add' ? 'Describe the section you want to add.' : 'Describe the change you want.', 'error');
+    if (mode === 'add') return sendAddSection(prompt);
     const sel = scopeElement();
     let selectorPath = '';
     let size = null;
@@ -228,6 +398,9 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
     busy = true;
     sendBtn.disabled = true;
     root.classList.add('busy');
+    const idleLabel = sendBtn.innerHTML;
+    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Applying…';
+    promptEl.readOnly = true;
     setStatus(attachments.length
       ? 'Reading your screenshots and editing the site… (up to a minute if a new image is created)'
       : 'Editing the site… (up to a minute if a new image is created)');
@@ -265,21 +438,31 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
     } finally {
       busy = false;
       sendBtn.disabled = false;
+      sendBtn.innerHTML = idleLabel;
+      promptEl.readOnly = false;
       root.classList.remove('busy');
     }
   }
 
   function fitPrompt() {
     promptEl.style.height = 'auto';
-    promptEl.style.height = `${Math.max(38, promptEl.scrollHeight + 2)}px`;
+    promptEl.style.height = `${Math.max(34, promptEl.scrollHeight)}px`;
   }
+
+  modesEl?.addEventListener('click', (event) => {
+    const modeBtn = event.target.closest('[data-mode]');
+    const posBtn = event.target.closest('[data-pos]');
+    if (modeBtn) mode = modeBtn.dataset.mode;
+    if (posBtn) insertPos = posBtn.dataset.pos;
+    if (modeBtn || posBtn) { renderContext(); promptEl.focus(); }
+  });
 
   function bind() {
     // The composer is always open; the toolbar button just jumps to the prompt.
     renderContext();
     // One line by default, growing with the text up to the CSS max-height.
     promptEl.addEventListener('input', fitPrompt);
-    document.getElementById('aiComposerBtn').addEventListener('click', () => promptEl.focus());
+    document.getElementById('aiComposerBtn')?.addEventListener('click', () => promptEl.focus());
     document.getElementById('aicAttach').addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', async () => { await addFiles(fileInput.files); fileInput.value = ''; });
     root.querySelectorAll('[data-capture]').forEach((btn) => btn.addEventListener('click', () => capture(btn.dataset.capture)));

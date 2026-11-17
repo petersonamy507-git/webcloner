@@ -3,7 +3,7 @@ import { withSession } from './browser-guard.mjs';
 import path from 'path';
 import crypto from 'crypto';
 
-export const MAX_PAGES = Number(process.env.CLONER_MAX_PAGES) || 50;
+export const MAX_PAGES = Number(process.env.CLONER_MAX_PAGES) || 200;
 export const MAX_CRAWL_DEPTH = 3;
 export const FETCH_CONCURRENCY = 8;
 
@@ -193,7 +193,7 @@ export function pageUrlToLocal(pageUrl, origin) {
     else if (!/\.html?$/i.test(pathname)) pathname += '/index.html';
 
     let local = pathname.replace(/^\//, '');
-    if (local === 'index.html') return 'index.html';
+    if (local === 'index.html' && !u.search) return 'index.html';
 
     if (u.search) {
       const ext = path.extname(local);
@@ -208,6 +208,8 @@ export function pageUrlToLocal(pageUrl, origin) {
 }
 
 /** Check if a URL is a crawlable same-origin HTML page */
+const ACTION_QUERY = /[?&](add[-_]to[-_]cart|remove_item|undo_item|add[-_]to[-_]wishlist|remove_from_wishlist|wishlist|orderby|filter_[a-z_]+|min_price|max_price|wc-ajax|s|replytocom|share|action|_wpnonce|nonce|logout|redirect_to|attachment_id|preview|ver)=/i;
+
 export function isCrawlablePage(url, origin) {
   if (isSkippedLink(url)) return false;
   try {
@@ -217,6 +219,9 @@ export function isCrawlablePage(url, origin) {
     if (SKIP_EXT.test(p)) return false;
     if (NON_PAGE_PREFIX.test(p)) return false;
     if (/email-protection/i.test(p)) return false;
+    // Shop and site actions are not pages: following them changes state or returns another
+    // page (WooCommerce's /?add-to-cart=… answers with the cart, which then overwrote the home page).
+    if (ACTION_QUERY.test(u.search)) return false;
     return true;
   } catch {
     return false;
