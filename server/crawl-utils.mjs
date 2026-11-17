@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { withSession } from './browser-guard.mjs';
 import path from 'path';
 import crypto from 'crypto';
 
@@ -365,7 +366,7 @@ const THANK_YOU_MESSAGE = 'Thank you for your response. We will contact you as s
 async function readHtml(url) {
   const res = await fetch(url, {
     redirect: 'follow',
-    headers: { 'User-Agent': USER_AGENT, Accept: 'text/html' },
+    headers: withSession(url, { 'User-Agent': USER_AGENT, Accept: 'text/html' }),
   });
   if (!res.ok) return null;
   const type = res.headers.get('content-type') || '';
@@ -528,6 +529,7 @@ export async function fetchWithRetry(url, options = {}, retries = 2) {
     try {
       const res = await fetch(url, {
         ...options,
+        headers: withSession(url, options.headers || {}),
         signal: options.signal || AbortSignal.timeout(30000),
       });
       return res;

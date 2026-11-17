@@ -57,6 +57,42 @@ function leadPreviewPlugin() {
   };
 }
 
+/**
+ * Cloned sites are previewed under /cloned/<folder>/, but their HTML and JS often load
+ * root-absolute paths (e.g. "/dist/js/config.js") that are only right at the site's own
+ * domain root. When a cloned page asks for such a path and the clone has that file,
+ * redirect the request into the clone instead of letting it 404 against the app.
+ */
+function clonedRootPathPlugin() {
+  const APP_PATHS = /^\/(cloned|api|src|public|node_modules|@vite|@fs|@id|@react-refresh)(\/|$)/;
+  return {
+    name: 'cloned-root-paths',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+        const [pathOnly, query = ''] = (req.url || '').split('?');
+        if (pathOnly === '/' || APP_PATHS.test(pathOnly)) return next();
+        let referer;
+        try { referer = new URL(req.headers.referer || ''); } catch { return next(); }
+        const clone = referer.pathname.match(/^\/cloned\/([^/]+)\//);
+        if (!clone) return next();
+        const cloneDir = path.join(ROOT, 'cloned', clone[1]);
+        let rel;
+        try { rel = decodeURIComponent(pathOnly).replace(/^\/+/, ''); } catch { return next(); }
+        const target = path.resolve(cloneDir, rel);
+        if (!target.startsWith(cloneDir + path.sep)) return next();
+        const exists = [target, path.join(cloneDir, encodeURI(rel))].some((p) => {
+          try { return fs.statSync(p).isFile(); } catch { return false; }
+        });
+        if (!exists) return next();
+        res.statusCode = 307;
+        res.setHeader('Location', `/cloned/${clone[1]}${pathOnly}${query ? `?${query}` : ''}`);
+        res.end();
+      });
+    },
+  };
+}
+
 const APP_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
 
 /** Stamps the version and build time into the page so a deploy can be confirmed at a glance. */
@@ -71,7 +107,7 @@ function versionStampPlugin() {
 }
 
 export default defineConfig({
-  plugins: [leadPreviewPlugin(), versionStampPlugin()],
+  plugins: [clonedRootPathPlugin(), leadPreviewPlugin(), versionStampPlugin()],
   root: '.',
   publicDir: 'public',
   server: {

@@ -87,6 +87,7 @@ export function initAiFixSelection({
           type: 'CLONER_REPLACE_OUTER',
           id: selection.id,
           outerHTML: data.fixedOuterHTML,
+          saved: true,
         }, '*');
       } else {
         loadPreview?.(getCurrentPage?.());

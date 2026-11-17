@@ -4,9 +4,9 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import Principal, current_principal, log_activity, project_for, require_entity, sanitize_folder
+from app.auth import Principal, current_principal, log_activity, project_for, require_entity, sanitize_folder, sees_all_sites
 from app.bootstrap import bootstrap
-from app.config import CLONED_DIR, CORS_ORIGINS, MIME_TYPES, ROOT
+from app.config import CLONED_DIR, CORS_ORIGINS, MIME_TYPES, ROOT, WORKSPACE_DIR
 from app.db import CloneJob, Project, get_db, utcnow
 from app.models import (
     AiAuditRequest,
@@ -44,6 +44,7 @@ from app.services.site_service import (
     save_page,
     site_dir,
     upload_image,
+    zip_directory,
 )
 
 app = FastAPI(title="Website Cloner API", version="2.0.0")
@@ -168,10 +169,11 @@ async def clone_website(body: CloneRequest, request: Request,
     entity_id = require_entity(principal)
     folder_name = sanitize_folder(body.folderName or "")
     if folder_name:
-        conflict = folder_conflict(db, entity_id, folder_name)
+        conflict = folder_conflict(db, entity_id, folder_name, principal)
         if conflict:
             return fail(conflict, 409)
-    result = await worker("clone", url=body.url, folderName=folder_name or None, mode=body.mode)
+    result = await worker("clone", url=body.url, folderName=folder_name or None, mode=body.mode,
+                          **({"sessionCookies": body.sessionCookies} if body.sessionCookies else {}))
     folder = sanitize_folder(result.get("folder") or "")
     if folder:
         register_clone(db, principal, entity_id, folder, body.url, body.mode, result)
@@ -183,9 +185,10 @@ async def list_clones(principal: Principal = Depends(current_principal), db: Ses
     entity_id = principal.entity_id
     if not entity_id:
         return {"success": True, "clones": []}
-    owned = set(db.execute(
-        select(Project.folder).where(Project.entity_id == entity_id, Project.deleted_at.is_(None))
-    ).scalars())
+    visible = select(Project.folder).where(Project.entity_id == entity_id, Project.deleted_at.is_(None))
+    if not sees_all_sites(principal):
+        visible = visible.where(Project.created_by == principal.user.id)
+    owned = set(db.execute(visible).scalars())
     data = await worker("list-clones")
     data["clones"] = [c for c in data.get("clones", []) if c.get("folder") in owned]
     # The desktop screenshot of the original site makes a better card image than a guessed site image.
@@ -229,23 +232,28 @@ async def restore_clone(request: Request, trashId: str = Query(""),
 
 
 @app.get("/api/download")
-async def download_zip(request: Request, folder: str = Query(""),
+async def download_zip(request: Request, folder: str = Query(""), format: str = Query("php"),
                        principal: Principal = Depends(current_principal), db: Session = Depends(get_db)):
-    project = site_action(db, principal, folder, "site.download", request)
+    """Custom PHP stack by default (index.php router, views/, includes/, class/, assets/); ?format=laravel for Laravel."""
+    project = site_action(db, principal, folder, "site.download", request, {"format": format})
+    directory = site_dir(project.folder)
+    if not directory.exists():
+        return Response("Clone not found.", status_code=404)
     try:
-        directory = site_dir(project.folder)
-        if not directory.exists():
-            return Response("Clone not found.", status_code=404)
-        # Rebuilt each time so the export always reflects the latest edits.
-        await worker("laravel-restructure", folder=project.folder)
-        data, filename = build_laravel_zip(project.folder)
-        return Response(
-            content=data,
-            media_type="application/zip",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-        )
+        if format == "laravel":
+            await worker("laravel-restructure", folder=project.folder)
+            data, filename = build_laravel_zip(project.folder)
+        else:
+            out = WORKSPACE_DIR / "entities" / str(project.entity_id) / "exports" / project.folder / "php"
+            await worker("php-export", folder=project.folder, outDir=str(out))
+            data, filename = zip_directory(out, f"{project.folder}.zip")
     except FileNotFoundError:
         return Response("Clone not found.", status_code=404)
+    return Response(
+        content=data,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # ── Editor ──

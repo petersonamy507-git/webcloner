@@ -152,6 +152,11 @@ def sanitize_folder(folder: str) -> str:
     return "".join(ch for ch in (folder or "") if ch.isalnum() or ch in "_-")
 
 
+def sees_all_sites(principal: Principal) -> bool:
+    """Admins see every site in their workspace; members only the sites they cloned."""
+    return principal.user.role in ("super_admin", "entity_admin")
+
+
 def project_for(db: Session, principal: Principal, folder: str, include_deleted: bool = False) -> Project:
     """Load a project the caller may access. Unknown and foreign projects both read as 404."""
     name = sanitize_folder(folder)
@@ -161,6 +166,8 @@ def project_for(db: Session, principal: Principal, folder: str, include_deleted:
     if not project or (project.deleted_at and not include_deleted):
         raise HTTPException(404, "Site not found.")
     if not principal.is_super_admin and project.entity_id != principal.user.entity_id:
+        raise HTTPException(404, "Site not found.")
+    if not sees_all_sites(principal) and project.created_by != principal.user.id:
         raise HTTPException(404, "Site not found.")
     return project
 

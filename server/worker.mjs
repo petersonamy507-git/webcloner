@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { puppeteerClone, resolveChromePath } from './PuppeteerCloner.mjs';
+import { parseSessionCookies, setSession } from './browser-guard.mjs';
 import { MAX_PAGES } from './crawl-utils.mjs';
 import { WebsiteCloner } from './WebsiteCloner.mjs';
 import { repairCloneAssets, repairCorruptedAssets, repairMissingLocalFiles, repairUiFidelity } from './clone-postprocess.mjs';
@@ -14,8 +15,9 @@ import { loadTheme, extractTheme, applyTheme, createPage } from './site-utils.mj
 import { generatePageWithAI } from './openai-generate.mjs';
 import { customizeSiteWithAI } from './ai-customize.mjs';
 import { auditAndFixClonedSite } from './ai-audit.mjs';
-import { restructureToPhpStack } from './php-restructure.mjs';
+import { attachLeadPhpToSite, restructureToPhpStack } from './php-restructure.mjs';
 import { restructureToLaravelStack } from './laravel-restructure.mjs';
+import { buildPhpExport } from './php-export.mjs';
 import { aiEditSite } from './ai-edit.mjs';
 import { reportProgress } from './progress.mjs';
 import { applyHeadSnippets, readHeadSnippets } from './head-snippets.mjs';
@@ -60,12 +62,20 @@ async function handleClone(input) {
   const mode = input.mode || 'website';
   // landing = the URL you entered only. website / full = every page on the site.
   const maxPages = mode === 'landing' || mode === 'page' ? 1 : MAX_PAGES;
+  // A signed-in session the user supplied for pages that need it; used only for
+  // requests to this site and never written to disk.
+  const sessionUrl = url.startsWith('http') ? url : `https://${url}`;
+  const sessionCookies = parseSessionCookies(input.sessionCookies, sessionUrl);
+  if (input.sessionCookies && !sessionCookies.length) {
+    throw new Error(`None of the session cookies belong to ${new URL(sessionUrl).hostname}. Export them from a signed-in tab of that site.`);
+  }
+  setSession(sessionUrl, sessionCookies);
   let result;
 
   try {
     if (mode !== 'static' && (await canUsePuppeteer())) {
       try {
-        result = await puppeteerClone(url, folderName, { maxPages, screenshotDir: input.screenshotDir || '' });
+        result = await puppeteerClone(url, folderName, { maxPages, screenshotDir: input.screenshotDir || '', sessionCookies });
       } catch (err) {
         console.warn('Puppeteer failed, falling back to static:', err.message);
         const cloner = new WebsiteCloner(url, folderName);
@@ -95,16 +105,18 @@ async function handleClone(input) {
     await repairUiFidelity(outDir, siteOrigin);
   } catch { /* non-fatal */ }
 
-  let phpStructure = null;
-  reportProgress(90, 'Building the PHP export');
+  // The clone's own pages stay exactly as captured, so the preview matches the live site.
+  // The PHP layout (views/, includes/, css/, js/) is built on a copy when the site is
+  // downloaded (php-export.mjs); rebuilding it here rewrote and broke the preview pages.
+  const phpStructure = null;
+  reportProgress(90, 'Connecting forms');
   try {
-    phpStructure = restructureToPhpStack(outDir);
+    attachLeadPhpToSite(outDir);
   } catch (err) {
-    console.warn('PHP restructure skipped:', err.message);
+    console.warn('Lead form hookup skipped:', err.message);
   }
   try {
-    const healed = await repairMissingLocalFiles(outDir, siteOrigin);
-    if (phpStructure && healed) phpStructure = { ...phpStructure, missingAssetsRestored: healed };
+    await repairMissingLocalFiles(outDir, siteOrigin);
   } catch (err) {
     console.warn('Missing asset repair skipped:', err.message);
   }
@@ -131,6 +143,7 @@ async function handleClone(input) {
     phpPreview: phpStructure ? `cd cloned/${result.folder} && ./start-server.sh` : null,
     downloadUrl: `/api/download?folder=${encodeURIComponent(result.folder)}`,
     fallback: result.fallback || false,
+    access: result.access || null,
   };
 }
 
@@ -216,6 +229,13 @@ async function handlePhpRestructure(input) {
   if (!fs.existsSync(dir)) throw new Error('Clone folder not found.');
   const result = restructureToPhpStack(dir);
   return { success: true, ...result };
+}
+
+async function handlePhpExport(input) {
+  const dir = siteDir(input.folder);
+  if (!fs.existsSync(dir)) throw new Error('Clone folder not found.');
+  if (!input.outDir || !path.isAbsolute(input.outDir)) throw new Error('An export folder is required.');
+  return buildPhpExport(dir, input.outDir);
 }
 
 async function handleLaravelRestructure(input) {
@@ -323,6 +343,7 @@ const handlers = {
   'ai-edit': handleAiEdit,
   'php-restructure': handlePhpRestructure,
   'laravel-restructure': handleLaravelRestructure,
+  'php-export': handlePhpExport,
   'head-snippets': handleHeadSnippets,
   'list-brands': handleListBrands,
   'apply-brand': handleApplyBrand,

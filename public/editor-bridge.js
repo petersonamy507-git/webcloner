@@ -82,14 +82,7 @@
       document.head.appendChild(style);
     }
     if (!document.body) return false;
-    if (!hint) {
-      hint = document.createElement('div');
-      hint.className = 'cloner-edit-hint';
-      hint.textContent = 'Click an element to edit it · Double-click to type inline · Drop an image to replace one';
-      document.body.appendChild(hint);
-      // Recede once the user has had a chance to read it.
-      setTimeout(() => hint?.classList.add('is-faded'), 6000);
-    }
+    // The editing hint lives in the editor's Ask AI bar, not on top of the page.
     document.documentElement.classList.add('cloner-editor-mode');
     return true;
   }
@@ -844,7 +837,8 @@
     if (msg.type === 'CLONER_REPLACE_OUTER') {
       const el = msg.id ? document.querySelector(`[data-cloner-id="${msg.id}"]`) : null;
       if (!el || !msg.outerHTML) return;
-      requestUndoSnapshot();
+      // An AI result is already saved on disk (and undoable from there), so it isn't a pending preview edit.
+      if (!msg.saved) requestUndoSnapshot();
       const template = document.createElement('template');
       template.innerHTML = msg.outerHTML.trim();
       const newEl = template.content.firstElementChild;

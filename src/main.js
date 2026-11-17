@@ -120,9 +120,11 @@ function resetCloneButton() {
 function showProgress(job) {
   progressSection.classList.remove('d-none');
   progressBar.style.width = `${Math.max(3, job.progress)}%`;
+  let host = '';
+  try { host = job.url ? `${new URL(job.url).hostname}: ` : ''; } catch { /* keep blank */ }
   progressText.textContent = job.status === 'queued'
-    ? 'Waiting for a free slot…'
-    : `${job.stage}… ${job.progress}%`;
+    ? `${host}Waiting for a free slot…`
+    : `${host}${job.stage}… ${job.progress}%`;
 }
 
 function renderChecks(validation) {
@@ -139,14 +141,45 @@ function renderChecks(validation) {
     : `<i class="bi bi-check2-circle me-1"></i>Checked ${validation.pagesChecked} page${validation.pagesChecked === 1 ? '' : 's'}: no important issues${validation.total ? ` (${validation.total} minor)` : ''}.`;
 }
 
+const RESTRICTED_LABELS = {
+  'sign-in': 'a sign-in',
+  captcha: 'a CAPTCHA / bot check',
+  paywall: 'a paywall',
+  'age-gate': 'an age check',
+  forbidden: 'access permission (HTTP 403)',
+};
+
+function renderAccess(access) {
+  const box = document.getElementById('resultAccess');
+  const items = [];
+  if (access?.dismissed?.length) {
+    const kinds = [...new Set(access.dismissed.filter((d) => d.kind !== 'backdrop').map((d) => d.kind.replace(/-/g, ' ')))];
+    if (kinds.length) items.push(`Closed ${kinds.join(', ')} popup${kinds.length === 1 ? '' : 's'} so the page underneath was captured. The site's own popup code is kept in the clone.`);
+  }
+  if (access?.permissions?.length) items.push(`Denied browser permission requests: ${access.permissions.join(', ')}.`);
+  if (access?.dialogs?.length) items.push(`Dismissed ${access.dialogs.length} browser dialog${access.dialogs.length === 1 ? '' : 's'} (alert / confirm).`);
+  if (access?.popupWindows) items.push(`Closed ${access.popupWindows} pop-up window${access.popupWindows === 1 ? '' : 's'}.`);
+  const restricted = (access?.restricted || []).map((r) => RESTRICTED_LABELS[r.kind] || r.kind);
+  if (restricted.length) {
+    items.push(access.session
+      ? `The site still asked for ${restricted.join(' and ')} with your session. Check the session cookies are current.`
+      : `Part of this site needs ${restricted.join(' and ')}. It was not bypassed. To include it, clone again with your signed-in session.`);
+  }
+  box.classList.toggle('d-none', !items.length);
+  box.classList.toggle('warn', restricted.length > 0);
+  box.innerHTML = items.length ? `<i class="bi bi-shield-check me-1"></i><strong>Popups and access</strong><ul>${items.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>` : '';
+}
+
+const SHOT_LABELS = { desktop: 'desktop', tablet: 'tablet', mobile: 'mobile', 'desktop-popup': 'with popup' };
+
 function renderShots(shots = {}) {
   const box = document.getElementById('resultShots');
-  const devices = ['desktop', 'tablet', 'mobile'].filter((d) => shots[d]);
+  const devices = ['desktop-popup', 'desktop', 'tablet', 'mobile'].filter((d) => shots[d]);
   box.classList.toggle('d-none', !devices.length);
   box.innerHTML = devices.length
     ? `<div class="clone-shots-title">Original site on each device</div><div class="clone-shots-row">${devices.map((d) => `
         <a href="${shots[d]}" target="_blank" rel="noopener" class="clone-shot clone-shot-${d}">
-          <img src="${shots[d]}" alt="${d} screenshot" loading="lazy" /><span>${d}</span>
+          <img src="${shots[d]}" alt="${SHOT_LABELS[d]} screenshot" loading="lazy" /><span>${SHOT_LABELS[d]}</span>
         </a>`).join('')}</div>`
     : '';
 }
@@ -168,16 +201,17 @@ function showResult(job) {
   if (brandSelect) brandSelect.value = '';
   if (applyBrandBtn) applyBrandBtn.disabled = true;
   renderChecks(data.validation);
+  renderAccess(data.access);
   renderShots(job.screenshots);
   loadBrands();
   loadLibrary();
 }
 
+// The panel above follows one clone; every clone (several can run at once) is in
+// the jobs list below with its own progress bar. The form stays usable throughout.
 async function watchJob(id) {
   activeJobId = id;
   hideAll();
-  cloneBtn.disabled = true;
-  cloneBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Cloning...';
   while (activeJobId === id) {
     let job;
     try {
@@ -193,7 +227,6 @@ async function watchJob(id) {
     await new Promise((resolve) => setTimeout(resolve, 1200));
   }
   if (activeJobId === id) activeJobId = null;
-  resetCloneButton();
   loadJobs();
 }
 
@@ -225,7 +258,7 @@ function jobRow(job) {
           <span class="job-status job-${job.status}">${STATUS_LABELS[job.status] || job.status}</span>
           <span class="job-url" title="${escapeHtml(job.url)}">${escapeHtml(job.url)}</span>
         </div>
-        <div class="job-meta">${escapeHtml(job.folder)} · ${escapeHtml(job.userEmail || '')} · ${when}${running ? ` · ${escapeHtml(job.stage)} ${job.progress}%` : ''}${job.status === 'failed' && job.error ? ` · ${escapeHtml(job.error)}` : ''}</div>
+        <div class="job-meta">${escapeHtml(job.folder)} · ${escapeHtml(job.userEmail || '')} · ${when}${job.result?.access?.restricted?.length ? ' · <span class="text-warning-emphasis">some content needs access</span>' : ''}${running ? ` · ${escapeHtml(job.stage)} ${job.progress}%` : ''}${job.status === 'failed' && job.error ? ` · ${escapeHtml(job.error)}` : ''}</div>
         ${running ? `<div class="progress job-progress"><div class="progress-bar" style="width:${Math.max(3, job.progress)}%"></div></div>` : ''}
       </div>
       <div class="job-thumbs">${thumbs}</div>
@@ -240,7 +273,7 @@ async function loadJobs() {
     jobsWrap.classList.toggle('d-none', !jobs.length);
     jobList.innerHTML = jobs.map(jobRow).join('');
     const running = jobs.filter((j) => j.status === 'queued' || j.status === 'running');
-    if (running.length) jobsTimer = setTimeout(loadJobs, 3000);
+    if (running.length) jobsTimer = setTimeout(loadJobs, 2000);
     return jobs;
   } catch {
     return [];
@@ -260,24 +293,32 @@ form.addEventListener('submit', async (e) => {
   hideAll();
   const url = document.getElementById('websiteUrl').value.trim();
   const folderName = document.getElementById('folderName').value.trim();
+  const sessionField = document.getElementById('sessionCookies');
+  const sessionCookies = sessionField?.value.trim() || '';
   if (!url) {
     showError('Please enter a valid website URL.');
     return;
   }
   cloneBtn.disabled = true;
-  showProgress({ status: 'queued', progress: 0, stage: 'Starting' });
+  cloneBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Starting...';
+  showProgress({ status: 'queued', progress: 0, stage: 'Starting', url });
   try {
     const { job } = await getJson(API.cloneJobs, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, folderName, mode: cloneMode.value }),
+      body: JSON.stringify({ url, folderName, mode: cloneMode.value, ...(sessionCookies ? { sessionCookies } : {}) }),
     });
+    if (sessionField) sessionField.value = ''; // don't keep it on screen
+    // Ready for the next site straight away; this one keeps running in the background.
+    document.getElementById('websiteUrl').value = '';
+    document.getElementById('folderName').value = '';
     loadJobs();
     watchJob(job.id);
   } catch (err) {
     showError(err.message === 'Failed to fetch'
       ? 'Could not connect to the server. Make sure the backend is running and try again.'
       : err.message);
+  } finally {
     resetCloneButton();
   }
 });

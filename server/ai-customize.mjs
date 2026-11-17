@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
 import * as cheerio from 'cheerio';
-import { loadEnvKey, openAiChatBody, OPENAI_CHAT_MODEL } from './openai-generate.mjs';
+import { loadEnvKey, openAiChatBody, OPENAI_CHAT_MODEL, OPENAI_FALLBACK_MODEL, OPENAI_TIMEOUT_MS } from './openai-generate.mjs';
 import { loadTheme, applyTheme, extractTheme, listPages } from './site-utils.mjs';
 import { applyFullPageTheme } from './fix-with-ai.mjs';
 
@@ -198,7 +198,7 @@ ${context.mainSample.slice(0, 2000)}`;
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
-    signal: AbortSignal.timeout(90000),
+    signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
     body: JSON.stringify(openAiChatBody({
       model,
       json: true,
@@ -208,14 +208,14 @@ ${context.mainSample.slice(0, 2000)}`;
   });
   let data = await res.json();
   if (!res.ok && /model|not found|does not exist|verify/i.test(data.error?.message || '')) {
-    model = OPENAI_CHAT_MODEL;
+    model = OPENAI_FALLBACK_MODEL;
     res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      signal: AbortSignal.timeout(90000),
+      signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
       body: JSON.stringify(openAiChatBody({
         model,
         json: true,

@@ -8,6 +8,9 @@ class CloneRequest(BaseModel):
     url: str
     folderName: Optional[str] = None
     mode: str = "full"
+    # Cookies from the user's own signed-in browser, for pages behind a login.
+    # Used for this clone only; never stored or logged.
+    sessionCookies: Optional[str] = Field(default=None, max_length=20000, repr=False)
 
     @field_validator("url")
     @classmethod

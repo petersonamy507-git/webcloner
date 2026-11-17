@@ -7,7 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as cheerio from 'cheerio';
-import { loadEnvKey, openAiChatBody } from './openai-generate.mjs';
+import { loadEnvKey, openAiChat } from './openai-generate.mjs';
 import { listPages } from './site-utils.mjs';
 import {
   repairCloneAssets,
@@ -330,22 +330,14 @@ ${issueSummary}
 Page samples:
 ${samples}`;
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    signal: AbortSignal.timeout(90000),
-    body: JSON.stringify(openAiChatBody({
-      json: true,
-      maxTokens: 8000,
-      messages: [
-        { role: 'system', content: AUDIT_SYSTEM_PROMPT },
-        { role: 'user', content: userText },
-      ],
-    })),
+  const data = await openAiChat(apiKey, {
+    json: true,
+    maxTokens: 8000,
+    messages: [
+      { role: 'system', content: AUDIT_SYSTEM_PROMPT },
+      { role: 'user', content: userText },
+    ],
   });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || `OpenAI error (${res.status})`);
   const ai = JSON.parse(stripJsonFences(data.choices?.[0]?.message?.content || '{}'));
 
   const applied = { seo: 0, patches: 0, cssRules: 0 };

@@ -9,6 +9,7 @@ from app.config import CLONED_DIR
 from app.db import Base, CloneJob, Entity, Project, User, SessionLocal, engine, utcnow
 
 DEFAULT_ENTITY_SLUG = "default"
+ENTITY_SLUGS = ("apex", "codified", "orion", "vanguard", "zenium")
 
 
 def _clone_meta(folder) -> dict:
@@ -28,13 +29,25 @@ def bootstrap() -> None:
             db.add(default)
             db.flush()
 
+        # The company's entities; every new user is assigned to one of them.
+        existing = set(db.execute(select(Entity.slug)).scalars())
+        for slug in ENTITY_SLUGS:
+            if slug not in existing:
+                db.add(Entity(slug=slug, name=slug.capitalize(), status="active", settings={}))
+        db.flush()
+
         known = set(db.execute(select(Project.folder)).scalars())
 
         # A restart kills running clones; say so, and remove their half-written folders.
         for job in db.execute(select(CloneJob).where(CloneJob.status.in_(("queued", "running")))).scalars():
             job.status, job.stage, job.finished_at = "failed", "Interrupted", utcnow()
             job.error = "The server restarted while this clone was running. Start it again."
-            if job.folder not in known:
+            backup = CLONED_DIR / f".{job.folder}.previous"
+            if backup.is_dir():  # a re-clone: the earlier copy comes back
+                shutil.rmtree(CLONED_DIR / job.folder, ignore_errors=True)
+                backup.rename(CLONED_DIR / job.folder)
+                job.error += " The previous copy of the site was kept."
+            elif job.folder not in known:
                 shutil.rmtree(CLONED_DIR / job.folder, ignore_errors=True)
 
         # Clones made before accounts existed belong to the default workspace; a folder

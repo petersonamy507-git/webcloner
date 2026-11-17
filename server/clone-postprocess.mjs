@@ -22,7 +22,8 @@ const USER_AGENT =
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const MAX_TOTAL_SIZE = 500 * 1024 * 1024;
 
-const MIME_EXT = {
+export const MIME_EXT = {
+  'image/avif': '.avif',
   'text/css': '.css',
   'text/javascript': '.js',
   'application/javascript': '.js',
@@ -39,6 +40,28 @@ const MIME_EXT = {
   'application/font-woff2': '.woff2',
   'video/mp4': '.mp4',
 };
+
+/**
+ * Point srcset candidates at saved copies. Candidates that could not be saved are
+ * dropped when another size was (a root path like /api/images/… would otherwise hit
+ * the editor's own server), and a src still pointing at the live site takes a saved one.
+ */
+function rewriteSrcset($, $el, rewriteHtmlRef) {
+  const srcset = $el.attr('srcset');
+  if (!srcset) return;
+  const parts = srcset.split(/,\s+(?=\S)/).map((p) => {
+    const [url, ...d] = p.trim().split(/\s+/);
+    const next = rewriteHtmlRef(url);
+    return { url: next, local: next !== url, descriptor: d.join(' ') };
+  });
+  const local = parts.filter((p) => p.local);
+  const keep = local.length ? local : parts;
+  $el.attr('srcset', keep.map((p) => p.url + (p.descriptor ? ` ${p.descriptor}` : '')).join(', '));
+  const src = $el.attr('src') || '';
+  if (local.length && (/^(https?:)?\/\//i.test(src) || src.startsWith('/'))) {
+    $el.attr('src', local[local.length - 1].url);
+  }
+}
 
 function hashStr(s) {
   return crypto.createHash('md5').update(s).digest('hex').slice(0, 8);
@@ -416,7 +439,13 @@ function rewriteCssUrlRef(refUrl, cssPath, pageOrigin, downloaded, outputDir) {
 
 function resolveLocalAssetPath(refUrl, pageUrl, pageOrigin, downloaded, outputDir = null) {
   const abs = resolveAssetAbsolute(refUrl, pageUrl, pageOrigin);
-  if (!abs) return null;
+  if (!abs) {
+    // Another domain (a CDN): only files the capture browser already saved are local.
+    if (!/^https?:\/\//i.test(String(refUrl || '').trim())) return null;
+    const cross = String(refUrl).trim().replace(/&amp;/g, '&');
+    const local = downloaded.get(cross) || downloaded.get(canonicalAssetKey(cross));
+    return local && (!outputDir || fs.existsSync(path.join(outputDir, local))) ? local : null;
+  }
   return lookupDownloaded(downloaded, abs, pageOrigin, outputDir);
 }
 
@@ -603,13 +632,7 @@ export async function postProcessClone({ outputDir, pageUrl, html, preSaved = ne
       $el.removeAttr('integrity');
       $el.removeAttr('crossorigin');
     });
-    const srcset = $el.attr('srcset');
-    if (srcset) {
-      $el.attr('srcset', srcset.split(',').map((p) => {
-        const [url, ...d] = p.trim().split(/\s+/);
-        return rewriteHtmlRef(url) + (d.length ? ' ' + d.join(' ') : '');
-      }).join(', '));
-    }
+    rewriteSrcset($, $el, rewriteHtmlRef);
   };
 
   $('img, source, audio, embed, iframe').each((_, el) => {
@@ -719,13 +742,7 @@ function rewritePageHtml(html, pageUrl, sourcePath, downloaded, outputDir) {
       $el.removeAttr('integrity');
       $el.removeAttr('crossorigin');
     });
-    const srcset = $el.attr('srcset');
-    if (srcset) {
-      $el.attr('srcset', srcset.split(',').map((p) => {
-        const [url, ...d] = p.trim().split(/\s+/);
-        return rewriteHtmlRef(url) + (d.length ? ' ' + d.join(' ') : '');
-      }).join(', '));
-    }
+    rewriteSrcset($, $el, rewriteHtmlRef);
   };
 
   $('img, source, audio, embed, iframe').each((_, el) => {
@@ -782,7 +799,10 @@ export async function postProcessAllPages({ outputDir, pages, preSaved = new Map
 
   const queueFromPage = (refUrl, pageUrl) => {
     if (!refUrl) return;
-    const abs = resolveAssetAbsolute(refUrl, pageUrl, pageOrigin);
+    let abs = resolveAssetAbsolute(refUrl, pageUrl, pageOrigin);
+    // Images on another domain (a CDN) the capture browser didn't fetch: download them too.
+    const ref = String(refUrl).trim().replace(/&amp;/g, '&');
+    if (!abs && /^https?:\/\/[^?#]+\.(png|jpe?g|gif|webp|avif|svg)(?:[?#]|$)/i.test(ref)) abs = ref;
     if (!abs || downloaded.has(abs) || isCrawlablePage(abs, pageOrigin)) return;
     const local = assetUrlToLocal(abs, pageOrigin);
     if (!local || local.endsWith('/') || pending.has(local)) return;

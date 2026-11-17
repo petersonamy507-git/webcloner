@@ -3,6 +3,9 @@
  * asset into the selected element. Every insert is saved to the page file.
  */
 import { API } from './api.js';
+import { currentUser } from './auth.js';
+
+const ENTITY_KEY = 'cloner.assetEntityId';
 
 const KIND_LABELS = { image: 'Image', svg: 'SVG', video: 'Video', font: 'Font' };
 
@@ -35,9 +38,43 @@ export function initAssetLibrary({
   const fileInput = document.getElementById('assetFileInput');
   const siteOnly = document.getElementById('assetSiteOnly');
   const target = document.getElementById('assetTarget');
+  const entitySelect = document.getElementById('assetEntity');
+  const entityName = document.getElementById('assetEntityName');
+  const isSuper = currentUser.role === 'super_admin';
   let kind = '';
   let assets = [];
   let searchTimer;
+  let entityId = null; // super admins pick a library; everyone else uses their own entity's
+
+  /** Super admins choose any entity's library (remembered per browser); others see their own entity. */
+  function setupEntity() {
+    const entities = currentUser.entities || [];
+    if (!isSuper || !entities.length) {
+      entityName.textContent = currentUser.activeEntity?.name || currentUser.entity?.name || '';
+      return;
+    }
+    let saved = null;
+    try { saved = Number(localStorage.getItem(ENTITY_KEY)) || null; } catch { saved = null; }
+    const known = (id) => entities.some((e) => e.id === id);
+    // First visit: the active workspace, unless that's the empty catch-all "default" one.
+    const active = currentUser.activeEntity;
+    const fallback = active && active.slug !== 'default' ? active : entities.find((e) => e.slug !== 'default') || entities[0];
+    entityId = known(saved) ? saved : fallback.id;
+    entitySelect.innerHTML = entities
+      .map((e) => `<option value="${e.id}" ${e.id === entityId ? 'selected' : ''}>${escapeHtml(e.name)}</option>`)
+      .join('');
+    entitySelect.classList.remove('d-none');
+    entitySelect.addEventListener('change', () => {
+      entityId = Number(entitySelect.value);
+      try { localStorage.setItem(ENTITY_KEY, String(entityId)); } catch { /* per-browser convenience only */ }
+      load();
+    });
+  }
+
+  function withEntity(params) {
+    if (entityId) params.set('entityId', String(entityId));
+    return params;
+  }
 
   function setStatus(message, isError = false) {
     statusEl.textContent = message;
@@ -56,7 +93,7 @@ export function initAssetLibrary({
   }
 
   async function load() {
-    const params = new URLSearchParams({ folder });
+    const params = withEntity(new URLSearchParams({ folder }));
     if (kind) params.set('kind', kind);
     if (search.value.trim()) params.set('q', search.value.trim());
     if (siteOnly.checked) params.set('onlySite', 'true');
@@ -203,7 +240,7 @@ export function initAssetLibrary({
     [...files].forEach((file) => form.append('files', file));
     setStatus(`Uploading ${files.length} file${files.length > 1 ? 's' : ''}…`);
     try {
-      const res = await fetch(API.assets, { method: 'POST', body: form });
+      const res = await fetch(`${API.assets}?${withEntity(new URLSearchParams())}`, { method: 'POST', body: form });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Upload failed.');
       setStatus(`Uploaded ${data.assets.length} file${data.assets.length > 1 ? 's' : ''} to your workspace library.`);
@@ -225,6 +262,7 @@ export function initAssetLibrary({
   }
 
   function bind() {
+    setupEntity();
     document.getElementById('assetLibraryBtn').addEventListener('click', () => {
       const open = panel.classList.toggle('open');
       if (open) { describeTarget(); load(); }

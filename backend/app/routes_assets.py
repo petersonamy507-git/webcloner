@@ -10,9 +10,9 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import Principal, current_principal, log_activity, project_for, require_entity
+from app.auth import Principal, current_principal, log_activity, project_for, require_entity, sees_all_sites
 from app.config import CLONED_DIR, WORKSPACE_DIR
-from app.db import Asset, Entity, get_db, utcnow
+from app.db import Asset, Entity, Project, get_db, utcnow
 
 router = APIRouter(prefix="/api/assets")
 
@@ -56,7 +56,9 @@ def entity_asset_dir(entity_id: int) -> Path:
     return WORKSPACE_DIR / "entities" / str(entity_id) / "assets"
 
 
-def asset_payload(asset: Asset, folder: str = "") -> dict:
+def asset_payload(asset: Asset, folder: str = "", visible: set[str] | None = None) -> dict:
+    """visible: the sites the viewer may see (None = all), so members don't learn teammates' site names."""
+    usage = [u for u in (asset.usage or []) if visible is None or u.get("folder") in visible]
     return {
         "id": asset.id,
         "fileName": asset.file_name,
@@ -66,7 +68,7 @@ def asset_payload(asset: Asset, folder: str = "") -> dict:
         "url": f"/api/assets/{asset.id}/file",
         "uploadedBy": asset.uploader.email if asset.uploader else None,
         "createdAt": asset.created_at.isoformat() + "Z",
-        "usage": asset.usage or [],
+        "usage": usage,
         "usedInSite": bool(folder) and any(u.get("folder") == folder for u in asset.usage or []),
     }
 
@@ -77,6 +79,15 @@ def load_asset(db: Session, principal: Principal, asset_id: int) -> Asset:
     if not asset or asset.deleted_at or (asset.entity_id != entity_id and not principal.is_super_admin):
         raise HTTPException(404, "Asset not found.")
     return asset
+
+
+def library_entity(db: Session, principal: Principal, entity_id: Optional[int]) -> int:
+    """The library to act on: your own workspace, or any one a super admin picks."""
+    if entity_id and principal.is_super_admin:
+        if not db.get(Entity, entity_id):
+            raise HTTPException(404, "Entity not found.")
+        return entity_id
+    return require_entity(principal)
 
 
 def validate_upload(name: str, head: bytes, data_path: Path) -> tuple[str, str, str]:
@@ -96,8 +107,9 @@ def validate_upload(name: str, head: bytes, data_path: Path) -> tuple[str, str, 
 
 @router.get("")
 def list_assets(q: str = Query(""), kind: str = Query(""), folder: str = Query(""), onlySite: bool = Query(False),
+                entityId: Optional[int] = Query(None),
                 principal: Principal = Depends(current_principal), db: Session = Depends(get_db)):
-    entity_id = require_entity(principal)
+    entity_id = library_entity(db, principal, entityId)
     if folder:
         folder = project_for(db, principal, folder).folder
     query = select(Asset).where(Asset.entity_id == entity_id, Asset.deleted_at.is_(None)).order_by(Asset.id.desc())
@@ -105,16 +117,19 @@ def list_assets(q: str = Query(""), kind: str = Query(""), folder: str = Query("
         query = query.where(Asset.kind == kind)
     if q.strip():
         query = query.where(Asset.file_name.like(f"%{q.strip()[:100]}%"))
-    assets = [asset_payload(a, folder) for a in db.execute(query).scalars()]
+    visible = None
+    if not sees_all_sites(principal):
+        visible = set(db.execute(select(Project.folder).where(Project.created_by == principal.user.id)).scalars())
+    assets = [asset_payload(a, folder, visible) for a in db.execute(query).scalars()]
     if onlySite and folder:
         assets = [a for a in assets if a["usedInSite"]]
     return {"success": True, "assets": assets}
 
 
 @router.post("")
-async def upload_assets(request: Request, files: list[UploadFile] = File(...),
+async def upload_assets(request: Request, files: list[UploadFile] = File(...), entityId: Optional[int] = Query(None),
                         principal: Principal = Depends(current_principal), db: Session = Depends(get_db)):
-    entity_id = require_entity(principal)
+    entity_id = library_entity(db, principal, entityId)
     entity = db.get(Entity, entity_id)
     if principal.user.role == "entity_user" and (entity.settings or {}).get("allowUserUploads", True) is False:
         raise HTTPException(403, "Uploads are limited to workspace admins in this workspace.")
@@ -207,7 +222,8 @@ def use_asset(asset_id: int, body: UseAssetRequest, request: Request,
     """Copy a library asset into a site so the page can reference it."""
     asset = load_asset(db, principal, asset_id)
     project = project_for(db, principal, body.folder)
-    if project.entity_id != asset.entity_id:
+    # Super admins may bring any entity's asset into any site; everyone else stays in their own workspace.
+    if project.entity_id != asset.entity_id and not principal.is_super_admin:
         raise HTTPException(404, "Asset not found.")
     source = entity_asset_dir(asset.entity_id) / asset.stored_name
     if not source.is_file():
@@ -226,4 +242,4 @@ def use_asset(asset_id: int, body: UseAssetRequest, request: Request,
                  {"site": project.folder, "page": body.page, "placement": body.placement}, request,
                  entity_id=project.entity_id)
     db.commit()
-    return {"success": True, "path": rel, "url": f"/cloned/{project.folder}/{rel}", "asset": asset_payload(asset, project.folder)}
+    return {"success": True, "path": rel, "url": f"/cloned/{project.folder}/{rel}", "asset": asset_payload(asset, project.folder, None if sees_all_sites(principal) else {project.folder})}

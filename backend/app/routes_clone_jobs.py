@@ -4,6 +4,7 @@ progress read from the Node cloner, desktop/tablet/mobile screenshots of the
 original site, and a validation scan of the result.
 """
 import asyncio
+import os
 import shutil
 import time
 from types import SimpleNamespace
@@ -13,7 +14,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.auth import Principal, current_principal, log_activity, require_entity, sanitize_folder
+from app.auth import Principal, current_principal, log_activity, require_entity, sanitize_folder, sees_all_sites
 from app.config import CLONED_DIR, WORKSPACE_DIR
 from app.db import CloneJob, Project, SessionLocal, User, get_db, utcnow
 from app.models import CloneRequest
@@ -22,27 +23,51 @@ from app.services.node_worker import run_node_worker
 
 router = APIRouter()
 
-CLONE_SLOTS = asyncio.Semaphore(2)
+# Clones that run at the same time on this server (each one drives its own Chrome);
+# more wait in the queue. Per workspace, up to MAX_ACTIVE can be queued or running.
+CLONE_CONCURRENCY = max(1, int(os.environ.get("CLONE_CONCURRENCY", "4")))
+CLONE_SLOTS = asyncio.Semaphore(CLONE_CONCURRENCY)
 ACTIVE = ("queued", "running")
-MAX_ACTIVE_PER_WORKSPACE = 3
+MAX_ACTIVE_PER_WORKSPACE = max(1, int(os.environ.get("CLONE_MAX_ACTIVE_PER_WORKSPACE", "8")))
 DEVICES = ("desktop", "tablet", "mobile")
+SHOTS = DEVICES + ("desktop-popup",)  # desktop-popup: the page as it opened, popup still showing
 
 _processes: dict[int, asyncio.subprocess.Process] = {}
 _cancelled: set[int] = set()
 _tasks: set[asyncio.Task] = set()
+# Session cookies waiting for their job to start. Memory only: never in the database or logs.
+_sessions: dict[int, str] = {}
 
 
 def job_dir(entity_id: int, job_id: int):
     return WORKSPACE_DIR / "entities" / str(entity_id) / "clone-jobs" / str(job_id)
 
 
+def previous_copy(folder: str):
+    """Where a site's existing copy waits while it is cloned again."""
+    return CLONED_DIR / f".{folder}.previous"
+
+
+def put_back_previous(folder: str) -> bool:
+    """A re-clone failed or was interrupted: bring the earlier copy back."""
+    backup = previous_copy(folder)
+    if not backup.is_dir():
+        return False
+    shutil.rmtree(CLONED_DIR / folder, ignore_errors=True)
+    backup.rename(CLONED_DIR / folder)
+    return True
+
+
 def iso(value):
     return value.isoformat() + "Z" if value else None
 
 
-def folder_conflict(db: Session, entity_id: int, folder: str) -> str | None:
+def folder_conflict(db: Session, entity_id: int, folder: str, principal: Principal | None = None) -> str | None:
     existing = db.execute(select(Project).where(Project.folder == folder)).scalar_one_or_none()
     if existing and existing.entity_id != entity_id:
+        return "That folder name is already taken. Choose another."
+    # A member may re-clone their own site, not overwrite a teammate's.
+    if existing and principal and not sees_all_sites(principal) and existing.created_by != principal.user.id:
         return "That folder name is already taken. Choose another."
     if not existing and (CLONED_DIR / folder).exists():
         return "That folder name is already taken. Choose another."
@@ -117,6 +142,7 @@ async def run_job(job_id: int) -> None:
             job.status, job.started_at, job.stage, job.progress = "running", utcnow(), "Starting", 2
             db.commit()
             entity_id, url, folder, mode, user_id = job.entity_id, job.url, job.folder, job.mode, job.user_id
+        session_cookies = _sessions.pop(job_id, None)
         shots = job_dir(entity_id, job_id) / "screenshots"
         last = {"t": 0.0, "p": -1}
 
@@ -129,17 +155,25 @@ async def run_job(job_id: int) -> None:
             last.update(t=now, p=percent)
             _update(job_id, progress=percent, stage=str(event.get("stage") or "Working")[:255])
 
+        # Cloning again over an existing site: keep the old copy until the new one is done.
+        target, backup = CLONED_DIR / folder, previous_copy(folder)
+        if target.is_dir():
+            shutil.rmtree(backup, ignore_errors=True)
+            target.rename(backup)
+
         try:
             result = await run_node_worker(
                 "clone", on_progress=on_progress, on_start=lambda proc: _processes.__setitem__(job_id, proc),
                 url=url, folderName=folder, mode=mode, screenshotDir=str(shots),
+                **({"sessionCookies": session_cookies} if session_cookies else {}),
             )
         except RuntimeError as e:
             cancelled = job_id in _cancelled
             _cancelled.discard(job_id)
-            with SessionLocal() as db:
-                if not db.execute(select(Project.id).where(Project.folder == folder)).first():
-                    shutil.rmtree(CLONED_DIR / folder, ignore_errors=True)  # don't leave a half-cloned folder
+            if not put_back_previous(folder):
+                with SessionLocal() as db:
+                    if not db.execute(select(Project.id).where(Project.folder == folder)).first():
+                        shutil.rmtree(CLONED_DIR / folder, ignore_errors=True)  # don't leave a half-cloned folder
             _update(job_id, status="cancelled" if cancelled else "failed", finished_at=utcnow(),
                     stage="Cancelled" if cancelled else "Failed",
                     error=None if cancelled else str(e)[:1000])
@@ -147,6 +181,7 @@ async def run_job(job_id: int) -> None:
         finally:
             _processes.pop(job_id, None)
 
+        shutil.rmtree(backup, ignore_errors=True)  # the new copy replaces it
         final_folder = sanitize_folder(result.get("folder") or folder) or folder
         _update(job_id, progress=97, stage="Checking the cloned site")
         try:
@@ -162,9 +197,10 @@ async def run_job(job_id: int) -> None:
             job = db.get(CloneJob, job_id)
             job.folder = final_folder
             job.status, job.progress, job.stage, job.finished_at = "succeeded", 100, "Done", utcnow()
-            job.screenshots = [d for d in DEVICES if (shots / f"{d}.jpg").is_file()]
+            job.screenshots = [d for d in SHOTS if (shots / f"{d}.jpg").is_file()]
             job.result = {k: result.get(k) for k in (
-                "url", "folder", "pagesCloned", "filesDownloaded", "totalSize", "previewUrl", "downloadUrl", "fallback")}
+                "url", "folder", "pagesCloned", "filesDownloaded", "totalSize", "previewUrl", "downloadUrl", "fallback",
+                "access")}
             job.result["validation"] = validation
             db.commit()
 
@@ -172,6 +208,8 @@ async def run_job(job_id: int) -> None:
 def load_job(db: Session, principal: Principal, job_id: int) -> CloneJob:
     job = db.get(CloneJob, job_id)
     if not job or (not principal.is_super_admin and job.entity_id != principal.user.entity_id):
+        raise HTTPException(404, "Clone job not found.")
+    if not sees_all_sites(principal) and job.user_id != principal.user.id:
         raise HTTPException(404, "Clone job not found.")
     return job
 
@@ -181,7 +219,7 @@ async def start_clone_job(body: CloneRequest, request: Request,
                           principal: Principal = Depends(current_principal), db: Session = Depends(get_db)):
     entity_id = require_entity(principal)
     folder = sanitize_folder(body.folderName or "") or f"clone_{int(time.time() * 1000)}"
-    conflict = folder_conflict(db, entity_id, folder)
+    conflict = folder_conflict(db, entity_id, folder, principal)
     if conflict:
         raise HTTPException(409, conflict)
     active = db.execute(
@@ -194,9 +232,12 @@ async def start_clone_job(body: CloneRequest, request: Request,
                    mode=body.mode, status="queued", stage="Waiting to start", progress=0)
     db.add(job)
     db.flush()
-    log_activity(db, principal, "site.clone_started", folder, {"url": body.url, "mode": body.mode, "job": job.id},
+    log_activity(db, principal, "site.clone_started", folder,
+                 {"url": body.url, "mode": body.mode, "job": job.id, "withSession": bool(body.sessionCookies)},
                  request, entity_id=entity_id)
     db.commit()
+    if body.sessionCookies and body.sessionCookies.strip():
+        _sessions[job.id] = body.sessionCookies
     task = asyncio.create_task(run_job(job.id))
     _tasks.add(task)
     task.add_done_callback(_tasks.discard)
@@ -208,9 +249,10 @@ def list_clone_jobs(principal: Principal = Depends(current_principal), db: Sessi
     entity_id = principal.entity_id
     if not entity_id:
         return {"success": True, "jobs": []}
-    jobs = db.execute(
-        select(CloneJob).where(CloneJob.entity_id == entity_id).order_by(CloneJob.id.desc()).limit(15)
-    ).scalars().all()
+    query = select(CloneJob).where(CloneJob.entity_id == entity_id)
+    if not sees_all_sites(principal):
+        query = query.where(CloneJob.user_id == principal.user.id)
+    jobs = db.execute(query.order_by(CloneJob.id.desc()).limit(15)).scalars().all()
     return {"success": True, "jobs": [job_payload(j) for j in jobs]}
 
 
@@ -227,6 +269,7 @@ def cancel_clone_job(job_id: int, request: Request,
         raise HTTPException(403, "Only the person who started this clone, or an admin, can cancel it.")
     if job.status == "queued":
         job.status, job.stage, job.finished_at = "cancelled", "Cancelled", utcnow()
+        _sessions.pop(job.id, None)
     elif job.status == "running":
         proc = _processes.get(job.id)
         if not proc:
@@ -244,7 +287,7 @@ def cancel_clone_job(job_id: int, request: Request,
 def clone_job_screenshot(job_id: int, device: str,
                          principal: Principal = Depends(current_principal), db: Session = Depends(get_db)):
     job = load_job(db, principal, job_id)
-    if device not in DEVICES or device not in (job.screenshots or []):
+    if device not in SHOTS or device not in (job.screenshots or []):
         raise HTTPException(404, "Screenshot not found.")
     path = job_dir(job.entity_id, job.id) / "screenshots" / f"{device}.jpg"
     if not path.is_file():

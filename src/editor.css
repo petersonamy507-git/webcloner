@@ -430,8 +430,8 @@
 
 .editor-layout { display: flex; height: calc(100vh - 52px); }
 
-.editor-preview { flex: 1; position: relative; background: #0b1220; overflow: hidden; }
-.iframe-wrap { position: relative; width: 100%; height: 100%; }
+.editor-preview { flex: 1; min-width: 0; position: relative; background: #0b1220; overflow: hidden; display: flex; flex-direction: column; }
+.iframe-wrap { position: relative; width: 100%; flex: 1; min-height: 0; }
 #previewFrame { width: 100%; height: 100%; border: none; background: #fff; }
 
 /* Sidebar */
@@ -931,6 +931,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.asset-entity { display: flex; align-items: center; gap: 0.5rem; }
+.asset-entity label { color: var(--tb-muted); font-size: 0.78rem; margin: 0; }
+.asset-entity select {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--tb-border-strong);
+  border-radius: 8px;
+  background: #0b1220;
+  color: var(--tb-text);
+}
+.asset-entity span { font-weight: 600; }
 .asset-tools { display: flex; gap: 0.4rem; }
 .asset-search {
   flex: 1;
@@ -1008,31 +1020,31 @@
 .asset-actions span { color: var(--tb-muted); }
 .asset-empty, .asset-drop-hint { color: var(--tb-muted); font-size: 0.75rem; margin: 0; }
 
-/* ── Ask AI composer ── */
+/* ── Ask AI composer: always open, docked under the preview so it never covers the page ── */
 .ai-composer {
-  position: fixed;
+  /* Floats over the bottom of the preview: no dark band, the page keeps the full height. */
+  position: absolute;
   left: 50%;
-  bottom: 18px;
-  z-index: 1035;
-  width: min(720px, calc(100vw - 32px));
+  bottom: 14px;
   transform: translateX(-50%);
+  z-index: 5;
+  width: min(860px, calc(100% - 24px));
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem;
+  gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
   border: 1px solid var(--tb-border-strong);
   border-radius: 14px;
-  background: rgba(16, 26, 46, 0.97);
+  background: rgba(16, 26, 46, 0.96);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
   font-size: 0.85rem;
 }
-.ai-composer[hidden] { display: none; }
 .ai-composer.dragging { outline: 2px dashed var(--tb-accent); outline-offset: 3px; }
 .ai-composer.busy textarea { opacity: 0.6; }
 .aic-head { display: flex; align-items: center; gap: 0.6rem; }
 .aic-title { font-weight: 600; white-space: nowrap; }
-.aic-context { flex: 1; min-width: 0; }
+.aic-context { flex: 0 1 auto; min-width: 0; overflow: hidden; }
 .aic-chip {
   display: inline-flex;
   align-items: center;
@@ -1058,9 +1070,14 @@
 .aic-icon:hover { color: var(--tb-text); background: rgba(148, 163, 184, 0.12); }
 .ai-composer textarea {
   width: 100%;
-  resize: vertical;
-  min-height: 64px;
-  max-height: 240px;
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  height: 38px;
+  min-height: 38px;
+  max-height: 160px;
+  overflow-y: auto;
+  line-height: 1.4;
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--tb-border-strong);
   border-radius: 10px;
@@ -1087,8 +1104,21 @@
   color: #fff;
   font-size: 0.8rem;
 }
-.aic-actions { display: flex; align-items: center; gap: 0.3rem; }
-.aic-status { flex: 1; min-width: 0; color: var(--tb-muted); font-size: 0.78rem; overflow-wrap: anywhere; }
+.aic-row { display: flex; align-items: flex-end; gap: 0.3rem; }
+.aic-row .aic-icon, .aic-row .aic-send { height: 38px; flex: none; }
+.aic-hint {
+  margin-left: auto;
+  min-width: 0;
+  color: var(--tb-muted);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.aic-hint.is-move { color: #fcd34d; }
+.aic-status { color: var(--tb-muted); font-size: 0.78rem; overflow-wrap: anywhere; }
+.aic-status:empty { display: none; }
+@media (max-width: 900px) { .aic-hint { display: none; } }
 .aic-status.ok { color: #7ee2a8; }
 .aic-status.error { color: #ff9ca0; }
 .aic-send {
@@ -1102,17 +1132,6 @@
 }
 .aic-send:hover:not(:disabled) { background: var(--tb-accent-hover); }
 .aic-send:disabled { opacity: 0.6; }
-/* Keep the composer over the preview, clear of the edit sidebar when it's open. */
-body:has(#editSidebar:not(.d-none)) .ai-composer {
-  left: calc((100vw - 360px) / 2);
-  width: min(640px, calc(100vw - 392px));
-}
-@media (max-width: 768px) {
-  body:has(#editSidebar:not(.d-none)) .ai-composer {
-    left: calc((100vw - 300px) / 2);
-    width: min(640px, calc(100vw - 332px));
-  }
-}
 
 /* ── Version history ── */
 .history-panel .asset-grid { gap: 0.35rem; }

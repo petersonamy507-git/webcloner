@@ -60,7 +60,9 @@ document.querySelectorAll('.admin-tab').forEach((tab) => tab.addEventListener('c
 async function refreshEntities() {
   entities = (await api('/entities')).entities;
   const options = entities.map((e) => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
-  $('userEntity').innerHTML = options;
+  const chosen = $('userEntity').value;
+  $('userEntity').innerHTML = `<option value="" disabled selected>Select entity…</option>${options}`;
+  if (entities.some((e) => String(e.id) === chosen)) $('userEntity').value = chosen;
   $('userFilter').innerHTML = `<option value="">All workspaces</option>${options}`;
   $('activityFilter').innerHTML = `<option value="">All workspaces</option>${options}`;
 }
@@ -175,23 +177,45 @@ $('userForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   try {
     const role = $('userRole').value;
+    const password = $('userPassword').value;
+    const needsEntity = isSuper && role !== 'super_admin';
+    if (needsEntity && !$('userEntity').value) {
+      status('Select which entity this user belongs to.', true);
+      $('userEntity').focus();
+      return;
+    }
+    if (password && password.length < 10) {
+      status('Password must be at least 10 characters, or leave it empty to send a set-password link.', true);
+      return;
+    }
     const data = await api('/users', {
       method: 'POST',
       body: JSON.stringify({
         email: $('userEmail').value,
         name: $('userName').value,
         role,
-        entityId: isSuper && role !== 'super_admin' ? Number($('userEntity').value) : null,
+        entityId: needsEntity ? Number($('userEntity').value) : null,
+        password: password || null,
       }),
     });
     $('userEmail').value = '';
     $('userName').value = '';
+    $('userPassword').value = '';
+    if (!data.setPasswordLink) $('linkBox').classList.add('d-none');
     if (data.setPasswordLink) showLink(`Set-password link for ${data.user.email} (expires in 24 hours)`, data.setPasswordLink.link);
     status(`User ${data.user.email} added.`);
     loadUsers();
   } catch (err) {
     status(err.message, true);
   }
+});
+
+$('userPasswordToggle').addEventListener('click', () => {
+  const input = $('userPassword');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  $('userPasswordToggle').innerHTML = `<i class="bi bi-eye${show ? '-slash' : ''}"></i>`;
+  $('userPasswordToggle').title = show ? 'Hide password' : 'Show password';
 });
 
 $('userRows').addEventListener('click', async (event) => {

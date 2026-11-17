@@ -82,9 +82,13 @@ async def ai_edit(body: AiEditRequest, request: Request,
 
     selection = body.selection or None
     if selection:
+        size = {k: selection.get(k) for k in ("width", "height")}
         selection = {k: selection.get(k) for k in ("tag", "label", "elementId", "classes", "outerHTML", "isGlobal", "selectorPath")}
         selection["outerHTML"] = str(selection.get("outerHTML") or "")[:60000]
         selection["selectorPath"] = str(selection.get("selectorPath") or "")[:500]
+        # On-screen size of the element, so a generated image gets the right shape.
+        if all(isinstance(v, (int, float)) and 0 < v < 20000 for v in size.values()):
+            selection.update({k: int(v) for k, v in size.items()})
 
     try:
         result = await run_node_worker(

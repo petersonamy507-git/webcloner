@@ -218,14 +218,19 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
     if (!prompt) return setStatus('Describe the change you want.', 'error');
     const sel = scopeElement();
     let selectorPath = '';
+    let size = null;
     const liveEl = sel && previewFrame.contentDocument?.querySelector(`[data-cloner-id="${sel.id}"]`);
     if (liveEl) {
       try { selectorPath = uniqueSelector(liveEl); } catch { selectorPath = ''; }
+      const rect = liveEl.getBoundingClientRect();
+      if (rect.width && rect.height) size = { width: Math.round(rect.width), height: Math.round(rect.height) };
     }
     busy = true;
     sendBtn.disabled = true;
     root.classList.add('busy');
-    setStatus(attachments.length ? 'Reading your screenshots and editing the site…' : 'Editing the site…');
+    setStatus(attachments.length
+      ? 'Reading your screenshots and editing the site… (up to a minute if a new image is created)'
+      : 'Editing the site… (up to a minute if a new image is created)');
     try {
       const res = await fetch(API.aiEdit, {
         method: 'POST',
@@ -237,7 +242,7 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
           images: attachments.map((a) => a.dataUrl),
           selection: sel ? {
             tag: sel.tag, label: sel.label, elementId: sel.elementId,
-            classes: sel.classes, outerHTML: sel.outerHTML, isGlobal: sel.isGlobal, selectorPath,
+            classes: sel.classes, outerHTML: sel.outerHTML, isGlobal: sel.isGlobal, selectorPath, ...size,
           } : null,
         }),
       });
@@ -249,6 +254,7 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
         const files = (data.filesChanged || []).join(', ');
         setStatus(`${data.summary}${files ? ` — saved to ${files}` : ''}`, 'ok');
         promptEl.value = '';
+        fitPrompt();
         attachments = [];
         renderAttachments();
         reloadPreview();
@@ -263,16 +269,17 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
     }
   }
 
-  function open() {
-    root.hidden = false;
-    wholePage = false;
-    renderContext();
-    promptEl.focus();
+  function fitPrompt() {
+    promptEl.style.height = 'auto';
+    promptEl.style.height = `${Math.max(38, promptEl.scrollHeight + 2)}px`;
   }
 
   function bind() {
-    document.getElementById('aiComposerBtn').addEventListener('click', () => (root.hidden ? open() : (root.hidden = true)));
-    document.getElementById('aicClose').addEventListener('click', () => { root.hidden = true; });
+    // The composer is always open; the toolbar button just jumps to the prompt.
+    renderContext();
+    // One line by default, growing with the text up to the CSS max-height.
+    promptEl.addEventListener('input', fitPrompt);
+    document.getElementById('aiComposerBtn').addEventListener('click', () => promptEl.focus());
     document.getElementById('aicAttach').addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', async () => { await addFiles(fileInput.files); fileInput.value = ''; });
     root.querySelectorAll('[data-capture]').forEach((btn) => btn.addEventListener('click', () => capture(btn.dataset.capture)));
@@ -304,7 +311,7 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
     /** The editor calls this whenever the selection changes. */
     selectionChanged() {
       wholePage = false;
-      if (!root.hidden) renderContext();
+      renderContext();
     },
   };
 }

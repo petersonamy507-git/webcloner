@@ -49,13 +49,18 @@
         <form class="admin-form" id="userForm">
           <h2>New user</h2>
           <div class="admin-form-row">
+            <select class="form-select" id="userEntity" aria-label="Entity"></select>
             <input class="form-control" id="userEmail" type="email" placeholder="Email" required />
             <input class="form-control" id="userName" placeholder="Name" />
+            <div class="admin-password">
+              <input class="form-control" id="userPassword" type="password" autocomplete="new-password"
+                placeholder="Password (optional)" minlength="10" />
+              <button type="button" class="admin-password-toggle" id="userPasswordToggle" title="Show password"><i class="bi bi-eye"></i></button>
+            </div>
             <select class="form-select" id="userRole"></select>
-            <select class="form-select" id="userEntity"></select>
             <button class="btn btn-primary" type="submit"><i class="bi bi-person-plus me-1"></i>Add</button>
           </div>
-          <p class="admin-hint">The new user gets a one-time link to set their own password. Send it to them.</p>
+          <p class="admin-hint">Set a password (at least 10 characters) and share it with the user, or leave it empty and they get a one-time link to choose their own.</p>
         </form>
         <div class="admin-link-box d-none" id="linkBox">
           <span id="linkLabel">Set-password link</span>

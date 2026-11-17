@@ -8,13 +8,17 @@
 import fs from 'fs';
 import path from 'path';
 import * as cheerio from 'cheerio';
-import { loadEnvKey, openAiChatBody } from './openai-generate.mjs';
+import { generateImagePng, loadEnvKey, openAiChat } from './openai-generate.mjs';
 import { listPages } from './site-utils.mjs';
 import { extractSectionHtml, stripEditorAttrs } from './ai-fix-selection.mjs';
 
 const EDIT_CSS = 'assets/css/cloner-ai-edits.css';
 const EDITABLE_EXT = /\.(html?|css|php)$/i;
 const ASSET_TOKEN = /\{\{asset:(\d+)\}\}/g;
+const SITE_IMAGE_TOKEN = /\{\{site:(\d+)\}\}/g;
+const GENERATED_TOKEN = /\{\{generated\}\}/g;
+const IMAGE_FILE = /\.(png|jpe?g|webp|gif|svg|avif)$/i;
+const IMAGE_SIZES = ['1024x1024', '1536x1024', '1024x1536'];
 // New code the model may not add: it could run in every visitor's browser.
 const UNSAFE = /<\s*script\b|\son[a-z]+\s*=|javascript:|<\s*iframe\b|<\s*object\b|<\s*embed\b/gi;
 
@@ -82,6 +86,46 @@ function relatedCss(siteDir, selection) {
   return hits.join('\n');
 }
 
+/**
+ * Every image the site already uses, with what identifies it (file name, alt text,
+ * the text next to it such as a product name), so the model can pick one itself.
+ */
+function siteImageCatalog(siteDir, currentPage) {
+  const root = path.resolve(siteDir);
+  const found = new Map();
+  const pages = listPages(siteDir).map((p) => p.file);
+  pages.sort((a, b) => (a === currentPage ? -1 : b === currentPage ? 1 : 0));
+  for (const file of pages.slice(0, 40)) {
+    let $;
+    try { $ = cheerio.load(fs.readFileSync(path.join(siteDir, file), 'utf8')); } catch { continue; }
+    $('img, picture source').each((_, el) => {
+      const node = $(el);
+      const raw = node.attr('src') || node.attr('data-src') || node.attr('data-lazy-src')
+        || String(node.attr('srcset') || node.attr('data-srcset') || '').split(',')[0].trim().split(/\s+/)[0];
+      if (!raw || /^(data:|https?:|\/\/)/i.test(raw)) return;
+      let rel;
+      try { rel = decodeURIComponent(raw.split(/[?#]/)[0]); } catch { rel = raw.split(/[?#]/)[0]; }
+      const full = rel.startsWith('/') ? path.resolve(root, `.${rel}`) : path.resolve(root, path.dirname(file), rel);
+      if (!full.startsWith(root + path.sep) || !IMAGE_FILE.test(full) || !fs.existsSync(full)) return;
+      const sitePath = path.relative(root, full).replace(/\\/g, '/');
+      const img = node.is('img') ? node : node.closest('picture').find('img').first();
+      const alt = String(img.attr('alt') || img.attr('title') || '').trim();
+      const card = node.closest('a, li, figure, article, [class*=card], [class*=item], [class*=product]').first();
+      const near = card.length ? card.text().replace(/\s+/g, ' ').trim().slice(0, 80) : '';
+      const prev = found.get(sitePath);
+      if (!prev || (!prev.alt && alt) || (!prev.near && near)) {
+        found.set(sitePath, { sitePath, alt: alt || prev?.alt || '', near: near || prev?.near || '' });
+      }
+    });
+    if (found.size >= 400) break;
+  }
+  // Described images first: those are the ones the model can match to a request.
+  return [...found.values()]
+    .sort((a, b) => Number(Boolean(b.alt || b.near)) - Number(Boolean(a.alt || a.near)))
+    .slice(0, 150)
+    .map((img, i) => ({ ...img, id: i + 1 }));
+}
+
 function systemPrompt() {
   return `You edit a cloned website's real source files. Make the smallest change that does what the user asks.
 
@@ -89,7 +133,8 @@ Return JSON only:
 {
   "summary": "one or two sentences describing what you changed",
   "edits": [{ "file": "relative/path.html", "find": "exact text copied from the source", "replace": "new text" }],
-  "css": "new CSS rules to add (or empty string)"
+  "css": "new CSS rules to add (or empty string)",
+  "generateImage": null
 }
 
 Rules:
@@ -100,15 +145,20 @@ Rules:
 - Use "edits" for text, structure, images and attributes.
 - Never add <script>, inline event handlers (onclick=...), javascript: links, iframes, objects or embeds.
 - To use one of the workspace assets, write {{asset:ID}} where its URL goes (in HTML src/href or CSS url()). The server turns it into the right path.
+- Changing an image: never give up because no file was uploaded. In order:
+  1. Look through SITE IMAGES for one that matches what the user wants (by file name, alt text or nearby text such as a product name) and use it with {{site:ID}}. Prefer a workspace asset if the user refers to one.
+  2. If none fits, create one: add "generateImage": { "prompt": "...", "size": "1024x1024" | "1536x1024" | "1024x1536" } to your answer and write {{generated}} where its URL goes. Pick the size closest to the selected element's shape. Write the prompt as a detailed description of a realistic, professional image that matches the look of the image being replaced (style, background, framing, lighting; use the screenshots). No text, logos or trademarks in it unless the user asks for them.
+- When you replace an <img>, update every source of it so the new image really shows: src, srcset, data-src, data-srcset, data-lazy-src and any <source srcset> in the same <picture> (point them at the new image, or remove srcset/<source>). Keep the element's classes, alt (update it to describe the new image) and size.
 - Screenshots show what the user is looking at; use them to understand which part and what change they mean.
 - If the request can't be done safely, return no edits, empty css, and explain why in summary.`;
 }
 
-function buildUserText({ page, prompt, selection, sourceExcerpt, pageExcerpt, cssContext, assets, failures }) {
+function buildUserText({ page, prompt, selection, sourceExcerpt, pageExcerpt, cssContext, assets, siteImages = [], failures }) {
   const parts = [`User request: ${prompt}`, `Current page file: ${page}`];
   if (selection) {
     parts.push(`Selected element: <${selection.tag || '?'}>${selection.label ? ` "${String(selection.label).slice(0, 80)}"` : ''}` +
-      `${selection.elementId ? ` id="${selection.elementId}"` : ''}${selection.classes ? ` class="${String(selection.classes).slice(0, 160)}"` : ''}`);
+      `${selection.elementId ? ` id="${selection.elementId}"` : ''}${selection.classes ? ` class="${String(selection.classes).slice(0, 160)}"` : ''}` +
+      `${selection.width && selection.height ? ` shown at ${selection.width}x${selection.height}px` : ''}`);
   }
   if (selection?.selectorPath) {
     parts.push(`Unique CSS selector for the selected element: ${selection.selectorPath}\nScope every new CSS rule to this selector (or its descendants) so only the selected element changes.`);
@@ -119,6 +169,9 @@ function buildUserText({ page, prompt, selection, sourceExcerpt, pageExcerpt, cs
   parts.push(assets.length
     ? `Workspace assets you may use:\n${assets.map((a) => `- {{asset:${a.id}}} ${a.kind} "${a.fileName}"`).join('\n')}`
     : 'Workspace assets: none.');
+  parts.push(siteImages.length
+    ? `SITE IMAGES (already in this site; use with {{site:ID}}):\n${siteImages.map((img) => `- {{site:${img.id}}} ${img.sitePath}${img.alt ? ` alt="${img.alt.slice(0, 80)}"` : ''}${img.near ? ` near "${img.near}"` : ''}`).join('\n')}`
+    : 'SITE IMAGES: none.');
   if (failures?.length) {
     parts.push(`Your previous answer could not be applied:\n${failures.map((f) => `- ${f}`).join('\n')}\nReturn the full corrected answer.`);
   }
@@ -133,18 +186,11 @@ function pageExcerptFor(html, hasSelection) {
 
 async function askModel(apiKey, userText, images) {
   const content = [{ type: 'text', text: userText }, ...images.map((url) => ({ type: 'image_url', image_url: { url, detail: 'high' } }))];
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    signal: AbortSignal.timeout(150000),
-    body: JSON.stringify(openAiChatBody({
-      json: true,
-      maxTokens: 8000,
-      messages: [{ role: 'system', content: systemPrompt() }, { role: 'user', content }],
-    })),
+  const data = await openAiChat(apiKey, {
+    json: true,
+    maxTokens: 8000,
+    messages: [{ role: 'system', content: systemPrompt() }, { role: 'user', content }],
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || `OpenAI error (${res.status})`);
   const raw = data.choices?.[0]?.message?.content || '{}';
   try {
     return JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, ''));
@@ -153,21 +199,39 @@ async function askModel(apiKey, userText, images) {
   }
 }
 
-/** Replace {{asset:ID}} with a path relative to the file it appears in. */
-function resolveAssets(text, fileRel, assetsById, used, errors) {
-  return String(text || '').replace(ASSET_TOKEN, (token, id) => {
-    const asset = assetsById.get(Number(id));
-    if (!asset) {
-      errors.push(`${token} is not one of the listed workspace assets.`);
-      return token;
-    }
-    used.add(asset.id);
-    return path.posix.relative(path.posix.dirname(fileRel), asset.sitePath) || asset.sitePath;
-  });
+/** Replace {{asset:ID}}, {{site:ID}} and {{generated}} with paths relative to the file they appear in. */
+function resolveAssets(text, fileRel, assetsById, used, errors, extra = {}) {
+  const rel = (target) => path.posix.relative(path.posix.dirname(fileRel), target) || target;
+  return String(text || '')
+    .replace(ASSET_TOKEN, (token, id) => {
+      const asset = assetsById.get(Number(id));
+      if (!asset) {
+        errors.push(`${token} is not one of the listed workspace assets.`);
+        return token;
+      }
+      used.add(asset.id);
+      return rel(asset.sitePath);
+    })
+    .replace(SITE_IMAGE_TOKEN, (token, id) => {
+      const img = extra.siteImages?.find((i) => i.id === Number(id));
+      if (!img) {
+        errors.push(`${token} is not one of the listed site images.`);
+        return token;
+      }
+      return rel(img.sitePath);
+    })
+    .replace(GENERATED_TOKEN, (token) => {
+      if (!extra.generatedPath) {
+        errors.push('{{generated}} is used but "generateImage" with a prompt is missing.');
+        return token;
+      }
+      extra.generatedUsed = true;
+      return rel(extra.generatedPath);
+    });
 }
 
 /** Validate a plan against the files in memory. Returns the new file contents or the reasons it failed. */
-export function planChanges(siteDir, plan, assetsById) {
+export function planChanges(siteDir, plan, assetsById, extra = {}) {
   const errors = [];
   const files = new Map();
   const used = new Set();
@@ -188,7 +252,7 @@ export function planChanges(siteDir, plan, assetsById) {
       errors.push(`${label}: "find" text ${occurrences ? `appears ${occurrences} times` : 'was not found'}; copy a unique snippet exactly from the SOURCE.`);
       continue;
     }
-    const replace = resolveAssets(edit.replace, target.rel, assetsById, used, errors);
+    const replace = resolveAssets(edit.replace, target.rel, assetsById, used, errors, extra);
     if (countUnsafe(replace) > countUnsafe(find)) {
       errors.push(`${label}: adds a script, event handler, iframe or javascript: link, which isn't allowed.`);
       continue;
@@ -197,7 +261,7 @@ export function planChanges(siteDir, plan, assetsById) {
     files.set(target.rel, before.slice(0, at) + replace + before.slice(at + find.length));
   }
 
-  const css = resolveAssets(plan.css, EDIT_CSS, assetsById, used, errors).trim();
+  const css = resolveAssets(plan.css, EDIT_CSS, assetsById, used, errors, extra).trim();
   if (css) {
     if (countUnsafe(css) || /@import|expression\s*\(|<\//i.test(css)) errors.push('The CSS contains @import, expressions or markup, which isn\'t allowed.');
     const open = (css.match(/\{/g) || []).length;
@@ -269,20 +333,45 @@ export async function aiEditSite(siteDir, { page = 'index.html', prompt = '', im
     pageExcerpt: pageExcerptFor(html, Boolean(sourceExcerpt)),
     cssContext: relatedCss(siteDir, sel),
     assets,
+    siteImages: siteImageCatalog(siteDir, pageTarget.rel),
   };
   const assetsById = new Map(assets.map((a) => [Number(a.id), a]));
+  const generatedPath = `images/ai/generated-${Date.now()}.webp`;
+  const extraFor = (p) => ({
+    siteImages: context.siteImages,
+    generatedPath: p?.generateImage?.prompt ? generatedPath : '',
+  });
 
   let plan = await askModel(apiKey, buildUserText(context), images);
-  let result = planChanges(siteDir, plan, assetsById);
+  let extra = extraFor(plan);
+  let result = planChanges(siteDir, plan, assetsById, extra);
   if (result.errors.length) {
     plan = await askModel(apiKey, buildUserText({ ...context, failures: result.errors }), images);
-    result = planChanges(siteDir, plan, assetsById);
+    extra = extraFor(plan);
+    result = planChanges(siteDir, plan, assetsById, extra);
   }
   if (result.errors.length) {
     throw new Error(`The AI's change couldn't be applied safely, so nothing was changed. ${result.errors[0]}`);
   }
   if (!result.files.size && !result.css) {
     return { success: true, changed: false, summary: plan.summary || 'No change was needed.', filesChanged: [], assetsUsed: [] };
+  }
+
+  // A new image the plan asked for: made before anything is written, so a failed
+  // generation leaves the site untouched.
+  let generatedImage = null;
+  if (extra.generatedUsed) {
+    const size = IMAGE_SIZES.includes(plan.generateImage.size) ? plan.generateImage.size : '1024x1024';
+    let png;
+    try {
+      png = await generateImagePng(apiKey, plan.generateImage.prompt, size, { format: 'webp' });
+    } catch (err) {
+      throw new Error(`Couldn't create the new image, so nothing was changed. ${err.message}`);
+    }
+    const dest = path.join(siteDir, generatedPath);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, png);
+    generatedImage = generatedPath;
   }
 
   // Everything validated; now write.
@@ -315,5 +404,6 @@ export async function aiEditSite(siteDir, { page = 'index.html', prompt = '', im
     filesChanged,
     phpMirrored,
     assetsUsed: [...result.used],
+    generatedImage,
   };
 }

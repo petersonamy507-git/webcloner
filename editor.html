@@ -120,6 +120,29 @@
         <div class="iframe-wrap">
           <iframe id="previewFrame" title="Site Preview"></iframe>
         </div>
+        <section class="ai-composer" id="aiComposer" aria-label="Ask AI to edit">
+          <div class="aic-head">
+            <span class="aic-title"><i class="bi bi-chat-square-text me-1"></i>Ask AI</span>
+            <span class="aic-context" id="aicContext"></span>
+            <span class="aic-hint" id="editorHint">Click an element to edit it · Double-click to type inline · Drop an image to replace one</span>
+          </div>
+          <div class="aic-attachments d-none" id="aicAttachments"></div>
+          <div class="aic-row">
+            <button type="button" class="aic-icon" id="aicAttach" title="Attach a screenshot file"><i class="bi bi-paperclip"></i></button>
+            <div class="dropup">
+              <button type="button" class="aic-icon" data-bs-toggle="dropdown" title="Take a screenshot of the preview"><i class="bi bi-camera"></i></button>
+              <ul class="dropdown-menu dropdown-menu-dark">
+                <li><button type="button" class="dropdown-item" data-capture="viewport"><i class="bi bi-window me-2"></i>Visible area</button></li>
+                <li><button type="button" class="dropdown-item" data-capture="section"><i class="bi bi-layout-text-window me-2"></i>Selected section</button></li>
+                <li><button type="button" class="dropdown-item" data-capture="element"><i class="bi bi-bounding-box me-2"></i>Selected element</button></li>
+              </ul>
+            </div>
+            <textarea id="aicPrompt" rows="1" placeholder="Describe the change… paste a screenshot with Ctrl/Cmd+V"></textarea>
+            <button type="button" class="aic-send" id="aicSend" title="Apply (Ctrl/Cmd+Enter)"><i class="bi bi-stars me-1"></i>Apply</button>
+          </div>
+          <span class="aic-status" id="aicStatus" role="status"></span>
+          <input type="file" id="aicFile" accept="image/png,image/jpeg,image/webp" multiple hidden />
+        </section>
         <div id="saveToast" class="save-toast d-none" role="status" aria-live="polite">
           <i class="bi bi-check-circle me-2"></i><span id="saveToastText">Saved successfully!</span>
         </div>
@@ -877,6 +900,11 @@
         <span><i class="bi bi-images me-1"></i>Workspace assets</span>
         <button type="button" class="asset-panel-close" id="assetPanelClose" title="Close"><i class="bi bi-x-lg"></i></button>
       </div>
+      <div class="asset-entity">
+        <label for="assetEntity">Entity</label>
+        <select id="assetEntity" class="d-none"></select>
+        <span id="assetEntityName"></span>
+      </div>
       <div class="asset-target" id="assetTarget"></div>
       <div class="asset-tools">
         <input type="search" class="asset-search" id="assetSearch" placeholder="Search by file name" />
@@ -914,29 +942,6 @@
       <pre></pre>
     </div>
 
-    <section class="ai-composer" id="aiComposer" hidden aria-label="Ask AI to edit">
-      <div class="aic-head">
-        <span class="aic-title"><i class="bi bi-chat-square-text me-1"></i>Ask AI to edit</span>
-        <span class="aic-context" id="aicContext"></span>
-        <button type="button" class="aic-icon" id="aicClose" title="Close"><i class="bi bi-x-lg"></i></button>
-      </div>
-      <div class="aic-attachments d-none" id="aicAttachments"></div>
-      <textarea id="aicPrompt" rows="3" placeholder="Describe the change… Paste a screenshot with Ctrl/Cmd+V, e.g. “Make this hero dark, use my logo, orange button, smooth fade-in.”"></textarea>
-      <div class="aic-actions">
-        <button type="button" class="aic-icon" id="aicAttach" title="Attach a screenshot file"><i class="bi bi-paperclip"></i></button>
-        <div class="dropup">
-          <button type="button" class="aic-icon" data-bs-toggle="dropdown" title="Take a screenshot of the preview"><i class="bi bi-camera"></i></button>
-          <ul class="dropdown-menu dropdown-menu-dark">
-            <li><button type="button" class="dropdown-item" data-capture="viewport"><i class="bi bi-window me-2"></i>Visible area</button></li>
-            <li><button type="button" class="dropdown-item" data-capture="section"><i class="bi bi-layout-text-window me-2"></i>Selected section</button></li>
-            <li><button type="button" class="dropdown-item" data-capture="element"><i class="bi bi-bounding-box me-2"></i>Selected element</button></li>
-          </ul>
-        </div>
-        <span class="aic-status" id="aicStatus" role="status"></span>
-        <button type="button" class="aic-send" id="aicSend" title="Apply (Ctrl/Cmd+Enter)"><i class="bi bi-stars me-1"></i>Apply</button>
-      </div>
-      <input type="file" id="aicFile" accept="image/png,image/jpeg,image/webp" multiple hidden />
-    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="/src/editor.js"></script>

@@ -439,6 +439,10 @@ export class WebsiteCloner {
     if (maxPages === 1) {
       for (const key of pageMap.keys()) pageMap.set(key, 'index.html');
     }
+    // The home page is always the site root, even when the site redirects "/" somewhere
+    // like /en/home. Otherwise there is no index.html to preview, edit or export.
+    const homeKey = canonicalPageKey(home.finalUrl);
+    if (homeKey) pageMap.set(homeKey, 'index.html');
 
     await includeOriginalThankYou({
       pageEntries,

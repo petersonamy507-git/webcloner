@@ -295,6 +295,11 @@ def resolve_cloned_file(url_path: str) -> Path | None:
         return None
     if full.is_file():
         return full
+    # Some clones saved a file under its URL-encoded name ("HLO%20Banner.jpg"),
+    # while the browser asks for the decoded one ("HLO Banner.jpg").
+    encoded = (ROOT / quote(rel, safe="/!$&'()*+,;=:@~")).resolve()
+    if encoded != full and cloned_root in encoded.parents and encoded.is_file():
+        return encoded
     if full.is_dir() and (full / "index.html").is_file():
         return full / "index.html"
     if not full.suffix:
@@ -304,3 +309,14 @@ def resolve_cloned_file(url_path: str) -> Path | None:
         if (full / "index.html").is_file():
             return full / "index.html"
     return None
+
+
+def zip_directory(directory: Path, filename: str) -> tuple[bytes, str]:
+    """Zip a finished export folder, dotfiles (.htaccess) included."""
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for path in sorted(directory.rglob("*")):
+            if path.is_file() and path.name != ".DS_Store":
+                zf.write(path, path.relative_to(directory).as_posix())
+    return buffer.getvalue(), filename
+

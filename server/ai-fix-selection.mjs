@@ -4,7 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as cheerio from 'cheerio';
-import { loadEnvKey, openAiChatBody } from './openai-generate.mjs';
+import { loadEnvKey, openAiChat, OPENAI_IMAGE_MODEL, OPENAI_IMAGE_QUALITY, OPENAI_TIMEOUT_MS } from './openai-generate.mjs';
 import { listPages } from './site-utils.mjs';
 import { detectSiteOrigin, loadCloneMeta, pageFileToOriginalUrl } from './site-origin.mjs';
 
@@ -246,22 +246,14 @@ ${(cloneSection || selection.outerHTML || '').slice(0, 12000)}
 --- ORIGINAL (live site, target) ---
 ${(originalSection || 'NOT FOUND — use clone + user note').slice(0, 12000)}`;
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    signal: AbortSignal.timeout(90000),
-    body: JSON.stringify(openAiChatBody({
-      json: true,
-      maxTokens: 12000,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-    })),
+  const data = await openAiChat(apiKey, {
+    json: true,
+    maxTokens: 12000,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
   });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || `OpenAI error (${res.status})`);
   return JSON.parse(stripJsonFences(data.choices?.[0]?.message?.content || '{}'));
 }
 
@@ -502,13 +494,13 @@ async function generateImageFile(apiKey, prompt) {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    signal: AbortSignal.timeout(120000),
+    signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
     body: JSON.stringify({
-      model: 'dall-e-3',
+      model: OPENAI_IMAGE_MODEL,
       prompt: String(prompt || 'A clean website image').slice(0, 1000),
       n: 1,
       size: '1024x1024',
-      response_format: 'b64_json',
+      quality: OPENAI_IMAGE_QUALITY,
     }),
   });
   const data = await res.json();
@@ -536,21 +528,14 @@ newSrc: ${newSrc || '(none)'}
 CURRENT ELEMENT:
 ${(selection.outerHTML || '').slice(0, 12000)}`;
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    signal: AbortSignal.timeout(90000),
-    body: JSON.stringify(openAiChatBody({
-      json: true,
-      maxTokens: 12000,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-    })),
+  const data = await openAiChat(apiKey, {
+    json: true,
+    maxTokens: 12000,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || `OpenAI error (${res.status})`);
   return JSON.parse(stripJsonFences(data.choices?.[0]?.message?.content || '{}'));
 }
 

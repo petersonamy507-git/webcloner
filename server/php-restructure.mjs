@@ -17,6 +17,7 @@ import { applyHeadSnippets, readHeadSnippets } from './head-snippets.mjs';
 import { stripSlickRuntime } from './clone-postprocess.mjs';
 import { PORTFOLIO_BANNER_CSS, SCROLL_DUPLICATE_SCRIPT } from './animation-css.mjs';
 import { toPhpPageHref, toPhpPageHrefs } from './openai-generate.mjs';
+import { FOOTER_CLOSE, HTACCESS, INDEX_PHP, headPhp, phpViewDocument, robotsTxt, sitemapXml } from './php-view.mjs';
 
 const PAGE_ANIMATIONS_CSS = 'css/cloner-page-animations.css';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -380,6 +381,14 @@ function writeLeadPhp(siteDir) {
   return true;
 }
 
+const URL_START = String.raw`(?<=(?:^|["'(=\s,])\/?)`;
+
+/** Make a path rule match only where a URL value begins (after a quote, "(", "=", space or comma). */
+function anchorToUrlStart(re) {
+  if (/^(?:src|href|url)/.test(re.source)) return re;
+  return new RegExp(URL_START + re.source, re.flags);
+}
+
 function rewriteAssetPaths(html) {
   let out = html;
   const rules = [
@@ -433,7 +442,10 @@ function rewriteAssetPaths(html) {
     [/href="images\//g, 'href="/images/'],
     [/url\((['"]?)images\//g, 'url($1/images/'],
   ];
-  for (const [re, rep] of rules) out = out.replace(re, rep);
+  // Only the folders migrateAssets() moves (top-level assets/, nypublishers/, …) may be
+  // rewritten, so every rule must match at the start of a URL value. Unanchored, they
+  // also hit nested paths like wp-content/themes/x/assets/css/ → wp-content/themes/x//css/.
+  for (const [re, rep] of rules) out = out.replace(anchorToUrlStart(re), rep);
 
   out = out.replace(/href=(["'])([^"']*?index\.html[^"']*)\1/gi, (full, quote, href) => `href=${quote}${toPhpPageHref(href)}${quote}`);
 
@@ -547,7 +559,13 @@ export function extractHeadAssets(html) {
     const block = $.html(el)?.trim();
     if (block) styles.push(block);
   });
-  return { links: dedupeTags(links), styles: dedupeTags(styles) };
+  // Head scripts (jQuery on most WordPress sites) must survive, or every script after them fails.
+  const scripts = [];
+  $('head script').each((_, el) => {
+    const block = $.html(el)?.trim();
+    if (block) scripts.push(block);
+  });
+  return { links: dedupeTags(links), styles: dedupeTags(styles), scripts: dedupeTags(scripts) };
 }
 
 function bundleScriptTags(siteDir, already = '') {
@@ -644,30 +662,7 @@ function writeIncludes(siteDir, shell = {}) {
     : fallbackStylesheetTags(siteDir);
   const headStyles = shell.headStyles || [];
 
-  // americanauthors structure — keep the source site's stylesheets
-  fs.writeFileSync(
-    path.join(inc, 'head.php'),
-    `<?php
-include_once("token.php");
-include_once("ppc_or_seo.php");
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-if (isset($_SERVER['HTTPS'])) { $requesMet = "https"; } else { $requesMet = "http"; }
-?>
-<html lang="en">
-<head>
-  <base href="/">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="index, follow">
-  <link rel="icon" href="/favicon.png" type="image/png">
-  ${headLinks.join('\n  ')}
-  ${headStyles.join('\n  ')}
-  <link rel="canonical" href="<?= $requesMet.'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'] ?>">
-</head>
-`
-  );
+  fs.writeFileSync(path.join(inc, 'head.php'), headPhp({ links: headLinks, styles: headStyles }));
 
   fs.writeFileSync(
     path.join(inc, 'token.php'),
@@ -733,72 +728,16 @@ ${MENU_DROPDOWN_CSS}
   const footerPhp = `${rewriteAssetPaths(shell.footerHtml || '')}
 ${bundleScripts}
 ${footerScripts}
-`;
+${FOOTER_CLOSE}`;
   fs.writeFileSync(path.join(inc, 'footer.php'), footerPhp);
 }
 
 function writeIndexPhp(siteDir) {
-  fs.writeFileSync(
-    path.join(siteDir, 'index.php'),
-    readTemplate('index.php', `<?php
-chdir(__DIR__);
-$requestPath = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/');
-if ($requestPath !== '/' && is_file(__DIR__ . $requestPath)) {
-    return false;
-}
-ob_start();
-session_start();
-$basePath = "/";
-$url = $_SERVER['REQUEST_URI'];
-$current_url = explode('?', $url);
-$url = $current_url[0];
-if ($url !== '/' && str_ends_with($url, '/index.html')) {
-    $url = substr($url, 0, -strlen('index.html'));
-}
-if ($url !== '/' && str_ends_with($url, '.html')) {
-    $url = substr($url, 0, -strlen('.html')) . '/';
-}
-if ($url !== '/' && !str_ends_with($url, '/')) {
-    $url .= '/';
-}
-$dir = __DIR__.'/views';
-$files = array_slice(scandir($dir), 2);
-$fileWithOutExt = array();
-foreach ($files as $file) {
-    if (!str_ends_with($file, '.php')) continue;
-    $without_extension = '/'.pathinfo($file, PATHINFO_FILENAME).'/';
-    array_push($fileWithOutExt, $without_extension);
-}
-$checkUrl = ($basePath!="/"?$basePath."/":"/");
-if ($url == $checkUrl) {
-    require $dir.'/home.php';
-    die();
-}
-if (in_array($url, $fileWithOutExt)) {
-    $urlWithoutSlashes = str_replace('/', "", $url);
-    require $dir.'/'.$urlWithoutSlashes.'.php';
-} else {
-    http_response_code(404);
-    require $dir.'/404.php';
-}
-?>`)
-  );
+  fs.writeFileSync(path.join(siteDir, 'index.php'), INDEX_PHP);
 }
 
 function writeHtaccess(siteDir) {
-  fs.writeFileSync(
-    path.join(siteDir, '.htaccess'),
-    readTemplate('.htaccess', `# americanauthors-style PHP router
-<IfModule mod_rewrite.c>
-RewriteEngine On
-RewriteBase /
-RewriteRule ^index\\.php$ - [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.php [L]
-</IfModule>
-`)
-  );
+  fs.writeFileSync(path.join(siteDir, '.htaccess'), HTACCESS);
 }
 
 function writeStartServer(siteDir) {
@@ -854,41 +793,38 @@ function writeSystemViews(siteDir) {
   const thankTpl = readTemplate('views/thank-you.php', '');
   fs.writeFileSync(
     path.join(viewsDir, 'thank-you.php'),
-    thankTpl || `<!DOCTYPE html>
-<html>
-<?php include_once("includes/head.php"); ?>
-<title>Thank You</title>
-<body>
-<?php include_once("includes/header.php"); ?>
-<section class="py-5 text-center">
-  <h1><?php echo htmlspecialchars($_REQUEST['successMsg'] ?? 'Thank you!'); ?></h1>
-  <a href="/" class="btn btn-primary mt-3">Go Home</a>
-</section>
-<?php include_once("includes/footer.php"); ?>
-</body>
-</html>
-`
+    thankTpl || phpViewDocument({
+      title: 'Thank you',
+      body: `    <section class="section1 d-flex" style="height: 65vh;">
+        <div class="container align-self-center">
+            <div class="row">
+                <div class="col-lg-12" style="margin-top: 70px; text-align:center;">
+                    <h1 class="first-color font-80 font-weight-bold">
+                        <?php if(isset($_REQUEST['thanksMsg'])){ echo htmlspecialchars($_REQUEST['thanksMsg']);} ?></h1>
+                    <h1 class="first-color font-80 font-weight-bold">
+                        <?php if(isset($_REQUEST['successMsg'])){ echo htmlspecialchars($_REQUEST['successMsg']);} ?></h1>
+                    <a href="/" class="header-btn mt-3">
+                        Go Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>`,
+    }),
   );
 
   fs.writeFileSync(
     path.join(viewsDir, '404.php'),
-    readTemplate('views/404.php', '') || `<!DOCTYPE html>
-<html>
-<?php include_once("includes/head.php"); ?>
-<title>404 Not Found</title>
-<body>
-<?php include_once("includes/header.php"); ?>
-<section class="py-5 text-center"><h1>404 — Page Not Found</h1><a href="/">Home</a></section>
-<?php include_once("includes/footer.php"); ?>
-</body>
-</html>
-`
+    readTemplate('views/404.php', '') || phpViewDocument({
+      title: 'Page not found',
+      body: '    <section class="py-5 text-center"><h1>404 — Page Not Found</h1><a href="/">Home</a></section>',
+    }),
   );
 }
 
 export function pageToSlug(pageFile) {
   if (pageFile === 'index.html') return 'home';
-  return pageFile.replace(/\/index\.html$/, '').replace(/\//g, '-');
+  return pageFile.replace(/\/index\.html?$/i, '').replace(/\.html?$/i, '').replace(/\//g, '-');
 }
 
 /** Prefix for static HTML preview served under /cloned/folder/... (Vite) */
@@ -995,18 +931,7 @@ function writeThankYouPhpFromOriginal(siteDir, rawHtml) {
   const description = $('meta[name="description"]').attr('content') || '';
   const bodyOpen = (rewritten.match(/<body\b[^>]*>/i) || ['<body>'])[0];
   const bodyInner = toPhpPageHrefs(extractBodyContent(rewritten));
-  const php = `<!DOCTYPE html>
-<html>
-<?php include_once("includes/head.php"); ?>
-<title>${title.replace(/</g, '&lt;')}</title>
-<meta name="description" content="${description.replace(/"/g, '&quot;')}">
-${bodyOpen}
-<?php include_once("includes/header.php"); ?>
-${bodyInner}
-<?php include_once("includes/footer.php"); ?>
-</body>
-</html>
-`;
+  const php = phpViewDocument({ title, description, body: bodyInner });
   fs.writeFileSync(path.join(views, 'thank-you.php'), php);
 }
 
@@ -1035,23 +960,15 @@ function convertPage(siteDir, pageFile, shell, viewsDir) {
   const headStyles = pageAssets.styles.length ? pageAssets.styles : (shell.headStyles || []);
   const shellHrefs = new Set((shell.headLinks || []).map(tagHref));
   const extraLinks = pageAssets.links.filter((tag) => !shellHrefs.has(tagHref(tag)));
+  const headScripts = pageAssets.scripts || [];
   const bundleScripts = bundleScriptTags(siteDir, shell.bodyScripts.join('\n'));
 
-  const php = `<!DOCTYPE html>
-<html>
-<?php include_once("includes/head.php"); ?>
-<title>${title.replace(/</g, '&lt;')}</title>
-<meta name="description" content="${(description || '').replace(/"/g, '&quot;')}">
-${extraLinks.join('\n')}
-<body>
-<?php include_once("includes/header.php"); ?>
-${orphanStyles}
-${toPhpPageHrefs(bodyInner)}
-${scrollScript}
-<?php include_once("includes/footer.php"); ?>
-</body>
-</html>
-`;
+  const php = phpViewDocument({
+    title,
+    description,
+    extraHead: [...extraLinks, ...headScripts].join('\n'),
+    body: `${orphanStyles}\n${toPhpPageHrefs(bodyInner)}\n${scrollScript}`,
+  });
 
   fs.writeFileSync(path.join(viewsDir, `${slug}.php`), php);
 
@@ -1064,6 +981,7 @@ ${scrollScript}
   <meta name="description" content="${(description || '').replace(/"/g, '&quot;')}">
   ${headLinks.join('\n  ')}
   ${headStyles.join('\n  ')}
+  ${headScripts.join('\n  ')}
   ${hasPortfolioScroll ? `<link rel="stylesheet" href="/${PAGE_ANIMATIONS_CSS}">` : ''}
   ${orphanStyles}
 </head>
@@ -1173,6 +1091,15 @@ export function attachLeadPhpToSite(siteDir) {
 /**
  * Restructure cloned folder to americanauthors PHP stack.
  */
+function siteOriginFromMeta(siteDir) {
+  try {
+    const meta = JSON.parse(fs.readFileSync(path.join(siteDir, 'clone-meta.json'), 'utf8'));
+    return new URL(meta.sourceUrl).origin;
+  } catch {
+    return '';
+  }
+}
+
 export function restructureToPhpStack(siteDir) {
   if (!fs.existsSync(siteDir)) throw new Error('Clone folder not found');
 
@@ -1206,9 +1133,10 @@ export function restructureToPhpStack(siteDir) {
   writeHtaccess(siteDir);
   writeStartServer(siteDir);
 
-  if (!fs.existsSync(path.join(siteDir, 'robots.txt'))) {
-    fs.writeFileSync(path.join(siteDir, 'robots.txt'), 'User-agent: *\nAllow: /\n');
-  }
+  const origin = siteOriginFromMeta(siteDir);
+  fs.writeFileSync(path.join(siteDir, 'robots.txt'), robotsTxt(origin));
+  const sitemapPaths = pages.filter((page) => !isThankYouPageFile(page)).map((page) => toPhpPageHref(page));
+  fs.writeFileSync(path.join(siteDir, 'sitemap.xml'), sitemapXml(origin, [...new Set(sitemapPaths)]));
 
   cleanupOldAssets(siteDir);
   repairPhpAssetSlashes(siteDir);

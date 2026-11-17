@@ -5,10 +5,10 @@
 import fs from 'fs';
 import path from 'path';
 import * as cheerio from 'cheerio';
-import { loadEnvKey, openAiChatBody, OPENAI_CHAT_MODEL } from './openai-generate.mjs';
+import { loadEnvKey, openAiChatBody, OPENAI_CHAT_MODEL, OPENAI_FALLBACK_MODEL, OPENAI_TIMEOUT_MS } from './openai-generate.mjs';
 import { applyTheme, contrastRatio, extractTheme, listPages, loadTheme, removeRepeatedSections, withContrast } from './site-utils.mjs';
 
-const FIX_MODELS = [OPENAI_CHAT_MODEL];
+const FIX_MODELS = [OPENAI_CHAT_MODEL, OPENAI_FALLBACK_MODEL].filter((m, i, all) => all.indexOf(m) === i);
 
 const FIX_CSS = 'assets/css/cloner-ai-fix.css';
 const PAGE_THEME_CSS = 'assets/css/cloner-ai-page-theme.css';
@@ -532,7 +532,7 @@ ${imageDataUrl ? 'The selected logo or image is attached. Read its colors before
           'Content-Type': 'application/json',
           Authorization: `Bearer ${apiKey}`,
         },
-        signal: AbortSignal.timeout(90000),
+        signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
         body: JSON.stringify(body),
       });
       const data = await res.json();

@@ -7,24 +7,67 @@ import { buildPageHtml, getSiteContext, removeRepeatedSections } from './site-ut
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 
-/** Single model for every AI feature: good at coding and structured edits, reads images, low cost. */
-export const OPENAI_CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-5-mini';
+/**
+ * Best OpenAI models for every AI feature (override any of them in .env):
+ * GPT-6 Astra, OpenAI's flagship for complex reasoning and coding, reads screenshots;
+ * GPT-6.1 Sol if Astra is unavailable; GPT Image 2.6 Sunburst for images.
+ */
+export const OPENAI_CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-6-astra';
+export const OPENAI_FALLBACK_MODEL = process.env.OPENAI_FALLBACK_MODEL || 'gpt-6.1-sol';
+export const OPENAI_REASONING_EFFORT = process.env.OPENAI_REASONING_EFFORT || 'high';
+export const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2.6-sunburst';
+export const OPENAI_IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY || 'high';
+// Deeper reasoning takes longer; the Node worker itself allows 10 minutes.
+export const OPENAI_TIMEOUT_MS = 240000;
 
-const isReasoningModel = (model) => /^(gpt-5|o\d)/i.test(model);
+const isReasoningModel = (model) => /^(gpt-[5-9]|o\d)/i.test(model);
 
 export function openAiChatBody({ messages, maxTokens = 4000, json = false, model = OPENAI_CHAT_MODEL }) {
   const body = { model, messages };
   if (isReasoningModel(model)) {
     // Reasoning models reject a custom temperature, and hidden reasoning tokens
-    // count against max_completion_tokens, so keep effort low and leave headroom.
-    body.reasoning_effort = 'low';
-    body.max_completion_tokens = maxTokens + 4000;
+    // count against max_completion_tokens, so leave room for them.
+    body.reasoning_effort = OPENAI_REASONING_EFFORT;
+    body.max_completion_tokens = maxTokens + (/^(low|minimal|none)$/.test(OPENAI_REASONING_EFFORT) ? 4000 : 20000);
   } else {
     body.temperature = 0.2;
     body.max_completion_tokens = maxTokens;
   }
   if (json) body.response_format = { type: 'json_object' };
   return body;
+}
+
+const FATAL_ERROR = /api key|incorrect api key|quota|billing|rate limit|insufficient/i;
+const MODEL_UNAVAILABLE = /model|not found|does not exist|do not have access|not available/i;
+
+/**
+ * One chat completion with the best model, falling back to OPENAI_FALLBACK_MODEL when
+ * the first is unavailable, overloaded or times out. Returns the API response JSON.
+ */
+export async function openAiChat(apiKey, options, { timeout = OPENAI_TIMEOUT_MS } = {}) {
+  const models = [options.model || OPENAI_CHAT_MODEL, OPENAI_FALLBACK_MODEL].filter((m, i, all) => m && all.indexOf(m) === i);
+  let lastError;
+  for (const model of models) {
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(timeout),
+        body: JSON.stringify(openAiChatBody({ ...options, model })),
+      });
+      const data = await res.json();
+      if (res.ok) return data;
+      const err = new Error(data.error?.message || `OpenAI error (${res.status})`);
+      err.status = res.status;
+      throw err;
+    } catch (err) {
+      lastError = err;
+      if (FATAL_ERROR.test(err.message)) throw err;
+      // A bad request stays bad on another model; only retry when this model is the problem.
+      if (err.status && err.status < 500 && !MODEL_UNAVAILABLE.test(err.message)) throw err;
+    }
+  }
+  throw lastError;
 }
 
 // Keys pasted from formatted text often keep wrapping quotes or backticks.
@@ -243,7 +286,7 @@ function contactFacts(html) {
 }
 
 /** Page generation uses the strongest model on the account, then falls back if that model is unavailable. */
-const PAGE_MODELS = [OPENAI_CHAT_MODEL];
+const PAGE_MODELS = [OPENAI_CHAT_MODEL, OPENAI_FALLBACK_MODEL].filter((m, i, all) => all.indexOf(m) === i);
 
 function pageSlug(pageName) {
   return String(pageName || 'page')
@@ -271,7 +314,7 @@ async function chatCompletion(apiKey, body) {
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    signal: AbortSignal.timeout(90000),
+    signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
     body: JSON.stringify(body),
   });
   const data = await res.json();
@@ -287,7 +330,7 @@ async function requestImagePng(apiKey, body) {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    signal: AbortSignal.timeout(120000),
+    signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
     body: JSON.stringify(body),
   });
   const data = await res.json();
@@ -297,13 +340,15 @@ async function requestImagePng(apiKey, body) {
   return Buffer.from(b64, 'base64');
 }
 
-export async function generateImagePng(apiKey, prompt, size) {
+/** format: 'png' (default) or 'webp' (much smaller, for images placed on pages). */
+export async function generateImagePng(apiKey, prompt, size, { format = 'png' } = {}) {
   const body = {
-    model: 'gpt-image-1',
+    model: OPENAI_IMAGE_MODEL,
     prompt: String(prompt).slice(0, 800),
     n: 1,
     size,
-    quality: 'medium',
+    quality: OPENAI_IMAGE_QUALITY,
+    ...(format === 'webp' ? { output_format: 'webp', output_compression: 85 } : {}),
   };
   let lastError;
   for (let attempt = 0; attempt < 3; attempt += 1) {

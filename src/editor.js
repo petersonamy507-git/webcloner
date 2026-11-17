@@ -350,6 +350,13 @@ function setMoveMode(enabled) {
   const btn = document.getElementById('moveModeBtn');
   btn?.classList.toggle('is-on', moveMode);
   btn?.setAttribute('aria-pressed', String(moveMode));
+  const hint = document.getElementById('editorHint');
+  if (hint) {
+    hint.textContent = moveMode
+      ? 'Move mode on · Drag an element to reposition it · Hold Shift to place it freely'
+      : 'Click an element to edit it · Double-click to type inline · Drop an image to replace one';
+    hint.classList.toggle('is-move', moveMode);
+  }
   previewFrame.contentWindow?.postMessage({ type: 'CLONER_SET_MOVE_MODE', enabled: moveMode }, '*');
 }
 
