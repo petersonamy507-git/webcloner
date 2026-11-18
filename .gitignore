@@ -8,3 +8,6 @@ cloned/
 .env.*
 .cloner-trash/
 workspace/
+
+# Database exports (contain user accounts)
+deploy/*.sql
