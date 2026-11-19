@@ -13,8 +13,13 @@ workspace/
 deploy/*.sql
 
 # Brand profiles and their saved sites (~500 MB): copied to the server separately, not kept in git
-brand_data/
+# brand_data/
 
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Old project archives
+Archive.zip
+Archive 2.zip
+Archive 4.zip
