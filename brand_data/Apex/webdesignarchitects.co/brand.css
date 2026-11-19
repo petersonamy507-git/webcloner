@@ -1,0 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700;800&display=swap');
+
+/* Web Design Architects – values taken from the live site (2026-11-18) */
+:root {
+  --brand-primary: #00FFFF;
+  --brand-color-1: #171313;
+  --brand-color-2: #838383;
+  --brand-color-3: #F5F5F5;
+  --brand-color-4: #212529;
+  --brand-font-heading: 'Oswald';
+  --brand-font-body: 'Poppins';
+}

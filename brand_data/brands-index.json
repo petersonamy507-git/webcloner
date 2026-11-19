@@ -1,0 +1,104 @@
+[
+  {
+    "group": "Apex",
+    "domain": "bookwritingmaestros.co",
+    "name": "Book Writing Maestros",
+    "folder": "Apex/bookwritingmaestros.co"
+  },
+  {
+    "group": "Apex",
+    "domain": "webdesignarchitects.co",
+    "name": "Web Design Architects",
+    "folder": "Apex/webdesignarchitects.co"
+  },
+  {
+    "group": "Apex",
+    "domain": "websitedesigntree.co",
+    "name": "Website Design Tree",
+    "folder": "Apex/websitedesigntree.co"
+  },
+  {
+    "group": "Orion",
+    "domain": "ecompartnerz.co",
+    "name": "eCom Partnerz",
+    "folder": "Orion/ecompartnerz.co"
+  },
+  {
+    "group": "Orion",
+    "domain": "ny-publishers.com",
+    "name": "NY Publishers",
+    "folder": "Orion/ny-publishers.com"
+  },
+  {
+    "group": "Ivertax Lab",
+    "domain": "northstarbookpublishers.co",
+    "name": "Northstar Book Publishers",
+    "folder": "Ivertax Lab/northstarbookpublishers.co"
+  },
+  {
+    "group": "Ivertax Lab",
+    "domain": "expertbookpartners.co",
+    "name": "Expert Book Partners",
+    "folder": "Ivertax Lab/expertbookpartners.co"
+  },
+  {
+    "group": "Ivertax Lab",
+    "domain": "onlineshopexpert.co",
+    "name": "Online Shop Expert",
+    "folder": "Ivertax Lab/onlineshopexpert.co"
+  },
+  {
+    "group": "Ink-Blaze",
+    "domain": "bluemountpublishers.co",
+    "name": "Blue Mount Publisher",
+    "folder": "Ink-Blaze/bluemountpublishers.co"
+  },
+  {
+    "group": "Ink-Blaze",
+    "domain": "americancreativesagency.com",
+    "name": "American Creatives Agency",
+    "folder": "Ink-Blaze/americancreativesagency.com"
+  },
+  {
+    "group": "Ink-Blaze",
+    "domain": "bes-publisher.com",
+    "name": "BES Publishers",
+    "folder": "Ink-Blaze/bes-publisher.com"
+  },
+  {
+    "group": "Vanguard",
+    "domain": "pandabookpublishing.co",
+    "name": "Panda Book Publishing",
+    "folder": "Vanguard/pandabookpublishing.co"
+  },
+  {
+    "group": "Vanguard",
+    "domain": "writers-bloom.com",
+    "name": null,
+    "folder": "Vanguard/writers-bloom.com"
+  },
+  {
+    "group": "Vanguard",
+    "domain": "bestselerllc.com",
+    "name": "Best Sellers LLC",
+    "folder": "Vanguard/bestselerllc.com"
+  },
+  {
+    "group": "Zenium",
+    "domain": "houseofbest-sellers.com",
+    "name": "House of Bestsellers",
+    "folder": "Zenium/houseofbest-sellers.com"
+  },
+  {
+    "group": "Zenium",
+    "domain": "primebooksagency.co",
+    "name": "Prime Books Agency",
+    "folder": "Zenium/primebooksagency.co"
+  },
+  {
+    "group": "Zenium",
+    "domain": "expressbookpublishing.com",
+    "name": "Express Book Publishing",
+    "folder": "Zenium/expressbookpublishing.com"
+  }
+]

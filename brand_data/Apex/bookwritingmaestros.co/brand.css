@@ -1,0 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+/* Book Writing Maestros – values taken from the live site (2026-11-18) */
+:root {
+  --brand-primary: #901114;
+  --brand-color-1: #AB2311;
+  --brand-color-2: #2C2C2C;
+  --brand-color-3: #F4F3EC;
+  --brand-color-4: #666666;
+  --brand-color-5: #212529;
+  --brand-font-heading: 'El Messiri';
+}

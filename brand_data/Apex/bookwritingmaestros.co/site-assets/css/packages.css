@@ -1,0 +1,368 @@
+.btn-a,a:hover {
+    text-decoration: none
+}
+
+.pack-h h2,.pack-h h5 {
+    color: #ffff;
+    text-transform: uppercase
+}
+
+.blink-bg,.btn-a,.check-icon-list,.off-box,.p1-box,.sc-btn1,.sc-btn2 {
+    display: inline-block
+}
+
+.blink-bg p,.pack-h h2,.pack-h h5 {
+    text-transform: uppercase
+}
+
+::selection {
+    background: #895ffc;
+    color: #fff;
+    text-shadow: none
+}
+
+::-webkit-scrollbar {
+    width: 5px;
+    background-color: #f5f5f5
+}
+
+::-webkit-scrollbar-button:end:increment,::-webkit-scrollbar-button:start:decrement {
+    display: none
+}
+
+::-webkit-scrollbar-track-piece {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+    background-color: #dedede
+}
+
+::-webkit-scrollbar-thumb:vertical {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+    background-image: linear-gradient(#222,#222)
+}
+
+.pack-h {
+    padding-bottom: 50px
+}
+
+.btn-a {
+    background-image: -webkit-linear-gradient(90deg,rgba(21,72,144,.99608) 0,#1d6bda 100%);
+    border: 2px solid #1d6bda;
+    border-radius: 6px;
+    color: #fff;
+    padding: 20px 40px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    -webkit-transition-duration: .4s;
+    transition-duration: .4s
+}
+
+.btn-a:hover {
+    background: 0 0;
+    color: #fff
+}
+
+.mainBanner {
+    background-color: #222;
+    padding: 80px 0
+}
+
+.pack-icon,.pack-wrap {
+    background-color: #901114
+}
+
+.pack-h h5 {
+    font-weight: 400;
+    line-height: 1.5;
+    font-size: 18px
+}
+
+.pack-h h2,.pack-txt h2 {
+    font-weight: 600;
+    line-height: 1.5
+}
+
+.pack-h h2 {
+    font-size: 60px
+}
+
+.pack-txt h2 {
+    color: #fff;
+    font-size: 22px
+}
+
+.pack-txt span {
+    color: #fff;
+    font-weight: 700;
+    font-size: 55px
+}
+
+.pack-icon i,ul.pack-list li {
+    line-height: 1.5;
+    font-weight: 600;
+    color: #fff
+}
+
+.pack-icon i {
+    font-size: 44px
+}
+.banner_form h2{
+    color: #fff;
+}
+.banner_form p {
+    text-align: center;
+    color: #000;
+}
+
+.pack-icon svg {
+    background-color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    vertical-align: middle;
+    margin-right: 10px
+}
+
+.pack-icon {
+    padding: 15px 15px 30px;
+    text-align: center
+}
+
+.pack-btn.text-center,.pack-wrap {
+    padding: 20px
+}
+
+span.cut {
+    font-size: 26px;
+    text-decoration: line-through red 2px
+}
+
+.sc-btn1,.sc-btn2 {
+    height: 50px;
+    width: 145px;
+    text-align: center;
+    line-height: 45px;
+    border-radius: 50px;
+    margin-right: 0;
+    font-weight: 700;
+    color: #fff;
+    z-index: 1;
+    border: 2px solid #fff;
+    transition-duration: .5s
+}
+
+.sc-btn1:hover,.sc-btn2:hover {
+    background-color: #fff;
+    color: #000
+}
+
+ul.pack-list {
+    padding: 20px 0;
+    height: 430px;
+    overflow-x: hidden
+}
+
+ul.pack-list li {
+    padding: 10px 30px;
+    border-bottom: .5px solid #e6e8e9;
+    text-transform: capitalize
+}
+
+.check-icon-list {
+    background-image: linear-gradient(0deg,#00f500 1%,#00db00 53%,#00c000 100%);
+    border-radius: 50%;
+    height: 6px;
+    width: 6px;
+    text-align: center;
+    margin-right: 9px
+}
+
+.pack-wrap {
+    box-shadow: 0 0 40px 2px rgb(41 168 225 / 40%)
+}
+
+span.off-pp {
+    font-size: 20px;
+    line-height: .5;
+    font-weight: 400;
+    display: block
+}
+
+img.p1-pack {
+    width: 90px;
+    display: block;
+    margin: auto
+}
+
+.p1-box {
+    text-align: center
+}
+
+.blink-bg {
+    color: #fff;
+    border-radius: 5px;
+    animation: .5s infinite blinkingBackground
+}
+
+@keyframes blinkingBackground {
+    0% {
+        color: #fff
+    }
+
+    100% {
+        color: red
+    }
+}
+
+.blink-bg p {
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 1.5;
+    padding: 10px 0
+}
+
+@media (max-width: 767px) {
+    .mainBanner {
+        padding:0
+    }
+    .banner_form h2{
+        font-size: 19px !important;
+    }
+    .pack-h,img.p1-pack {
+        display: none
+    }
+
+    .pack-icon {
+        padding-bottom: 0
+    }
+
+    .p1-box {
+        width: 49%
+    }
+
+    .sc-btn1,.sc-btn2 {
+        width: 130px
+    }
+
+    .pack-txt span {
+        font-size: 40px;
+        vertical-align: super
+    }
+
+    span.cut {
+        font-size: 20px
+    }
+
+    span.off-pp {
+        font-size: 25px
+    }
+}
+
+.banner_form {
+    background: #fff;
+    padding: 20px;
+    width: 90%;
+    margin-left: auto;
+    border-radius: 9px;
+    position: relative;
+    box-shadow: 0px 0px 11px -3px;
+}
+
+.banner_form h2 {
+    width: 100%;
+    text-align: center;
+    font-size: 21px;
+    border-radius: 3px;
+    font-weight: 700;
+    margin: 15px 0 15px;
+    z-index: 2;
+    position: relative;
+}
+
+.banner_form form::after {
+    position: absolute;
+    content: "";
+    top: 14px;
+    left: -2px;
+    background-image: url(../images/form-heading-after.svg);
+    background-size: contain;
+    background-repeat: no-repeat;
+    height: 12%;
+    width: 100%;
+    z-index: 1; 
+    opacity: 0.9;
+}
+
+.banner_form p {
+    font-size: 16px;
+    line-height: 22px;
+    font-weight: 400;
+    width: 80%;
+    margin: 30px 30px -20px 30px;
+}
+
+.banner_form form textarea {
+    padding-top: 16px!important
+}
+
+.banner_form form {
+    margin: 30px 0 0
+}
+
+.banner_form form input,.banner_form form textarea {
+    width: 100%;
+    margin: 0 0 15px;
+    height: 50px;
+    outline: 0;
+    border: 1px solid #000;
+    padding: 0 0 0 15px;
+    font-family: 'El Messiri';
+    font-size: 16px;
+    color: #000
+}
+
+img.msg {
+    width: 88%;
+    height: 37px;
+    padding: 4px;
+    position: relative;
+    top: 9px;
+    margin-right: 18px;
+    right: -10px
+}
+
+input::placeholder,textarea::placeholder {
+    color: #000!important
+}
+
+p.inst-call a {
+    color: #901114;
+    font-weight: 700
+}
+
+.banner_form form input::placeholder,.banner_form form textarea::placeholder {
+    color: #901114
+}
+
+.banner_form form textarea {
+    height: 80px
+}
+
+input[type=submit] {
+    background: #901114;
+    color: #fff!important;
+    font-size: 18px!important;
+    font-weight: 700
+}
+
+.dropdown-menu.megamenu.sm-menu {
+    margin-top: -15px!important
+}
+
+.cta-btn {
+    margin-right: 79px
+}
+
+.cct {
+    color: #901114!important
+}

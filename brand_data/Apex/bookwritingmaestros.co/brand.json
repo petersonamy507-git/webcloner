@@ -1,0 +1,90 @@
+{
+  "schema_version": "2.0",
+  "group": "Apex",
+  "domain": "bookwritingmaestros.co",
+  "company": {
+    "name": "Book Writing Maestros",
+    "website": "https://www.bookwritingmaestros.co",
+    "tagline": "We are the consummate Ghostwriters for Hire | USA",
+    "about": null,
+    "copyright": "Copyright © 2023 Book Writing Maestros | All rights reserved."
+  },
+  "seo": {
+    "title": "Professional Book Writing Services | Book Writing Maestros",
+    "description": "Book Writing Maestros is the USA's best website for hire book writer online. Our professional book writing services always deliver books on time."
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 (929) 543-6633",
+        "e164": "+19295436633"
+      }
+    ],
+    "emails": [
+      "query@bookwritingmaestros.co"
+    ],
+    "address": {
+      "street": "631 4th Ave unit # 4006",
+      "city": "Brooklyn",
+      "state": "NY",
+      "zip": "11232",
+      "as_shown": "631 4th Ave unit # 4006 Brooklyn, NY 11232"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": "#901114",
+    "observed": [
+      "#AB2311",
+      "#2C2C2C",
+      "#F4F3EC",
+      "#666666",
+      "#212529"
+    ]
+  },
+  "fonts": {
+    "heading": "El Messiri",
+    "body": null,
+    "loaded_from_google_fonts": [
+      "El Messiri",
+      "Montserrat"
+    ],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.png",
+      "source_url": "https://www.bookwritingmaestros.co/images/Logo-04.png"
+    },
+    "favicon": {
+      "file": "logos/favicon.png",
+      "source_url": "https://www.bookwritingmaestros.co/images/favicon.png"
+    }
+  },
+  "services": [
+    "Ghostwriting",
+    "Book Publishing",
+    "Audio Book",
+    "Book Cover Design",
+    "Book Video",
+    "Author Website",
+    "Fiction Books",
+    "Speech Writing",
+    "Autobiography Ghostwriting",
+    "Fantasy Writing",
+    "Comic Book",
+    "Nonfiction Books",
+    "Book Editing",
+    "Children Book",
+    "Novel Writing",
+    "Book Marketing"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://www.bookwritingmaestros.co",
+    "notes": [
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}
