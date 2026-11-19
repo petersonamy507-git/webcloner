@@ -264,7 +264,7 @@ ACTION_CATEGORIES = {
     "site": ("site.clone", "site.delete", "site.restore", "site.save", "site.upload", "site.download",
              "site.open", "site.theme", "site.create_page", "site.history_restore", "site.version_restore",
              "site.head_snippets", "site.replace_logos", "site.apply_brand", "site.brand_image", "site.php_restructure",
-             "site.github_push", "site.github_push_request", "site.lock", "site.unlock"),
+             "site.github_push", "site.github_push_request", "site.lock", "site.unlock", "site.assets.repair"),
     "ai": ("site.ai.",),
     "asset": ("asset.",),
 }

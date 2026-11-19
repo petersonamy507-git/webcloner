@@ -1,4 +1,4 @@
-import { currentUser } from './auth.js';
+import { currentUser, isAdmin } from './auth.js';
 import { bindDownloadLinks } from './github-status.js';
 import { ICON_LIBRARIES } from './icon-libraries.js';
 import { initSiteTools } from './site-tools.js';
@@ -11,6 +11,8 @@ import { initAiEditSelection } from './ai-edit-selection.js';
 import { initProjectHistory } from './project-history.js';
 import { initAssetLibrary } from './asset-library.js';
 import { initAiComposer } from './ai-composer.js';
+import { initMissingAssets } from './missing-assets.js';
+import { initTextAssets } from './text-assets.js';
 import { initVersionHistory } from './version-history.js';
 import { API } from './api.js';
 
@@ -29,6 +31,8 @@ if (downloadZipBtn) downloadZipBtn.dataset.githubPush = folder;
 
 /** Site flags: hide "Push to GitHub" after its one push; a locked site is view-only for users. */
 let siteReadOnly = false;
+let missingAssets = null;
+let textAssets = null;
 fetch(`${API.githubStatus}?folder=${encodeURIComponent(folder)}`)
   .then((res) => res.json())
   .then((data) => {
@@ -450,6 +454,7 @@ function openSidebar(data) {
 
   showContentSections(data.type);
   showBrandGallery(data.type === 'image');
+  textAssets?.show(['text', 'link', 'button'].includes(data.type));
   const textOnly = !['link', 'image', 'icon', 'button', 'video', 'input'].includes(data.type);
   document.getElementById('applyBtn')?.classList.toggle('d-none', textOnly);
 
@@ -610,7 +615,7 @@ async function loadBrandGalleries() {
   const entities = galleryEntities().map((e) => ({ id: `entity:${e.id}`, name: e.name, entityId: e.id, type: 'entity' }));
   let brands = [];
   try {
-    const res = await fetch(API.brandGallery);
+    const res = await fetch(`${API.brandGallery}?folder=${encodeURIComponent(folder)}`);
     const data = await res.json();
     if (res.ok && data.success) brands = (data.brands || []).map((b) => ({ ...b, type: 'brand' }));
   } catch { /* brand folders are optional */ }
@@ -1044,6 +1049,7 @@ async function runAutosave() {
     if (html) await savePage(currentPage, html);
     if (pendingGlobalEdits.length) await applyGlobalEdits();
     setSaveState('saved');
+    missingAssets?.changed();
   } catch (err) {
     setSaveState('error', err.message);
     autosaveAgain = true;
@@ -1102,6 +1108,27 @@ async function applyGlobalEdits() {
 
 function applyEditToHtml(html, edit) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
+  if (edit.editType === 'replace-text') {
+    doc.querySelectorAll('header,footer,nav,[role="banner"],[role="contentinfo"]').forEach((container) => {
+      const walker = doc.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const n = walker.currentNode;
+        if (n.nodeValue.includes(edit.find)) n.nodeValue = n.nodeValue.split(edit.find).join(edit.replace);
+      }
+      if (edit.kind === 'phone') {
+        const old = edit.find.replace(/\D/g, '');
+        container.querySelectorAll('a[href^="tel:"],a[href^="callto:"]').forEach((a) => {
+          if (old && a.getAttribute('href').replace(/\D/g, '').endsWith(old.slice(-9))) a.setAttribute('href', `tel:${edit.replace.replace(/[^\d+]/g, '')}`);
+        });
+      }
+      if (edit.kind === 'email') {
+        container.querySelectorAll('a[href^="mailto:"]').forEach((a) => {
+          if (a.getAttribute('href').toLowerCase().includes(edit.find.toLowerCase())) a.setAttribute('href', `mailto:${edit.replace}`);
+        });
+      }
+    });
+    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  }
   doc.querySelectorAll('header,footer,nav,[role="banner"],[role="contentinfo"]').forEach((container) => {
     container.querySelectorAll(edit.tag).forEach((el) => {
       if (edit.editType === 'html') el.innerHTML = edit.innerHTML;
@@ -1473,6 +1500,13 @@ window.addEventListener('message', async (e) => {
       alert('Image upload failed: ' + err.message);
     }
   }
+  if (e.data?.type === 'CLONER_TEXT_REPLACED') {
+    const r = e.data.data || {};
+    // Header and footer details repeat on every page: change them there too.
+    if (r.isGlobal) (r.found || []).filter(Boolean).forEach((find) => pendingGlobalEdits.push({ editType: 'replace-text', kind: r.kind, find, replace: r.value }));
+    updateUndoButtons();
+    scheduleAutosave();
+  }
   if (e.data?.type === 'CLONER_ELEMENT_MOVED') {
     updateUndoButtons();
     scheduleAutosave();
@@ -1518,6 +1552,7 @@ function initEditor() {
     getPage: () => currentPage,
     reloadPreview: () => loadPreview(currentPage),
     showSaveToast,
+    allowImages: isAdmin,
   });
   aiComposer.bind();
   const versionHistory = initVersionHistory({
@@ -1526,6 +1561,20 @@ function initEditor() {
     onRestored: () => { loadPages(); loadPreview(currentPage); showSaveToast('Version restored.'); },
   });
   versionHistory.bind();
+  missingAssets = initMissingAssets({
+    folder,
+    previewFrame,
+    getPage: () => currentPage,
+    goToPage: (page) => {
+      if (![...pageSelect.options].some((o) => o.value === page)) return;
+      pageSelect.value = page;
+      pageSelect.dispatchEvent(new Event('change'));
+    },
+    reloadPreview: () => loadPreview(currentPage),
+    flush: () => flushPendingEdits().catch(() => {}),
+  });
+  missingAssets.start();
+  textAssets = initTextAssets({ folder, previewFrame, getSelected: () => selectedElement });
   document.getElementById('assetLibraryBtn')?.addEventListener('click', () => versionHistory.close());
   fetch(API.siteOpened, {
     method: 'POST',

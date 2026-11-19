@@ -23,7 +23,7 @@ import { reportProgress } from './progress.mjs';
 import { applyHeadSnippets, readHeadSnippets } from './head-snippets.mjs';
 import { saveCloneMeta } from './site-origin.mjs';
 import { editSelectionWithAI, fixSelectionFromOriginal } from './ai-fix-selection.mjs';
-import { applyBrand, listBrands, replaceProjectLogos } from './apply-brand.mjs';
+import { applyBrand, replaceProjectLogos } from './apply-brand.mjs';
 import { fixPageWithAI } from './fix-with-ai.mjs';
 import { restoreSnapshot, snapshotSite } from './history.mjs';
 import { deleteClone, listClones, restoreClone } from './clone-library.mjs';
@@ -208,14 +208,10 @@ async function handleAiCustomize(input) {
   return { success: true, ...result };
 }
 
-function handleListBrands() {
-  return { success: true, brands: listBrands() };
-}
-
 async function handleApplyBrand(input) {
   const dir = siteDir(input.folder);
   if (!fs.existsSync(dir)) throw new Error('Clone folder not found.');
-  return applyBrand(dir, input.brand);
+  return applyBrand(dir, input.brand, input.brandDir || '');
 }
 
 function handleReplaceLogos(input) {
@@ -355,7 +351,6 @@ const handlers = {
   'laravel-restructure': handleLaravelRestructure,
   'php-export': handlePhpExport,
   'head-snippets': handleHeadSnippets,
-  'list-brands': handleListBrands,
   'apply-brand': handleApplyBrand,
   'replace-logos': handleReplaceLogos,
 };

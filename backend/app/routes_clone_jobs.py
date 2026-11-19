@@ -191,7 +191,14 @@ async def run_job(job_id: int) -> None:
 
         shutil.rmtree(backup, ignore_errors=True)  # the new copy replaces it
         final_folder = sanitize_folder(result.get("folder") or folder) or folder
-        _update(job_id, progress=97, stage="Checking the cloned site")
+        _update(job_id, progress=97, stage="Fixing broken images")
+        try:
+            from app.routes_asset_check import repair_folder
+            repaired = await repair_folder(final_folder, url)
+            assets = {k: repaired.get(k) for k in ("recovered", "missing", "stylesheetMissing", "pages")}
+        except Exception as e:  # noqa: BLE001 — a failed check must not fail the clone
+            assets = {"error": str(e)[:300]}
+        _update(job_id, progress=98, stage="Checking the cloned site")
         try:
             validation = _validation_summary(await run_node_worker(
                 "ai-audit", folder=final_folder, mode="audit", categories=["all"], useAI=False))
@@ -210,6 +217,7 @@ async def run_job(job_id: int) -> None:
                 "url", "folder", "pagesCloned", "filesDownloaded", "totalSize", "previewUrl", "downloadUrl", "fallback",
                 "access")}
             job.result["validation"] = validation
+            job.result["assets"] = assets
             db.commit()
 
 

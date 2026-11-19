@@ -4,7 +4,9 @@
 import fs from 'fs';
 import path from 'path';
 import * as cheerio from 'cheerio';
-import { loadEnvKey, openAiChat, OPENAI_IMAGE_MODEL, OPENAI_IMAGE_QUALITY, OPENAI_TIMEOUT_MS } from './openai-generate.mjs';
+import { loadEnvKey, openAiChat } from './openai-generate.mjs';
+import { generateImage, referenceFromFile } from './gemini-image.mjs';
+import { localImageFile } from './image-fit.mjs';
 import { listPages } from './site-utils.mjs';
 import { detectSiteOrigin, loadCloneMeta, pageFileToOriginalUrl } from './site-origin.mjs';
 
@@ -490,26 +492,6 @@ function wantsGeneratedImage(prompt, selection) {
   return visual && /\b(generat|create|draw|design|replace|new|change|make|swap)\b/i.test(prompt || '');
 }
 
-async function generateImageFile(apiKey, prompt) {
-  const res = await fetch('https://api.openai.com/v1/images/generations', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
-    body: JSON.stringify({
-      model: OPENAI_IMAGE_MODEL,
-      prompt: String(prompt || 'A clean website image').slice(0, 1000),
-      n: 1,
-      size: '1024x1024',
-      quality: OPENAI_IMAGE_QUALITY,
-    }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || `Image generation failed (${res.status})`);
-  const b64 = data.data?.[0]?.b64_json;
-  if (!b64) throw new Error('Image generation returned no image.');
-  return b64;
-}
-
 async function aiRewriteElement({ selection, prompt, newSrc }) {
   const apiKey = loadEnvKey();
   if (!apiKey) throw new Error('OPENAI_API_KEY not found in .env');
@@ -565,10 +547,14 @@ export async function editSelectionWithAI(siteDir, {
   if (mediaBase64) {
     assetPath = saveMediaFile(siteDir, mediaBase64, mediaExt || (selection.type === 'video' ? 'mp4' : 'png'));
   } else if (wantsGeneratedImage(note, selection)) {
-    const apiKey = loadEnvKey();
-    if (!apiKey) throw new Error('OPENAI_API_KEY not found in .env');
-    const b64 = await generateImageFile(apiKey, note);
-    assetPath = saveMediaFile(siteDir, b64, 'png');
+    // Nano Banana 2 (Gemini), with the image being changed as the reference.
+    const current = selection.src ? localImageFile(siteDir, page, selection.src) : null;
+    const reference = current ? referenceFromFile(current) : null;
+    const made = await generateImage(note, {
+      size: selection.width && selection.height ? { width: selection.width, height: selection.height } : '1024x1024',
+      references: reference ? [reference] : [],
+    });
+    assetPath = saveMediaFile(siteDir, made.buffer.toString('base64'), made.ext.slice(1));
   }
 
   const linkedUrl = (note.match(/https?:\/\/\S+/) || [])[0] || '';

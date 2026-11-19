@@ -8,7 +8,9 @@
 import fs from 'fs';
 import path from 'path';
 import * as cheerio from 'cheerio';
-import { generateImagePng, loadEnvKey, openAiChat } from './openai-generate.mjs';
+import { loadEnvKey, openAiChat } from './openai-generate.mjs';
+import { generateImage, referenceFromFile } from './gemini-image.mjs';
+import { localImageFile } from './image-fit.mjs';
 import { listPages } from './site-utils.mjs';
 import { extractSectionHtml, stripEditorAttrs } from './ai-fix-selection.mjs';
 
@@ -314,6 +316,38 @@ function mirrorToPhp(siteDir, originals, changed) {
   return mirrored;
 }
 
+/**
+ * The image currently on the page that an AI image change replaces: the selected <img>, or the
+ * only image (or background image) inside the selection. Sent to Gemini as the reference.
+ */
+function currentImageReference(siteDir, pageRel, sel) {
+  const html = String(sel?.outerHTML || '');
+  if (!html) return null;
+  const decode = (v) => v.replace(/&amp;/g, '&').trim();
+  const srcs = [...html.matchAll(/<img\b[^>]*?\s(?:src|data-src|data-lazy-src)\s*=\s*["']([^"']+)["']/gi)].map((m) => decode(m[1]));
+  const bgs = [...html.matchAll(/url\(\s*(?:&quot;|['"])?([^'")&]+)(?:&quot;|['"])?\s*\)/gi)].map((m) => decode(m[1]));
+  const isImage = /^(img|picture)$/i.test(sel.tag || '');
+  const unique = [...new Set(srcs)];
+  const candidates = isImage || unique.length === 1 ? unique.slice(0, 1) : (!unique.length && bgs.length === 1 ? bgs : []);
+  for (const src of candidates) {
+    const file = localImageFile(siteDir, pageRel, src);
+    const ref = file && referenceFromFile(file);
+    if (ref) return ref;
+  }
+  return null;
+}
+
+/** Write a generated image; Gemini may answer in another format than .png, so fix the name. */
+function saveGenerated(siteDir, plannedPath, made) {
+  const finalPath = plannedPath.replace(/\.png$/, made.ext || '.png');
+  const dest = path.join(siteDir, finalPath);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.writeFileSync(dest, made.buffer);
+  const swap = (text) => (finalPath === plannedPath || !text ? text
+    : text.split(path.posix.basename(plannedPath)).join(path.posix.basename(finalPath)));
+  return { finalPath, swap };
+}
+
 const SIZE_WORDS = /\b(size|resize|width|height|wide|wider|narrow|tall|taller|short|bigger|smaller|larger|full[- ]?width|full[- ]?screen|stretch|shrink|enlarge|scale|crop|aspect|square|circle|round)\b/i;
 
 /**
@@ -351,7 +385,7 @@ export async function aiEditSite(siteDir, { page = 'index.html', prompt = '', im
     siteImages: siteImageCatalog(siteDir, pageTarget.rel),
   };
   const assetsById = new Map(assets.map((a) => [Number(a.id), a]));
-  const generatedPath = `images/ai/generated-${Date.now()}.webp`;
+  const generatedPath = `images/ai/generated-${Date.now()}.png`;
   const extraFor = (p) => ({
     siteImages: context.siteImages,
     generatedPath: p?.generateImage?.prompt ? generatedPath : '',
@@ -377,16 +411,21 @@ export async function aiEditSite(siteDir, { page = 'index.html', prompt = '', im
   let generatedImage = null;
   if (extra.generatedUsed) {
     const size = IMAGE_SIZES.includes(plan.generateImage.size) ? plan.generateImage.size : '1024x1024';
-    let png;
+    // Nano Banana 2 (Gemini); the image being replaced goes along as the reference.
+    const reference = currentImageReference(siteDir, pageTarget.rel, sel);
+    let made;
     try {
-      png = await generateImagePng(apiKey, plan.generateImage.prompt, size, { format: 'webp' });
+      made = await generateImage(plan.generateImage.prompt, {
+        size: sel?.width && sel?.height ? { width: sel.width, height: sel.height } : size,
+        references: reference ? [reference] : [],
+      });
     } catch (err) {
       throw new Error(`Couldn't create the new image, so nothing was changed. ${err.message}`);
     }
-    const dest = path.join(siteDir, generatedPath);
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, png);
-    generatedImage = generatedPath;
+    const saved = saveGenerated(siteDir, generatedPath, made);
+    for (const [rel, text] of result.files) result.files.set(rel, saved.swap(text));
+    result.css = saved.swap(result.css);
+    generatedImage = saved.finalPath;
   }
 
   // Everything validated; now write.
@@ -552,7 +591,7 @@ export async function aiInsertSection(siteDir, { page = 'index.html', prompt = '
   ].filter(Boolean).join('\n\n');
 
   const assetsById = new Map(assets.map((a) => [Number(a.id), a]));
-  const generatedPath = `images/ai/generated-${Date.now()}.webp`;
+  const generatedPath = `images/ai/generated-${Date.now()}.png`;
   const build = (plan) => {
     const errors = [];
     const used = new Set();
@@ -579,16 +618,16 @@ export async function aiInsertSection(siteDir, { page = 'index.html', prompt = '
   let generatedImage = null;
   if (built.extra.generatedUsed) {
     const size = IMAGE_SIZES.includes(plan.generateImage.size) ? plan.generateImage.size : '1536x1024';
-    let png;
+    let made;
     try {
-      png = await generateImagePng(apiKey, plan.generateImage.prompt, size, { format: 'webp' });
+      made = await generateImage(plan.generateImage.prompt, { size }); // Nano Banana 2 (Gemini)
     } catch (err) {
       throw new Error(`Couldn't create the section's image, so nothing was changed. ${err.message}`);
     }
-    const dest = path.join(siteDir, generatedPath);
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, png);
-    generatedImage = generatedPath;
+    const saved = saveGenerated(siteDir, generatedPath, made);
+    built.inner = saved.swap(built.inner);
+    built.css = saved.swap(built.css);
+    generatedImage = saved.finalPath;
   }
   for (const id of built.used) {
     const asset = assetsById.get(id);

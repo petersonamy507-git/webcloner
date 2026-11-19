@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { generateImage } from './gemini-image.mjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import * as cheerio from 'cheerio';
@@ -15,8 +16,6 @@ const ROOT = path.join(__dirname, '..');
 export const OPENAI_CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-6-astra';
 export const OPENAI_FALLBACK_MODEL = process.env.OPENAI_FALLBACK_MODEL || 'gpt-6.1-sol';
 export const OPENAI_REASONING_EFFORT = process.env.OPENAI_REASONING_EFFORT || 'high';
-export const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2.6-sunburst';
-export const OPENAI_IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY || 'high';
 // Deeper reasoning takes longer; the Node worker itself allows 10 minutes.
 export const OPENAI_TIMEOUT_MS = 240000;
 
@@ -324,48 +323,6 @@ async function chatCompletion(apiKey, body) {
     throw err;
   }
   return data.choices?.[0]?.message?.content || '';
-}
-
-async function requestImagePng(apiKey, body) {
-  const res = await fetch('https://api.openai.com/v1/images/generations', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || `Image generation failed (${res.status})`);
-  const b64 = data.data?.[0]?.b64_json;
-  if (!b64) throw new Error('Image generation returned no image.');
-  return Buffer.from(b64, 'base64');
-}
-
-/** format: 'png' (default) or 'webp' (much smaller, for images placed on pages). */
-export async function generateImagePng(apiKey, prompt, size, { format = 'png' } = {}) {
-  const body = {
-    model: OPENAI_IMAGE_MODEL,
-    prompt: String(prompt).slice(0, 800),
-    n: 1,
-    size,
-    quality: OPENAI_IMAGE_QUALITY,
-    ...(format === 'webp' ? { output_format: 'webp', output_compression: 85 } : {}),
-  };
-  let lastError;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      return await requestImagePng(apiKey, body);
-    } catch (err) {
-      lastError = err;
-      if (/quality|unknown parameter/i.test(err.message) && body.quality) {
-        delete body.quality;
-        continue;
-      }
-      // Temporary OpenAI server errors succeed on a second try. Other errors will not.
-      if (!/server had an error|try again|overloaded|temporar|timeout|\b5\d\d\b/i.test(err.message)) throw err;
-      await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
-    }
-  }
-  throw lastError;
 }
 
 function upsertMarkedBlock(file, slug, body) {
@@ -1295,12 +1252,10 @@ Build the strongest page for this request while staying visually native to the c
     const file = String(image.file || '').replace(/[^a-z0-9._-]/gi, '').replace(/^\.+/, '');
     if (!file || !IMAGE_EXT.test(file)) return null;
     try {
-      const png = await generateImagePng(
-        apiKey,
-        `${image.prompt || file}. Professional photograph, no text, no letters, no watermark.`,
-        '1024x1024',
-      );
-      const pngName = file.replace(/\.\w+$/, '.png');
+      // Nano Banana 2 (Gemini) makes every AI image.
+      const made = await generateImage(`${image.prompt || file}. Professional photograph, no text, no letters, no watermark.`, { size: '1024x1024' });
+      const png = made.buffer;
+      const pngName = file.replace(/\.\w+$/, made.ext || '.png');
       for (const dir of ['images', 'assets/images']) {
         const folder = path.join(siteDir, dir);
         fs.mkdirSync(folder, { recursive: true });

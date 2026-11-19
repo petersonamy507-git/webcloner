@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import Principal, current_principal, log_activity, project_for, require_editable
+from app.auth import Principal, current_principal, is_admin_user, log_activity, project_for, require_editable
 from app.config import WORKSPACE_DIR
 from app.db import Asset, get_db, utcnow
 from app.models import AiEditRequest
@@ -66,6 +66,9 @@ async def ai_edit(body: AiEditRequest, request: Request,
         raise HTTPException(400, "Describe the change you want.")
     if len(prompt) > 4000:
         raise HTTPException(400, "Keep the request under 4,000 characters.")
+    if body.images and not is_admin_user(principal):
+        # Regular users describe changes in words; only admins may hand the AI screenshots.
+        raise HTTPException(403, "Only admins can add screenshots to the AI chat. Describe the change in text instead.")
     shots = check_screenshots(body.images)
 
     # The AI may only use this workspace's own assets.

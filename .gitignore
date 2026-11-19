@@ -11,3 +11,10 @@ workspace/
 
 # Database exports (contain user accounts)
 deploy/*.sql
+
+# Brand profiles and their saved sites (~500 MB): copied to the server separately, not kept in git
+brand_data/
+
+# Python bytecode
+__pycache__/
+*.pyc

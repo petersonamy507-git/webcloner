@@ -79,77 +79,8 @@ def save_page(folder: str, page: str, html: str) -> dict:
 
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"}
-BRANDS_DIR = ROOT / "brands"
-
-
-def brand_dir(brand_id: str) -> Path:
-    safe = re.sub(r"[^a-z0-9_-]", "", (brand_id or "").lower())
-    directory = (BRANDS_DIR / safe).resolve()
-    root = BRANDS_DIR.resolve()
-    if not safe or not str(directory).startswith(str(root)) or not directory.is_dir():
-        raise FileNotFoundError("Brand not found.")
-    return directory
-
-
-def resolve_brand_file(brand_id: str, file: str) -> Path:
-    directory = brand_dir(brand_id)
-    rel = Path(file or "")
-    if not file or rel.is_absolute() or ".." in rel.parts:
-        raise FileNotFoundError("Image not found.")
-    target = (directory / rel).resolve()
-    if not target.is_relative_to(directory) or not target.is_file():
-        raise FileNotFoundError("Image not found.")
-    if target.suffix.lower() not in IMAGE_EXTS:
-        raise FileNotFoundError("Image not found.")
-    return target
-
-
-def list_brand_galleries() -> list[dict]:
-    if not BRANDS_DIR.is_dir():
-        return []
-    brands = []
-    for child in sorted(BRANDS_DIR.iterdir()):
-        meta_file = child / "brand.json"
-        if not child.is_dir() or not meta_file.is_file():
-            continue
-        try:
-            meta = json.loads(meta_file.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            continue
-        brand_id = meta.get("id") or child.name
-        images = []
-        logo_name = meta.get("logo") or "logo.png"
-        logo = child / logo_name
-        if logo.is_file():
-            images.append(_brand_image(brand_id, logo_name, "Logo", "logo"))
-        for folder_name in ("portfolio", "porfolio"):
-            portfolio = child / folder_name
-            if not portfolio.is_dir():
-                continue
-            for image in sorted(portfolio.iterdir(), key=lambda item: item.name.lower()):
-                if image.suffix.lower() not in IMAGE_EXTS or not image.is_file():
-                    continue
-                rel = f"{folder_name}/{image.name}"
-                images.append(_brand_image(brand_id, rel, image.stem, "portfolio"))
-        brands.append({
-            "id": brand_id,
-            "name": meta.get("name") or brand_id,
-            "images": images,
-        })
-    return brands
-
-
-def _brand_image(brand_id: str, rel: str, label: str, kind: str) -> dict:
-    return {
-        "file": rel,
-        "label": label,
-        "kind": kind,
-        "url": f"/api/brand-file?brand={quote(brand_id)}&file={quote(rel)}",
-    }
-
-
-def copy_brand_image(folder: str, brand_id: str, file: str) -> dict:
-    source = resolve_brand_file(brand_id, file)
+def copy_brand_image(folder: str, source: Path) -> dict:
+    """Copy one brand image (already checked against the caller's entity) into the site."""
     directory = site_dir(folder)
     if not directory.exists():
         raise FileNotFoundError("Clone folder not found.")

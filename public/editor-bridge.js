@@ -553,6 +553,7 @@
         if (existing.tagName === 'IMG') {
           keepImageBox(existing);
           existing.setAttribute('src', url);
+          existing.removeAttribute('data-missing-asset');
           selectElement(existing);
           return existing;
         }
@@ -700,6 +701,7 @@
           if (msg.src !== img.getAttribute('src') && !msg.width && !msg.height) keepImageBox(img);
           img.setAttribute('src', msg.src);
           img.removeAttribute('srcset');
+          img.removeAttribute('data-missing-asset');
           // Lazy-load scripts copy these into src later, which would bring the old image back.
           ['data-src', 'data-imgurl', 'data-lazy-src', 'data-original', 'data-lazy', 'data-srcset']
             .forEach((attr) => { if (img.hasAttribute(attr)) img.setAttribute(attr, attr === 'data-srcset' ? '' : msg.src); });
@@ -845,6 +847,64 @@
       style.setAttribute('data-cloner-font', family);
       style.textContent = `@font-face{font-family:'${family}';src:url("${String(msg.src).replace(/["\\]/g, '')}");font-display:swap;}`;
       document.head.appendChild(style);
+    }
+
+    // A company detail (phone, email, address, name…) clicked in the editor's "Company details"
+    // panel: swap just that part of the selected text, keep icons and markup, fix tel:/mailto: links.
+    if (msg.type === 'CLONER_REPLACE_TEXT') {
+      const el = msg.id ? document.querySelector(`[data-cloner-id="${msg.id}"]`) : null;
+      if (!el || typeof msg.value !== 'string') return;
+      requestUndoSnapshot();
+      const PATTERNS = {
+        phone: /\+?\(?\d[\d\s().-]{6,18}\d/g,
+        email: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
+      };
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+        acceptNode: (n) => (n.parentElement && /^(SCRIPT|STYLE|NOSCRIPT)$/.test(n.parentElement.tagName)
+          ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+      });
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      const found = [];
+      const pattern = PATTERNS[msg.kind];
+      if (pattern) {
+        nodes.forEach((n) => {
+          const text = n.nodeValue;
+          const next = text.replace(pattern, (m) => {
+            if (msg.kind === 'phone' && m.replace(/\D/g, '').length < 7) return m;
+            found.push(m);
+            return msg.value;
+          });
+          if (next !== text) n.nodeValue = next;
+        });
+      }
+      let mode = found.length ? 'part' : 'all';
+      if (!found.length) {
+        // No phone/email inside (or another kind of detail): the selected text becomes the value.
+        const filled = nodes.filter((n) => n.nodeValue.trim());
+        found.push(filled.map((n) => n.nodeValue.trim()).join(' ').trim());
+        if (filled.length) {
+          const first = filled[0];
+          first.nodeValue = first.nodeValue.replace(/^(\s*)[\s\S]*?(\s*)$/, (m, a, b) => `${a}${msg.value}${b}`);
+          filled.slice(1).forEach((n) => { n.nodeValue = n.nodeValue.replace(/\S[\s\S]*\S|\S/, ''); });
+        } else {
+          el.textContent = msg.value;
+        }
+      }
+      // Links that dial or mail the old details now point at the new ones.
+      const links = [el.closest('a'), ...el.querySelectorAll('a')].filter(Boolean);
+      links.forEach((a) => {
+        const href = a.getAttribute('href') || '';
+        if (msg.kind === 'phone' && /^(tel|callto|sms):/i.test(href)) a.setAttribute('href', `${href.split(':')[0]}:${msg.value.replace(/[^\d+]/g, '')}`);
+        if (msg.kind === 'phone' && /wa\.me\/|whatsapp\.com\/send/i.test(href)) a.setAttribute('href', href.replace(/(wa\.me\/|phone=)\+?\d+/i, `$1${msg.value.replace(/\D/g, '')}`));
+        if (msg.kind === 'email' && /^mailto:/i.test(href)) a.setAttribute('href', `mailto:${msg.value}`);
+        if (msg.kind === 'website' && /^https?:/i.test(href)) a.setAttribute('href', msg.value);
+      });
+      window.parent.postMessage({
+        type: 'CLONER_TEXT_REPLACED',
+        data: { id: msg.id, mode, kind: msg.kind, value: msg.value, found, isGlobal: isGlobal(el) },
+      }, '*');
+      selectElement(el);
     }
 
     if (msg.type === 'CLONER_REPLACE_OUTER') {

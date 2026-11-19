@@ -9,7 +9,9 @@ from app.config import CLONED_DIR
 from app.db import Base, CloneJob, Entity, Project, User, SessionLocal, engine, utcnow
 
 DEFAULT_ENTITY_SLUG = "default"
-ENTITY_SLUGS = ("apex", "codified", "orion", "vanguard", "zenium")
+ENTITY_SLUGS = ("apex", "codified", "orion", "vanguard", "zenium", "ink-blaze", "ivertax-lab")
+# Display names where capitalising the slug isn't right (these match the brand_data group folders).
+ENTITY_NAMES = {"ink-blaze": "Ink-Blaze", "ivertax-lab": "Ivertax Lab"}
 
 
 def _clone_meta(folder) -> dict:
@@ -33,7 +35,7 @@ def bootstrap() -> None:
         existing = set(db.execute(select(Entity.slug)).scalars())
         for slug in ENTITY_SLUGS:
             if slug not in existing:
-                db.add(Entity(slug=slug, name=slug.capitalize(), status="active", settings={}))
+                db.add(Entity(slug=slug, name=ENTITY_NAMES.get(slug, slug.capitalize()), status="active", settings={}))
         db.flush()
 
         known = set(db.execute(select(Project.folder)).scalars())

@@ -32,27 +32,74 @@ function updateModeHelp() {
 
 cloneMode?.addEventListener('change', updateModeHelp);
 updateModeHelp();
-loadBrands();
+let brandList = [];
+let brandsFor = null;
 
-async function loadBrands() {
-  if (!brandSelect || brandSelect.options.length > 1) return;
+/** The brands of the entity that owns `folder` (an entity never sees another entity's brands). */
+async function loadBrands(folder) {
+  if (!brandSelect || !folder || brandsFor === folder) return;
+  brandsFor = folder;
+  brandSelect.innerHTML = '<option value="">Loading brands…</option>';
+  brandSelect.disabled = true;
+  renderBrandPreview();
   try {
-    const res = await fetch(API.brands);
+    const res = await fetch(`${API.brands}?folder=${encodeURIComponent(folder)}`);
     const data = await res.json();
-    for (const brand of data.brands || []) {
+    if (!res.ok || !data.success) throw new Error(data.error || 'Could not load brands.');
+    brandList = data.brands || [];
+    brandSelect.innerHTML = brandList.length
+      ? '<option value="">Choose a brand…</option>'
+      : '<option value="">No brands for this entity yet</option>';
+    for (const brand of brandList) {
       const option = document.createElement('option');
       option.value = brand.id;
-      option.textContent = brand.name;
+      option.textContent = brand.domain && brand.domain !== brand.name ? `${brand.name} — ${brand.domain}` : brand.name;
+      if (!brand.usable) {
+        option.disabled = true;
+        option.textContent += ' (no details yet)';
+      }
       brandSelect.appendChild(option);
     }
-  } catch {
-    if (brandStatus) brandStatus.textContent = 'Could not load brands.';
+    brandSelect.disabled = !brandList.length;
+    if (brandStatus) brandStatus.textContent = '';
+  } catch (err) {
+    brandsFor = null;
+    brandSelect.innerHTML = '<option value="">Choose a brand…</option>';
+    if (brandStatus) brandStatus.textContent = err.message || 'Could not load brands.';
   }
+}
+
+/** Logo and contact details of the chosen brand, so it's clear what will go in. */
+function renderBrandPreview() {
+  let box = document.getElementById('brandPreview');
+  if (!box && brandSelect) {
+    box = document.createElement('div');
+    box.id = 'brandPreview';
+    box.className = 'brand-preview d-none';
+    brandSelect.after(box);
+  }
+  const brand = brandList.find((b) => b.id === brandSelect?.value);
+  if (!box) return;
+  if (!brand) {
+    box.className = 'brand-preview d-none';
+    box.innerHTML = '';
+    return;
+  }
+  const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const details = [brand.phone, brand.email, brand.address].filter(Boolean).map(esc).join(' · ');
+  box.className = 'brand-preview';
+  box.innerHTML = `
+    ${brand.logoUrl ? `<span class="brand-preview-logo"><img src="${esc(brand.logoUrl)}" alt="${esc(brand.name)} logo" /></span>` : ''}
+    <span class="brand-preview-text"><strong>${esc(brand.name)}</strong>
+      ${details ? `<small>${details}</small>` : ''}
+      <small>${brand.portfolioCount ? `${brand.portfolioCount} portfolio images` : 'No portfolio images: portfolio pictures stay as they are'}</small>
+    </span>`;
 }
 
 brandSelect?.addEventListener('change', () => {
   if (applyBrandBtn) applyBrandBtn.disabled = !brandSelect.value;
   if (brandStatus) brandStatus.textContent = '';
+  renderBrandPreview();
 });
 
 applyBrandBtn?.addEventListener('click', async () => {
@@ -71,7 +118,7 @@ applyBrandBtn?.addEventListener('click', async () => {
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || 'Could not apply this brand.');
     brandStatus.className = 'small mt-2 text-success';
-    brandStatus.textContent = `Applied ${data.brand}. Updated ${data.pagesUpdated} pages, ${data.logosReplaced} logos, and ${data.portfolioImages} portfolio images.`;
+    brandStatus.textContent = `Applied ${data.brand}. Updated ${data.pagesUpdated} page${data.pagesUpdated === 1 ? '' : 's'}, ${data.logosReplaced} logo${data.logosReplaced === 1 ? '' : 's'} and ${data.portfolioImages} portfolio image${data.portfolioImages === 1 ? '' : 's'}${data.profileSwap ? `, and swapped ${data.profileSwap.from}'s details in ${data.profileSwap.filesChanged} file${data.profileSwap.filesChanged === 1 ? '' : 's'}` : ''}. Every image kept its original size.`;
   } catch (err) {
     brandStatus.className = 'small mt-2 text-danger';
     brandStatus.textContent = err.message;
@@ -143,6 +190,28 @@ function renderChecks(validation) {
     : `<i class="bi bi-check2-circle me-1"></i>Checked ${validation.pagesChecked} page${validation.pagesChecked === 1 ? '' : 's'}: no important issues${validation.total ? ` (${validation.total} minor)` : ''}.`;
 }
 
+/** Broken images the cloner couldn't download again: they must be replaced before a GitHub push. */
+function renderMissing(assets) {
+  const checks = document.getElementById('resultChecks');
+  let box = document.getElementById('resultMissing');
+  if (!box && checks) {
+    box = document.createElement('div');
+    box.id = 'resultMissing';
+    checks.after(box);
+  }
+  if (!box) return;
+  const missing = assets?.missing || 0;
+  const recovered = assets?.recovered || 0;
+  if (!missing && !recovered) {
+    box.className = 'd-none';
+    return;
+  }
+  box.className = `clone-checks ${missing ? 'warn' : 'ok'}`;
+  box.innerHTML = missing
+    ? `<i class="bi bi-image me-1"></i><strong>Some images are missing:</strong> ${missing} image${missing === 1 ? '' : 's'} couldn't be downloaded${recovered ? ` (${recovered} other broken file${recovered === 1 ? ' was' : 's were'} fixed)` : ''}. They show as red “Image missing” boxes. Replace them in the editor before pushing to GitHub.`
+    : `<i class="bi bi-check2-circle me-1"></i>Fixed ${recovered} broken image${recovered === 1 ? '' : 's'} or file${recovered === 1 ? '' : 's'} by downloading them again.`;
+}
+
 const RESTRICTED_LABELS = {
   'sign-in': 'a sign-in',
   captcha: 'a CAPTCHA / bot check',
@@ -201,12 +270,12 @@ function showResult(job) {
   document.getElementById('editPreviewBtn').href = `/editor.html?folder=${encodeURIComponent(job.folder)}`;
   clonedFolder = job.folder;
   if (brandStatus) brandStatus.textContent = '';
-  if (brandSelect) brandSelect.value = '';
   if (applyBrandBtn) applyBrandBtn.disabled = true;
   renderChecks(data.validation);
+  renderMissing(data.assets);
   renderAccess(data.access);
   renderShots(job.screenshots);
-  loadBrands();
+  loadBrands(job.folder);
   loadLibrary();
 }
 

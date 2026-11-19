@@ -10,7 +10,8 @@ from app.auth import Principal, client_ip, current_principal, is_admin_user, log
 from app.bootstrap import bootstrap
 from app.config import CLONED_DIR, CORS_ORIGINS, MIME_TYPES, ROOT, WORKSPACE_DIR
 from app.db import CloneJob, Entity, Project, SiteSettings, User, get_db, utcnow
-from app.services import github_push
+from app.services import brand_registry, github_push
+from app.services.brand_text import rebrand_profile_text
 from app.models import (
     AiAuditRequest,
     AiEditSelectionRequest,
@@ -35,14 +36,13 @@ from app.routes_assets import router as assets_router
 from app.routes_versions import router as versions_router, safe_record_version
 from app.routes_clone_jobs import folder_conflict, register_clone, router as clone_jobs_router
 from app.routes_ai_edit import router as ai_edit_router
+from app.routes_asset_check import missing_message, repair_folder, router as asset_check_router
 from app.routes_auth import router as auth_router
 from app.services.node_worker import run_node_worker
 from app.services.site_service import (
     build_laravel_zip,
     copy_brand_image,
-    list_brand_galleries,
     list_pages,
-    resolve_brand_file,
     resolve_cloned_file,
     save_page,
     site_dir,
@@ -64,6 +64,7 @@ app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(assets_router)
 app.include_router(ai_edit_router)
+app.include_router(asset_check_router)
 app.include_router(versions_router)
 app.include_router(clone_jobs_router)
 
@@ -125,25 +126,54 @@ async def health():
     return {"status": "ok", "backend": "fastapi"}
 
 
-# ── Brand kits (shared, read-only) ──
+# ── Brands (each entity sees and uses only its own) ──
+
+def brand_scope(db: Session, principal: Principal, folder: str = "") -> tuple[str, Project | None]:
+    """The entity whose brands apply: the site's entity when a site is given, else the caller's."""
+    project = project_for(db, principal, folder) if folder else None
+    entity_id = project.entity_id if project else principal.entity_id
+    entity = db.get(Entity, entity_id) if entity_id else None
+    return (entity.slug if entity else ""), project
+
+
+def owned_brand(db: Session, principal: Principal, brand_id: str, entity: str) -> dict:
+    brand = brand_registry.find_brand(brand_id)
+    if not brand or brand["entity"] != entity:
+        # Another entity's brand reads exactly like a missing one.
+        raise HTTPException(404, "Brand not found.")
+    return brand
+
 
 @app.get("/api/brand-gallery")
-async def brand_gallery(principal: Principal = Depends(current_principal)):
-    return {"success": True, "brands": list_brand_galleries()}
+async def brand_gallery(folder: str = Query(""), principal: Principal = Depends(current_principal),
+                        db: Session = Depends(get_db)):
+    entity, _ = brand_scope(db, principal, folder)
+    return {"success": True, "brands": [brand_registry.gallery(b) for b in brand_registry.brands_for(entity) if b["usable"]]}
 
 
 @app.get("/api/brand-file")
-async def brand_file(brand: str = Query(""), file: str = Query(""), principal: Principal = Depends(current_principal)):
+async def brand_file(brand: str = Query(""), file: str = Query(""), principal: Principal = Depends(current_principal),
+                     db: Session = Depends(get_db)):
+    found = brand_registry.find_brand(brand)
+    if found and not principal.is_super_admin:
+        own = db.get(Entity, principal.user.entity_id) if principal.user.entity_id else None
+        if not own or own.slug != found["entity"]:
+            found = None
     try:
-        path = resolve_brand_file(brand, file)
+        if not found:
+            raise FileNotFoundError
+        path = brand_registry.resolve_file(found, file)
     except FileNotFoundError:
         return Response("Image not found.", status_code=404)
     return FileResponse(path)
 
 
 @app.get("/api/brands")
-async def list_brands(principal: Principal = Depends(current_principal)):
-    return await worker("list-brands")
+async def list_brands(folder: str = Query(""), principal: Principal = Depends(current_principal),
+                      db: Session = Depends(get_db)):
+    entity, _ = brand_scope(db, principal, folder)
+    brands = brand_registry.brands_for(entity)
+    return {"success": True, "entity": entity, "brands": [brand_registry.public(b) for b in brands]}
 
 
 @app.post("/api/replace-logos")
@@ -161,9 +191,11 @@ async def use_brand_image(body: UseBrandImageRequest, request: Request,
                           principal: Principal = Depends(current_principal), db: Session = Depends(get_db)):
     if not body.folder or not body.brand or not body.file:
         return fail("Choose a brand image.", 400)
+    entity, _ = brand_scope(db, principal, body.folder)
+    brand = owned_brand(db, principal, body.brand, entity)
     project = site_action(db, principal, body.folder, "site.brand_image", request, {"brand": body.brand})
     try:
-        return {"success": True, **copy_brand_image(project.folder, body.brand, body.file)}
+        return {"success": True, **copy_brand_image(project.folder, brand_registry.resolve_file(brand, body.file))}
     except FileNotFoundError as e:
         return fail(str(e), 404)
 
@@ -173,9 +205,20 @@ async def apply_brand(body: ApplyBrandRequest, request: Request,
                       principal: Principal = Depends(current_principal), db: Session = Depends(get_db)):
     if not body.folder or not body.brand:
         return fail("Choose a clone and a brand.", 400)
-    project = site_action(db, principal, body.folder, "site.apply_brand", request, {"brand": body.brand})
-    return await versioned(db, principal, project, "site.apply_brand", f"Applied brand {body.brand}",
-                           worker("apply-brand", folder=project.folder, brand=body.brand))
+    entity, _ = brand_scope(db, principal, body.folder)
+    brand = owned_brand(db, principal, body.brand, entity)
+    if not brand["usable"]:
+        return fail(brand["note"] or "This brand can't be applied yet.", 400)
+    project = site_action(db, principal, body.folder, "site.apply_brand", request, {"brand": brand["id"]})
+
+    async def run():
+        # A clone of one of our own brand sites: swap its exact details (taglines, SEO text,
+        # every phone format, colours, fonts) first, using the brand_data profiles.
+        swapped = await asyncio.to_thread(rebrand_profile_text, project.folder, project.source_url or "", brand)
+        result = await worker("apply-brand", folder=project.folder, brand=brand["id"], brandDir=brand["dir"])
+        return {**result, "profileSwap": swapped}
+
+    return await versioned(db, principal, project, "site.apply_brand", f"Applied brand {brand['name']}", run())
 
 
 # ── Cloning and the site library ──
@@ -381,6 +424,10 @@ async def github_push_site(body: GithubPushRequest, request: Request,
     project = site_action(db, principal, body.folder, "site.github_push_request", request)
     if not site_dir(project.folder).exists():
         return fail("Clone not found.", 404)
+    # Last chance to bring back broken images; whatever is still missing blocks the push.
+    report = await repair_folder(project.folder, project.source_url or "")
+    if report.get("missing"):
+        return fail(missing_message(report), 409)
     out = WORKSPACE_DIR / "entities" / str(project.entity_id) / "exports" / project.folder / "php"
     try:
         await worker("php-export", folder=project.folder, outDir=str(out))

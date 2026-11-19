@@ -72,7 +72,7 @@ function sectionOf(el) {
   return node;
 }
 
-export function initAiComposer({ folder, previewFrame, getSelected, getPage, reloadPreview, showSaveToast }) {
+export function initAiComposer({ folder, previewFrame, getSelected, getPage, reloadPreview, showSaveToast, allowImages = false }) {
   const root = document.getElementById('aiComposer');
   const promptEl = document.getElementById('aicPrompt');
   const attachmentsEl = document.getElementById('aicAttachments');
@@ -106,7 +106,7 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
     'Features grid with icons',
   ];
   const PLACEHOLDERS = {
-    change: 'Tell AI what to change… (paste a screenshot with Ctrl/Cmd+V)',
+    change: allowImages ? 'Tell AI what to change… (paste a screenshot with Ctrl/Cmd+V)' : 'Tell AI what to change…',
     add: 'Describe the section to add, e.g. “testimonials with three customer quotes”',
   };
 
@@ -246,7 +246,13 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
     });
   }
 
+  const NO_IMAGES = 'Only admins can add screenshots. Describe the change in text instead.';
+
   async function addImage(source, label) {
+    if (!allowImages) {
+      setStatus(NO_IMAGES, 'error');
+      return;
+    }
     if (attachments.length >= MAX_IMAGES) {
       setStatus(`You can attach up to ${MAX_IMAGES} screenshots.`, 'error');
       return;
@@ -267,6 +273,7 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
   }
 
   async function capture(mode) {
+    if (!allowImages) return setStatus(NO_IMAGES, 'error');
     const doc = previewFrame.contentDocument;
     const win = previewFrame.contentWindow;
     if (!doc?.documentElement) return setStatus('The preview is still loading. Try again in a moment.', 'error');
@@ -463,9 +470,17 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
     // One line by default, growing with the text up to the CSS max-height.
     promptEl.addEventListener('input', fitPrompt);
     document.getElementById('aiComposerBtn')?.addEventListener('click', () => promptEl.focus());
-    document.getElementById('aicAttach').addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', async () => { await addFiles(fileInput.files); fileInput.value = ''; });
-    root.querySelectorAll('[data-capture]').forEach((btn) => btn.addEventListener('click', () => capture(btn.dataset.capture)));
+    if (allowImages) {
+      document.getElementById('aicAttach').addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', async () => { await addFiles(fileInput.files); fileInput.value = ''; });
+      root.querySelectorAll('[data-capture]').forEach((btn) => btn.addEventListener('click', () => capture(btn.dataset.capture)));
+    } else {
+      // Regular users work with text only: no attach, camera or pasted/dropped screenshots.
+      document.getElementById('aicAttach')?.remove();
+      root.querySelector('[data-capture]')?.closest('.dropup')?.remove();
+      fileInput?.remove();
+      promptEl.placeholder = PLACEHOLDERS[mode];
+    }
     sendBtn.addEventListener('click', send);
     promptEl.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); send(); }
@@ -478,9 +493,9 @@ export function initAiComposer({ folder, previewFrame, getSelected, getPage, rel
         .filter(Boolean);
       if (!images.length) return;
       event.preventDefault();
-      addFiles(images);
+      addFiles(images); // refused with a message for non-admins
     });
-    root.addEventListener('dragover', (event) => { event.preventDefault(); root.classList.add('dragging'); });
+    root.addEventListener('dragover', (event) => { event.preventDefault(); if (allowImages) root.classList.add('dragging'); });
     root.addEventListener('dragleave', () => root.classList.remove('dragging'));
     root.addEventListener('drop', (event) => {
       event.preventDefault();
