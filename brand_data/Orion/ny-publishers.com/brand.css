@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;500;600;700;800&display=swap');
+
+/* NY Publishers – values taken from the live site (2026-11-18) */
+:root {
+  --brand-primary: #064877;
+  --brand-color-1: #8F9CB5;
+  --brand-color-2: #DBDBDB;
+  --brand-color-3: #333333;
+  --brand-color-4: #212529;
+  --brand-font-heading: 'Titillium Web';
+}

@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* Online Shop Expert – values taken from the live site (2026-11-18) */
+:root {
+  --brand-primary: #FF4A00;
+  --brand-color-1: #393939;
+  --brand-color-2: #121212;
+  --brand-color-3: #0E101A;
+  --brand-color-4: #A47413;
+  --brand-color-5: #3E4960;
+  --brand-color-6: #FBFAF6;
+  --brand-font-heading: 'Manrope';
+  --brand-font-body: 'Manrope';
+}

@@ -1,0 +1,86 @@
+{
+  "schema_version": "2.0",
+  "group": "Ivertax Lab",
+  "domain": "northstarbookpublishers.co",
+  "company": {
+    "name": "Northstar Book Publishers",
+    "website": "https://northstarbookpublishers.co",
+    "tagline": "Your Ideas Can Be Your Next Bestseller!",
+    "about": null,
+    "copyright": "© 2026 Northstar Book Publishers - All Rights Reserved"
+  },
+  "seo": {
+    "title": "Professional Book Writing & Publishing Services | Northstar Book Publishers",
+    "description": "Looking for expert book writing, editing, publishing, and marketing services? Northstar Book Publishers helps authors turn ideas into bestselling books. Free consultation available."
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 (312) 313-4079",
+        "e164": "+13123134079"
+      }
+    ],
+    "emails": [
+      "info@northstarbookpublishers.co"
+    ],
+    "address": {
+      "street": "318 W Adams St",
+      "city": "Chicago",
+      "state": "IL",
+      "zip": "60606",
+      "as_shown": "318 W Adams St Chicago, IL 60606"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": "#041838",
+    "observed": [
+      "#3293FC",
+      "#222E41",
+      "#05193C",
+      "#030919",
+      "#1A976A"
+    ]
+  },
+  "fonts": {
+    "heading": "Poppins",
+    "body": "Poppins",
+    "loaded_from_google_fonts": [
+      "Merriweather",
+      "Poppins"
+    ],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Merriweather:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.png",
+      "source_url": "https://northstarbookpublishers.co/assets/images/main-logo.png"
+    },
+    "logo_white": {
+      "file": "logos/logo_white.png",
+      "source_url": "https://northstarbookpublishers.co/assets/images/logo-white.png"
+    },
+    "favicon": {
+      "file": "logos/favicon.png",
+      "source_url": "https://northstarbookpublishers.co/favicon.png"
+    }
+  },
+  "services": [
+    "Ghostwriting",
+    "Book Editing",
+    "Book Marketing",
+    "Book Publishing",
+    "Book Cover Design",
+    "Book Formating",
+    "Proof Reading",
+    "Author's Website"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://northstarbookpublishers.co",
+    "notes": [
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}

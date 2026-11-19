@@ -1,0 +1,96 @@
+{
+  "schema_version": "2.0",
+  "group": "Ivertax Lab",
+  "domain": "onlineshopexpert.co",
+  "company": {
+    "name": "Online Shop Expert",
+    "website": "https://www.onlineshopexpert.co",
+    "tagline": "Your Ultimate Business Ally",
+    "about": null,
+    "copyright": null
+  },
+  "seo": {
+    "title": "Business Strategists with you, every step of the way | Online Shop Expert",
+    "description": null
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 (213) 838-5703",
+        "e164": "+12138385703"
+      }
+    ],
+    "emails": [
+      "info@onlineshopexpert.co"
+    ],
+    "address": {
+      "street": "829 W 8th St",
+      "city": "Los Angeles",
+      "state": "CA",
+      "zip": "90017",
+      "as_shown": "829 W 8th St Los Angeles, CA 90017, USA"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": "#FF4A00",
+    "observed": [
+      "#393939",
+      "#121212",
+      "#0E101A",
+      "#A47413",
+      "#3E4960",
+      "#FBFAF6"
+    ]
+  },
+  "fonts": {
+    "heading": "Manrope",
+    "body": "Manrope",
+    "loaded_from_google_fonts": [
+      "Manrope"
+    ],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.png",
+      "source_url": "https://www.onlineshopexpert.co/assets/images/logo.png"
+    },
+    "logo_white": {
+      "file": "logos/logo_white.png",
+      "source_url": "https://www.onlineshopexpert.co/assets/images/white-logo.png"
+    },
+    "favicon": {
+      "file": "logos/favicon.png",
+      "source_url": "https://www.onlineshopexpert.co/favicon.png"
+    }
+  },
+  "services": [
+    "Amazon FBA Automation",
+    "Shopify Dropshipping Automation",
+    "Walmart Automation",
+    "Tiktok Shop Automation",
+    "Youtube Automation"
+  ],
+  "stats": [
+    {
+      "value": "330 Million+",
+      "label": "Companies worldwide"
+    },
+    {
+      "value": "3X",
+      "label": "Revenue boost"
+    },
+    {
+      "value": "$150 Million+",
+      "label": "Generated"
+    }
+  ],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://www.onlineshopexpert.co",
+    "notes": [
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}

@@ -1,0 +1,1836 @@
+    /*@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');*/
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&amp;display=swap');
+
+.service-page h1,
+.service-page h2,
+.service-page h3,
+.service-page h4,
+.service-page h5,
+.service-page h6{
+    font-family: "Poppins";
+    text-transform: capitalize;
+}
+
+.service-page span,
+.service-page input,
+.service-page textarea,
+.service-page p,
+.service-page ul{
+    font-family: "Poppins";
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.service-page a,
+.service-page button{
+    font-family: "Poppins";
+    margin: 0;
+    padding: 0;
+    text-transform: capitalize;
+}
+
+.service-page a:hover{
+    color: inherit;
+}
+
+body{
+    font-family: "Poppins";
+    overflow-x: hidden;
+    background: #FFFFFF;
+}
+
+main.service-page{
+    overflow: hidden;
+}
+
+.service-page a,
+.service-page button,
+.service-page input,
+.service-page textarea,
+.service-page textarea:focus{
+    outline: none;
+    box-shadow: none;
+    text-decoration: none;
+}
+
+.service-page .form-group input::-webkit-outer-spin-button,
+.service-page .form-group input::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Firefox */
+.service-page .form-group input[type=number]{
+  -moz-appearance: textfield;
+}
+
+.service-page .container-fluid{
+    padding: 0 100px;
+}
+
+/*Website Custom Style Css For Single Items Start Here*/
+
+/*Heading & Para Style Css*/
+.service-page .heading-one{
+    font-size: 60px;
+    line-height: 68px;
+}
+.service-page .heading-two{
+    font-size: 50px;
+    line-height: 58px;
+}
+.service-page .heading-three{
+    font-size: 40px;
+    line-height: 48px;
+}
+.service-page .heading-four{
+    font-size: 32px;
+    line-height: 40px;
+}
+.service-page .heading-five{
+    font-size: 22px;
+    line-height: 30px;
+}
+.service-page .heading-six{
+    font-size: 20px;
+    line-height: 28px;
+}
+.service-page p{
+    font-size: 18px;
+    line-height: 26px;
+    margin: 0 0 10px;
+}
+.service-page li{
+    font-size: 18px;
+    line-height: 26px;
+    margin: 0 0 5px;
+}
+/*Heading & Para Style Css*/
+
+/*Buttons Style Css*/
+.service-page .website-main-buttons{
+    margin: 20px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.service-page .website-main-buttons a.read-more-btn,
+.service-page .website-main-buttons button.popup-btn,
+.service-page .website-main-buttons button.chat-btn,
+.service-page .website-main-buttons a.call-btn{
+    font-size: 16px;
+    font-weight: 500;
+    width: 175px;
+    height: 60px;
+    border-radius: 3px;
+    padding: 5px 5px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .3s ease-in-out;
+}
+/*Buttons Style Css*/
+
+/*Website Custom Style Css For Single Items End Here*/
+
+/**************************************************************************
+ --------------------- Home Page Folds Css Start Here ---------------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+
+/*Banner Main Section Css Start Here*/
+section.banner-main-service-sec{
+    background: #0c2b5a;
+    padding: 50px 0 50px;
+    background: url(../images/banner-main-bg.png);
+    background-repeat: no-repeat;
+    background-position: 100% 100%;
+    background-size: cover;
+    position: relative;
+    z-index: 1;
+}
+.banner-main-service-sec .banner-inner-content{}
+.banner-main-service-sec .banner-inner-content .heading-one{
+    color: #fff;
+    font-weight: 600;
+    margin: 0 0 20px;
+}
+.banner-main-service-sec .banner-inner-content p{
+    color: #fff;
+    font-weight: 400;
+}
+.banner-main-service-sec .banner-inner-content .website-main-buttons{
+    margin: 30px 0;
+}
+.banner-main-service-sec .banner-inner-content .website-main-buttons button.popup-btn{
+    background: #3394F8;
+    color: #fff;
+    border: 2px solid #3394F8;
+    width: 225px;
+}
+.banner-main-service-sec .banner-inner-content .website-main-buttons button.popup-btn:hover{
+    background: #fff;
+    color: #3394F8;
+}
+.banner-main-service-sec .banner-inner-content .website-main-buttons a.call-btn{
+    background: transparent;
+    color: #fff;
+    border: 2px solid #fff;
+}
+.banner-main-service-sec .banner-inner-content .website-main-buttons a.call-btn:hover{
+    background: #fff;
+    color: #004184;
+}
+.banner-main-service-sec .banner-brands-area{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 70px 0 20px;
+}
+.banner-main-service-sec .banner-brands-area img{
+    width: 120px;
+    height: 25px;
+    object-fit: contain;
+}
+/*Banner Main Form Start*/
+.banner-main-service-sec .banner-main-form{
+    width: 100%;
+    margin: 0 auto;
+}
+.banner-main-service-sec .banner-main-form .banner-form-inner{
+    background: #fff;
+    box-shadow: 0 5px 20px -10px #000;
+    border-radius: 15px;
+}
+.banner-main-service-sec .banner-form-inner h5{
+    background: #3394F8;
+    color: #fff;
+    font-size: 20px;
+    line-height: 30px;
+    font-weight: 600;
+    border-radius: 12px 12px 0 0;
+    padding: 15px 20px;
+    margin: 0;
+}
+.banner-main-service-sec .banner-form-inner form{
+    padding: 20px 20px;
+}
+.banner-main-service-sec .banner-form-inner form .form-group{
+    margin: 0 0 10px;
+}
+.banner-main-service-sec .banner-form-inner form .form-group input{
+    background: #fff;
+    font-size: 14px;
+    font-weight: 400;
+    color: #000;
+    border: 1px solid #C0C0C0;
+    width: 100%;
+    height: 50px;
+    padding: 10px 12px;
+    border-radius: 4px;
+}
+.banner-main-service-sec .banner-form-inner form .form-group input::placeholder{
+    color: #ACACAC;
+}
+.banner-main-service-sec .banner-form-inner form .form-group textarea{
+    background: #fff;
+    font-size: 14px;
+    font-weight: 400;
+    color: #000;
+    border: 1px solid #C0C0C0;
+    width: 100%;
+    height: 120px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    resize: none;
+}
+.banner-main-service-sec .banner-form-inner form .form-group textarea::placeholder{
+    color: #ACACAC;
+}
+.banner-main-service-sec .banner-form-inner form .form-group .form-select{
+    background-color: #fff;
+    color: #ACACAC;
+    font-size: 14px;
+    font-weight: 400;
+    width: 100%;
+    height: 50px;
+    border-radius: 4px;
+    border: 1px solid #C0C0C0;
+    outline: none;
+    box-shadow: none;
+    padding: 10px 30px 10px 12px;
+    cursor: pointer;
+}
+.banner-main-service-sec .banner-form-inner form .form-group .form-select option{
+    color: #000;
+}
+.banner-main-service-sec .banner-form-inner form .form-group-select{
+    margin: 5px 0 15px;
+}
+.banner-main-service-sec .banner-form-inner form .form-group-select .heading-six{
+    color: #1E1E1E;
+    font-weight: 700;
+    margin: 0 0 10px;
+}
+.banner-main-service-sec .banner-form-inner form .form-group-select .form-check-flex{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.banner-main-service-sec .banner-form-inner form .form-group-select .form-check{
+    margin: 0 5px 7px;
+    width: 45%;
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+.banner-main-service-sec .banner-form-inner form .form-group-select .form-check .form-check-input{
+    background-color: #fff;
+    border: 1px solid #797979;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    outline: none;
+    box-shadow: none;
+    margin: 0 10px 0 0;
+    cursor: pointer;
+}
+.banner-main-service-sec .banner-form-inner form .form-group-select .form-check .form-check-input:checked[type=checkbox]{
+    background-color: #287AC7;
+}
+.banner-main-service-sec .banner-form-inner form .form-group-select .form-check .form-check-label{
+    color: #797979;
+    font-size: 14px;
+    line-height: 22px;
+    font-weight: 400;
+    cursor: pointer;
+}
+.banner-main-service-sec .banner-form-inner .form-group-btns{
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+.banner-main-service-sec .form-group-btns button.submit-btn{
+    background: #3394F8;
+    color: #fff;
+    border: 2px solid #3394F8;
+    font-size: 16px;
+    font-weight: 600;
+    width: 50%;
+    height: 60px;
+    border-radius: 4px;
+    padding: 5px 5px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .3s ease-in-out;
+}
+.banner-main-service-sec .form-group-btns button.submit-btn:hover{
+    background: #fff;
+    color: #3394F8;
+}
+.banner-main-service-sec .form-group-btns button.reset-btn{
+    background: #ACACAC;
+    color: #fff;
+    border: 2px solid #ACACAC;
+    font-size: 16px;
+    font-weight: 500;
+    width: 50%;
+    height: 60px;
+    border-radius: 4px;
+    padding: 5px 5px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .3s ease-in-out;
+}
+.banner-main-service-sec .form-group-btns button.reset-btn:hover{
+    background: #000;
+    border: 2px solid #000;
+}
+/*Banner Main Form End*/
+/*Banner Main Section Css End Here*/
+
+/*Step Works Section Css Start Here*/
+section.step-works-wrap-service-sec{
+    padding: 50px 0;
+}
+.step-works-wrap-service-sec .step-works-head{
+    margin: 0 auto 30px;
+    width: 75%;
+    text-align: center;
+}
+.step-works-wrap-service-sec .step-works-head .heading-two{
+    color: #000;
+    font-weight: 600;
+    margin: 0 0 20px;
+}
+.step-works-wrap-service-sec .step-works-head p{
+    color: #707070;
+    font-weight: 400;
+}
+.step-works-wrap-service-sec .step-works-inner .step-works-box{
+    background: #DCECFE;
+    border-radius: 6px;
+    padding: 30px 30px;
+}
+.step-works-wrap-service-sec .step-works-box span.step-count{
+    color: #004184;
+    font-size: 40px;
+    line-height: 48px;
+    font-weight: 900;
+    margin: 0 0 20px;
+    display: block;
+}
+.step-works-wrap-service-sec .works-box-content .heading-six{
+    color: #000;
+    font-weight: 500;
+    margin: 0 0 20px;
+}
+.step-works-wrap-service-sec .works-box-content p{
+    color: #000;
+    font-size: 14px;
+    line-height: 22px;
+    font-weight: 400;
+    min-height: 125px;
+    max-height: 125px;
+    overflow-y: auto;
+}
+.step-works-wrap-service-sec .works-box-content p::-webkit-scrollbar-track{
+    -webkit-box-shadow: inset 0 0px 0px rgba(0,0,0,0.0);
+    border-radius: 0px;
+}
+.step-works-wrap-service-sec .works-box-content p::-webkit-scrollbar{
+    width: 3px;
+    background: #b2b2b2;
+    border-radius: 0px;
+}
+.step-works-wrap-service-sec .works-box-content p::-webkit-scrollbar-thumb{
+    background-color: #000;
+    border-radius: 0px;
+}
+/*Step Works Section Css End Here*/
+
+/*Main CTA Section Css Start Here*/
+section.cta-main-wrap-service-sec{
+    background-image: none;
+}
+.cta-main-wrap-service-sec .cta-main-img{
+    background: #fff;
+    padding: 20px 20px;
+    text-align: center;
+}
+.cta-main-wrap-service-sec .cta-main-img img{
+    width: auto;
+    height: 100%;
+    margin: 0 auto;
+}
+.cta-main-wrap-service-sec .cta-main-img .website-main-buttons{
+    margin: 30px 0 0;
+    justify-content: center;
+}
+.cta-main-wrap-service-sec .cta-main-img .website-main-buttons button.popup-btn{
+    background: #3394F8;
+    color: #fff;
+    border: 2px solid #3394F8;
+    width: 225px;
+}
+.cta-main-wrap-service-sec .cta-main-img .website-main-buttons button.popup-btn:hover{
+    background: #fff;
+    color: #3394F8;
+}
+.cta-main-wrap-service-sec .cta-main-img .website-main-buttons a.call-btn{
+    background: #fff;
+    color: #004184;
+    border: 2px solid #004184;
+}
+.cta-main-wrap-service-sec .cta-main-img .website-main-buttons a.call-btn:hover{
+    background: #004184;
+    color: #fff;
+}
+.cta-main-wrap-service-sec .cta-main-content{
+    background: #004184;
+    padding: 50px 50px;
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+}
+.cta-main-wrap-service-sec .cta-main-content .heading-two{
+    color: #fff;
+    font-weight: 600;
+    margin: 0 0 20px;
+}
+.cta-main-wrap-service-sec .cta-main-content p{
+    color: #fff;
+    font-weight: 400;
+}
+/*Main CTA Section Css End Here*/
+
+/*Our Portfolio Section Css Start Here*/
+section.our-portfolio-wrap-service-sec{
+    padding: 100px 0;
+    background: url(../images/portfolio-bg.png);
+    background-repeat: no-repeat;
+    background-position: 100% 100%;
+    background-size: cover;
+    position: relative;
+    z-index: 1;
+}
+.our-portfolio-wrap-service-sec .our-portfolio-head{
+    margin: 0 0 50px;
+    text-align: center;
+}
+.our-portfolio-wrap-service-sec .our-portfolio-head .heading-two{
+    color: #000;
+    font-weight: 600;
+    margin: 0 0 20px;
+}
+.our-portfolio-wrap-service-sec .our-portfolio-head p{
+    color: #707070;
+    font-weight: 400;
+}
+.our-portfolio-wrap-service-sec .our-portfolio-inner .our-portfolio-buttons{
+    margin: 0 0 30px;
+}
+.our-portfolio-wrap-service-sec .our-portfolio-buttons ul.nav-pills{
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+.our-portfolio-wrap-service-sec .our-portfolio-buttons ul.nav-pills li.nav-item{
+    margin: 0;
+}
+.our-portfolio-wrap-service-sec .our-portfolio-buttons ul.nav-pills li.nav-item button.nav-link{
+    background: transparent;
+    color: #000;
+    border: 1px dashed #000;
+    font-size: 16px;
+    font-weight: 600;
+    width: 150px;
+    height: 50px;
+    border-radius: 3px;
+    padding: 5px 5px;
+    margin: 0;
+    text-transform: capitalize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .3s ease-in-out;
+}
+.our-portfolio-wrap-service-sec .our-portfolio-buttons ul.nav-pills li.nav-item button.nav-link.active,
+.our-portfolio-wrap-service-sec .our-portfolio-buttons ul.nav-pills li.nav-item button.nav-link:hover{
+    background: #3394F8;
+    color: #fff;
+}
+.our-portfolio-wrap-service-sec .our-portfolio-tabitem .portfolio-tabitem-books{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.our-portfolio-wrap-service-sec .portfolio-tabitem-books .portfolio-books-box{
+    text-align: center;
+}
+.our-portfolio-wrap-service-sec .portfolio-books-box a{
+    width: 200px;
+    margin: 0 auto;
+    display: block;
+    position: relative;
+    border-radius: 5px;
+    transition: all .3s ease-in-out;
+}
+.our-portfolio-wrap-service-sec.portfolio-books-box a:hover{
+    transform: scale(1.05);
+}
+.our-portfolio-wrap-service-sec .portfolio-books-box a img{
+    width: 100%;
+    height: 300px;
+}
+/*Our Portfolio Section Css End Here*/
+
+/*Counter Satisfy Section Css Start Here*/
+section.counter-satisfy-wrap-service-sec{
+    padding: 50px 0;
+    background: #3394F8;
+}
+.counter-satisfy-wrap-service-sec .counter-satisfy-inner{}
+.counter-satisfy-wrap-service-sec .counter-satisfy-inner .counter-satisfy-box{
+    text-align: center;
+}
+.counter-satisfy-wrap-service-sec .counter-satisfy-box .counter-box-head{}
+.counter-satisfy-wrap-service-sec .counter-satisfy-box .counter-box-head h4{
+    color: #fff;
+    font-size: 60px;
+    line-height: 68px;
+    font-weight: 500;
+    margin: 0 0 10px;
+}
+.counter-satisfy-wrap-service-sec .counter-satisfy-box .counter-box-head h4 span{}
+.counter-satisfy-wrap-service-sec .counter-satisfy-box p{
+    color: #fff;
+    font-weight: 400;
+    margin: 0;
+}
+/*Counter Satisfy Section Css End Here*/
+
+/*Unlock Story Section Css Start Here*/
+section.unlock-story-wrap-service-sec{
+    background: #004184;
+    padding: 75px 0;
+    position: relative;
+    z-index: 1;
+}
+.unlock-story-wrap-service-sec .unlock-story-head{
+    text-align: center;
+    margin: 0 0 30px;
+}
+.unlock-story-wrap-service-sec .unlock-story-head .heading-two{
+    color: #fff;
+    font-weight: 600;
+    margin: 0 0 20px;
+}
+.unlock-story-wrap-service-sec .unlock-story-head p{
+    color: #fff;
+    font-weight: 400;
+}
+.unlock-story-wrap-service-sec .unlock-story-content .heading-two{
+    color: #fff;
+    font-weight: 500;
+    margin: 0 0 20px;
+}
+.unlock-story-wrap-service-sec .unlock-story-content p{
+    color: #fff;
+    font-weight: 400;
+    margin: 0 0 10px;
+}
+.unlock-story-wrap-service-sec .unlock-story-content ul{
+    margin: 20px 0;
+    list-style: disc;
+    padding: 0 0 0 20px;
+}
+.unlock-story-wrap-service-sec .unlock-story-content ul li{
+    color: #fff;
+    font-weight: 600;
+}
+.unlock-story-wrap-service-sec .unlock-story-content .website-main-buttons{
+    margin: 30px 0;
+}
+.unlock-story-wrap-service-sec .unlock-story-content .website-main-buttons button.popup-btn{
+    background: #3394F8;
+    color: #fff;
+    border: 2px solid #3394F8;
+    width: 225px;
+}
+.unlock-story-wrap-service-sec .unlock-story-content .website-main-buttons button.popup-btn:hover{
+    background: #fff;
+    color: #3394F8;
+}
+.unlock-story-wrap-service-sec .unlock-story-content .website-main-buttons a.call-btn{
+    background: transparent;
+    color: #fff;
+    border: 2px solid #fff;
+}
+.unlock-story-wrap-service-sec .unlock-story-content .website-main-buttons a.call-btn:hover{
+    background: #fff;
+    color: #004184;
+}
+.unlock-story-wrap-service-sec .unlock-story-inner .unlock-story-img{
+    text-align: right;
+}
+.unlock-story-wrap-service-sec .unlock-story-img img{
+    width: 90%;
+}
+.unlock-story-wrap-service-sec.unlock-story-printing{
+    background: #fff;
+}
+.unlock-story-wrap-service-sec.unlock-story-printing .unlock-story-content .heading-two{
+    color: #000;
+}
+.unlock-story-wrap-service-sec.unlock-story-printing .unlock-story-content p{
+    color: #000;
+}
+.unlock-story-wrap-service-sec.unlock-story-printing .unlock-story-content ul li{
+    color: #000;
+}
+/*Unlock Story Section Css End Here*/
+
+/*Award Brands Section Css Start Here*/
+section.award-brands-wrap-service-sec{
+    background: #fff;
+    padding: 50px 0px;
+}
+.award-brands-wrap-service-sec .award-brands-head .heading-three{
+    color: #000;
+    font-weight: 600;
+    margin: 0 0 10px;
+}
+.award-brands-wrap-service-sec .award-brands-head p{
+    color: #000;
+    font-weight: 400;
+}
+.award-brands-wrap-service-sec .award-brands-wrap-service-sec .award-brands-slider{
+    margin: 0 20px 0;
+}
+.award-brands-wrap-service-sec .award-brands-slider .slick-arrow{
+    top: 25%;
+    position: absolute;
+    background: none;
+    border: none;
+    font-size: 0;
+    z-index: 9;
+    display: none !important;
+}
+.award-brands-wrap-service-sec .award-brands-slider .slick-prev{
+    left: -15px;
+}
+.award-brands-wrap-service-sec .award-brands-slider .slick-prev:before{
+    content: '\f104';
+    position: absolute;
+    font-family: 'Font Awesome 6 Pro';
+    font-size: 32px;
+    color: #000;
+}
+.award-brands-wrap-service-sec .award-brands-slider .slick-next{
+    right: -25px;
+}
+.award-brands-wrap-service-sec .award-brands-slider .slick-next:before{
+    content: '\f105';
+    position: absolute;
+    font-family: 'Font Awesome 6 Pro';
+    font-size: 32px;
+    color: #000;
+    right: 10px;
+}
+.award-brands-wrap-service-sec .award-brands-slider .award-brands-box{
+    margin: 0 10px 0;
+}
+.award-brands-wrap-service-sec .award-brands-box img{
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    margin: 0 auto;
+}
+/*Award Brands Section Css End Here*/
+
+/*Service Offer Section Css Start Here*/
+section.service-offer-wrap-service-sec{
+    background: #DCECFE;
+    padding: 50px 0;
+}
+.service-offer-wrap-service-sec .service-offer-head{
+    margin: 0 auto 30px;
+    width: 75%;
+    text-align: center;
+}
+.service-offer-wrap-service-sec .service-offer-head .heading-two{
+    color: #000;
+    font-weight: 600;
+    margin: 0 0 20px;
+}
+.service-offer-wrap-service-sec .service-offer-head p{
+    color: #707070;
+    font-weight: 400;
+}
+.service-offer-wrap-service-sec .service-offer-inner .service-offer-box{
+    background: #FFF;
+    border-radius: 6px;
+    padding: 20px 20px;
+}
+.service-offer-wrap-service-sec .service-offer-box .offer-box-img{
+    background: #3394F8;
+    width: 70px;
+    height: 75px;
+    margin: 0 0 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.service-offer-wrap-service-sec .offer-box-img img{
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+}
+.service-offer-wrap-service-sec .service-box-content .heading-six{
+    color: #000;
+    font-weight: 600;
+    margin: 0 0 20px;
+}
+.service-offer-wrap-service-sec .service-box-content p{
+    color: #000;
+    font-size: 14px;
+    line-height: 22px;
+    font-weight: 400;
+    min-height: 190px;
+    max-height: 190px;
+    overflow-y: auto;
+}
+.service-offer-wrap-service-sec .service-box-content p::-webkit-scrollbar-track{
+    -webkit-box-shadow: inset 0 0px 0px rgba(0,0,0,0.0);
+    border-radius: 0px;
+}
+.service-offer-wrap-service-sec .service-box-content p::-webkit-scrollbar{
+    width: 3px;
+    background: #b2b2b2;
+    border-radius: 0px;
+}
+.service-offer-wrap-service-sec .service-box-content p::-webkit-scrollbar-thumb{
+    background-color: #000;
+    border-radius: 0px;
+}
+/*Service Offer Section Css End Here*/
+
+/*Customer FeedBack Section Css Start Here*/
+section.customer-feedback-wrap-service-sec{
+    padding: 100px 0;
+}
+.customer-feedback-wrap-service-sec .customer-feedback-head{
+    margin: 0 0 30px;
+    text-align: center;
+}
+.customer-feedback-wrap-service-sec .customer-feedback-head .heading-two{
+    color: #000;
+    font-weight: 600;
+    margin: 0 0 20px;
+}
+.customer-feedback-wrap-service-sec .customer-feedback-head p{
+    color: #707070;
+    font-weight: 400;
+}
+.customer-feedback-wrap-service-sec .customer-feedback-wrap-service-sec .customer-feedback-inner{}
+.customer-feedback-wrap-service-sec .customer-feedback-inner .feedback-inner-head{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 50px;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-head .feedback-inner-left{
+    display: flex;
+    align-items: center;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-left span{
+    color: #000;
+    font-size: 16px;
+    line-height: 22px;
+    font-weight: 500;
+    margin: 0 10px 0 0;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-left .rating-star-icons{
+    display: flex;
+    align-items: center;
+    margin: 0 10px 0 0;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-left small{
+    color: #13D8B9;
+    font-size: 10px;
+    line-height: 16px;
+    font-weight: 600;
+    margin: 10px 0 0;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-head .feedback-inner-right{
+    display: flex;
+    align-items: center;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-right small{
+    color: #13D8B9;
+    font-size: 10px;
+    line-height: 16px;
+    font-weight: 600;
+    margin: 10px 5px 0 0;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-right img{
+    width: 75px;
+    height: 15px;
+    object-fit: contain;
+}
+.customer-feedback-wrap-service-sec .customer-feedback-inner .testimonials-serv-slider{}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-arrow{
+    bottom: -5%;
+    top: inherit;
+    position: absolute;
+    background: none;
+    border: none;
+    font-size: 0;
+    z-index: 9;
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-prev{
+    left: 47%;
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-prev::before{
+    content: '\f104';
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-next{
+    right: 47%;
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-next::before{
+    content: '\f105';
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-prev::before,
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-next::before{
+    font-family: 'Font Awesome 6 Pro';
+    background: #13D8B9;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    width: 35px;
+    height: 35px;
+    line-height: 35px;
+    border-radius: 100%;
+    text-align: center;
+    display: block;
+    opacity: 1;
+    transition: all .3s ease-in-out;
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-arrow:hover::before{
+    background: #000;
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .feedback-slider-box{
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0px 0px 20px -5px rgba(0, 0, 0, 0.25);
+    padding: 35px 35px;
+    margin: 60px 15px;
+    transition: all .3s ease-in-out;
+    position: relative;
+    user-select: text;
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .feedback-slider-box.slick-active{
+    filter: blur(2px);
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .feedback-slider-box.slick-slide.slick-current.slick-active.slick-center{
+    filter: blur(0px);
+    transform: scaleY(1.1) scaleX(1.3) translateY(-25px);
+    z-index: 9;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-box .feedback-box-head{
+    display: grid;
+    grid-template-columns: 20% 80%;
+    justify-content: center;
+    align-items: start;
+    gap: 20px;
+}
+.customer-feedback-wrap-service-sec .feedback-box-head .feedback-box-thumb{
+    width: 80px;
+    height: 80px;
+    border-radius: 100%;;
+}
+.customer-feedback-wrap-service-sec .feedback-box-thumb img{
+    width: 80px;
+    height: 80px;
+    border-radius: 100%;
+}
+.customer-feedback-wrap-service-sec .feedback-box-head .feedback-box-content{
+    width: 75%;
+}
+.customer-feedback-wrap-service-sec .feedback-box-content .heading-five{
+    color: #000;
+    font-weight: 700;
+    margin: 0 0 10px;
+}
+.customer-feedback-wrap-service-sec .feedback-box-content span{
+    color: #B9B9B9;
+    font-size: 14px;
+    line-height: 22px;
+    font-weight: 500;
+    margin: 0 0 10px;
+    display: block;
+}
+.customer-feedback-wrap-service-sec .feedback-box-content p{
+    color: #000;
+    font-size: 14px;
+    line-height: 22px;
+    font-weight: 500;
+    min-height: 150px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-content p::-webkit-scrollbar-track{
+    -webkit-box-shadow: inset 0 0px 0px rgba(0,0,0,0.0);
+    border-radius: 0px;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-content p::-webkit-scrollbar{
+    width: 3px;
+    background: #b2b2b2;
+    border-radius: 0px;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-content p::-webkit-scrollbar-thumb{
+    background-color: #000;
+    border-radius: 0px;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-box .feedback-slider-verify{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    gap: 10px;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-verify img{}
+.customer-feedback-wrap-service-sec .feedback-slider-verify span{
+    color: #424242;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    display: block;
+    margin: 0;
+}
+/*Customer FeedBack Section Css End Here*/
+
+/**************************************************************************
+ --------------------- Home Page Folds Css End Here -----------------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+
+@media only screen and (min-width: 1400px) and (max-width: 1599px){}
+@media only screen and (min-width: 1200px) and (max-width: 1399px){
+
+/**************************************************************************
+ --------------- Home Page Folds Responsive Css Start Here ----------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+
+/*Banner Main Section Responsive Css Start Here*/
+/*Banner Published Form Responsive Css*/
+.banner-main-service-sec .banner-inner-published-form{
+    width: 90%;
+}
+/*Banner Published Form Responsive Css*/
+/*Banner Down Brands Section Responsive Css End Here*/
+
+/*Step Works Section Responsive Css Start Here*/
+.step-works-wrap-service-sec .step-works-inner .step-works-box{
+    margin: 0 0 20px;
+}
+.step-works-wrap-service-sec .step-works-box p{
+    min-height: 100px;
+    max-height: 125px;
+}
+/*Step Works Section Responsive Css End Here*/
+
+/*Main CTA Section Responsive Css Start Here*/
+.cta-main-wrap-service-sec .cta-left-img img{
+    width: 75%;
+}
+.cta-main-wrap-service-sec .cta-right-img{
+    right: -55px;
+    bottom: 0px;
+}
+/*Main CTA Section Responsive Css End Here*/
+
+/**************************************************************************
+ --------------- Home Page Folds Responsive Css End Here ------------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+}
+@media only screen and (min-width: 992px) and (max-width: 1199px){
+
+/*Website Custom Style Responsive Css For Single Items Start Here*/
+
+/*Heading & Para Style Responsive Css*/
+.service-page .heading-one{
+    font-size: 42px;
+    line-height: 48px;
+}
+.service-page .heading-two{
+    font-size: 36px;
+    line-height: 42px;
+}
+.service-page .heading-three{
+    font-size: 36px;
+    line-height: 42px;
+}
+/*Heading & Para Style Responsive Css*/
+
+/*Buttons Style Responsive Css*/
+.service-page .website-main-buttons a.read-more-btn,
+.service-page .website-main-buttons button.popup-btn,
+.service-page .website-main-buttons button.chat-btn,
+.service-page .website-main-buttons a.call-btn{
+    width: 175px;
+}
+/*Buttons Style Responsive Css*/
+
+/*Website Custom Style Responsive Css For Single Items End Here*/
+
+/**************************************************************************
+ --------------- Home Page Folds Responsive Css Start Here ----------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+
+/*Banner Main Section Responsive Css Start Here*/
+/*Banner Published Form Responsive Css*/
+.banner-main-service-sec .banner-inner-published-form{
+    width: 90%;
+}
+/*Banner Published Form Responsive Css*/
+/*Banner Down Brands Section Responsive Css End Here*/
+/*Main Info Section Responsive Css End Here*/
+
+/*Step Works Section Responsive Css Start Here*/
+.step-works-wrap-service-sec .step-works-inner .step-works-box{
+    margin: 0 0 20px;
+}
+.step-works-wrap-service-sec .step-works-box p{
+    min-height: 100px;
+    max-height: 125px;
+}
+/*Step Works Section Responsive Css End Here*/
+
+/*Main CTA Section Responsive Css Start Here*/
+.cta-main-wrap-service-sec .cta-left-img img{
+    width: 90%;
+    top: -140px;
+}
+.cta-main-wrap-service-sec .cta-right-img{
+    right: -55px;
+    bottom: 0px;
+}
+.cta-main-wrap-service-sec .cta-right-img img{
+    width: 60%;
+}
+/*Main CTA Section Responsive Css End Here*/
+
+/**************************************************************************
+ --------------- Home Page Folds Responsive Css End Here ------------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+}
+@media only screen and (min-width: 768px) and (max-width: 991px){
+
+/*Website Custom Style Responsive Css For Single Items Start Here*/
+
+/*Heading & Para Style Responsive Css*/
+.service-page .heading-one{
+    font-size: 38px;
+    line-height: 44px;
+}
+.service-page .heading-two{
+    font-size: 32px;
+    line-height: 38px;
+}
+.service-page .heading-three{
+    font-size: 32px;
+    line-height: 38px;
+}
+/*Heading & Para Style Responsive Css*/
+
+/*Buttons Style Responsive Css*/
+.service-page .website-main-buttons{
+    margin: 20px 0 0;
+    justify-content: center;
+}
+.service-page .website-main-buttons a.read-more-btn,
+.service-page .website-main-buttons button.popup-btn,
+.service-page .website-main-buttons button.chat-btn,
+.service-page .website-main-buttons a.call-btn{
+    font-size: 16px;
+    width: 175px;
+}
+/*Buttons Style Responsive Css*/
+
+/*Website Custom Style Responsive Css For Single Items End Here*/
+
+
+/**************************************************************************
+ --------------- Home Page Folds Responsive Css Start Here ----------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+
+/*Banner Main Section Responsive Css Start Here*/
+section.banner-main-service-sec{
+    padding: 120px 0 50px;
+}
+.banner-main-service-sec .banner-inner-content{
+    text-align: center;
+    margin: 0 0 20px;
+}
+/*Banner Published Form Responsive Css*/
+.banner-main-service-sec .banner-inner-published-form{
+    width: 90%;
+    padding: 20px 20px;
+}
+.banner-main-service-sec .banner-inner-published-form h4{
+    font-size: 26px;
+    line-height: 32px;
+}
+.banner-main-service-sec .banner-inner-published-form .form-group-select .form-check-flex .form-check{
+    width: 47%;
+}
+/*Banner Published Form Responsive Css*/
+/* Children Banner Responsive Css Start */
+.banner-main-service-sec.children-banner-main::before{
+    background: #fff;
+    opacity: 0.7;
+}
+/* Children Banner Responsive Css End */
+/*Banner Down Brands Section Responsive Css End Here*/
+
+/*Step Works Section Responsive Css Start Here*/
+section.step-works-wrap-service-sec{
+    padding: 30px 0;
+}
+.step-works-inner .step-works-box{
+    margin: 0 0 30px;
+}
+.step-works-wrap-service-sec .step-works-inner .step-works-box.marg-zero{
+    margin: 0 0 30px;
+}
+.step-works-wrap-service-sec .step-works-inner .website-main-buttons{
+    margin: 20px 0;
+}
+.step-works-wrap-service-sec .step-works-img{
+    text-align: center;
+}
+.step-works-wrap-service-sec .step-works-img img{
+    width: 65%;
+}
+/*Step Works Section Responsive Css End Here*/
+
+/*Main CTA Section Responsive Css Start Here*/
+section.cta-main-wrap-service-sec{
+    padding: 30px 0;
+}
+.cta-main-wrap-service-sec .cta-left-img{
+    text-align: center;
+    margin: 0 0 20px;
+}
+.cta-main-wrap-service-sec .cta-left-img img{
+    width: 35%;
+    margin: 0 auto;
+    position: inherit;
+    top: inherit;
+}
+.cta-main-wrap-service-sec .cta-main-content{
+    margin: 0 0 10px;
+}
+.cta-main-wrap-service-sec .cta-right-img{
+    position: relative;
+    right: -150px;
+    bottom: -30px;
+    text-align: right;
+}
+.cta-main-wrap-service-sec .cta-right-img img{
+    width: 75%;
+}
+/*Main CTA Section Responsive Css End Here*/
+
+/*Portfolio Publish Section Responsive Css Start Here*/
+section.our-portfolio-wrap-service-sec{
+    padding: 30px 0;
+}
+/*Portfolio Publish Section Responsive Css End Here*/
+
+/**************************************************************************
+ --------------- Home Page Folds Responsive Css End Here ------------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+}
+@media only screen and (min-width: 576px) and (max-width: 767px){
+
+/*Website Custom Style Responsive Css For Single Items Start Here*/
+
+/*Heading & Para Style Responsive Css*/
+.service-page .heading-one{
+    font-size: 38px;
+    line-height: 44px;
+}
+.service-page .heading-two{
+    font-size: 32px;
+    line-height: 38px;
+}
+.service-page .heading-three{
+    font-size: 32px;
+    line-height: 38px;
+}
+.service-page .heading-four{
+    font-size: 16px;
+    line-height: 22px;
+}
+.service-page .heading-five{
+    font-size: 18px;
+    line-height: 24px;
+}
+.service-page .heading-six{
+    font-size: 16px;
+    line-height: 22px;
+}
+.service-page p{
+    font-size: 14px;
+    line-height: 20px;
+}
+.service-page li{
+    font-size: 14px;
+    line-height: 20px;
+}
+/*Heading & Para Style Responsive Css*/
+
+/*Buttons Style Responsive Css*/
+.service-page .website-main-buttons{
+    margin: 20px 0 0;
+    justify-content: center;
+}
+.service-page .website-main-buttons a.read-more-btn,
+.service-page .website-main-buttons button.popup-btn,
+.service-page .website-main-buttons button.chat-btn,
+.service-page .website-main-buttons a.call-btn{
+    padding: 10px 5px;
+    font-size: 16px;
+    width: 160px;
+}
+/*Buttons Style Responsive Css*/
+
+/*Website Custom Style Responsive Css For Single Items End Here*/
+
+
+/**************************************************************************
+ --------------- Home Page Folds Responsive Css Start Here ----------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+
+/*Banner Main Section Responsive Css Start Here*/
+section.banner-main-service-sec{
+    padding: 120px 0 50px;
+}
+.banner-main-service-sec .banner-inner-content{
+    text-align: center;
+    margin: 0 0 20px;
+}
+/*Banner Published Form Responsive Css*/
+.banner-main-service-sec .banner-inner-published-form{
+    width: 100%;
+    padding: 20px 20px;
+}
+.banner-main-service-sec .banner-inner-published-form h4{
+    font-size: 26px;
+    line-height: 32px;
+}
+.banner-main-service-sec .banner-inner-published-form .form-group .form-select{
+    font-size: 14px;
+}
+.banner-main-service-sec .banner-inner-published-form .form-group-select .form-check-flex .form-check{
+    width: 47%;
+}
+.banner-main-service-sec .banner-inner-published-form .form-group-select .form-check-flex .form-check .form-check-label{
+    font-size: 14px;
+}
+.banner-main-service-sec .banner-inner-published-form .form-group button.submit-btn{
+    font-size: 16px;
+}
+/*Banner Published Form Responsive Css*/
+/* Children Banner Responsive Css Start */
+.banner-main-service-sec.children-banner-main::before{
+    background: #fff;
+    opacity: 0.7;
+}
+/* Children Banner Responsive Css End */
+/*Banner Down Brands Section Responsive Css End Here*/
+
+/*Step Works Section Responsive Css Start Here*/
+section.step-works-wrap-service-sec{
+    padding: 30px 0;
+}
+.step-works-wrap-service-sec .step-works-head{
+    width: 100%;
+    margin: 0 auto 20px;
+}
+.step-works-wrap-service-sec .step-works-inner .step-works-box{
+    margin: 0 0 30px;
+}
+.step-works-wrap-service-sec .step-works-inner .step-works-box.marg-zero{
+    margin: 0 0 30px;
+}
+.step-works-wrap-service-sec .step-works-inner .website-main-buttons{
+    margin: 20px 0;
+}
+.step-works-wrap-service-sec .step-works-img{
+    text-align: center;
+}
+.step-works-wrap-service-sec .step-works-img img{
+    width: 75%;
+}
+/*Step Works Section Responsive Css End Here*/
+
+/*Main CTA Section Responsive Css Start Here*/
+section.cta-main-wrap-service-sec{
+    padding: 30px 0;
+}
+.cta-main-wrap-service-sec .cta-left-img{
+    text-align: center;
+    margin: 0 0 20px;
+}
+.cta-main-wrap-service-sec .cta-left-img img{
+    width: 50%;
+    margin: 0 auto;
+    position: inherit;
+    top: inherit;
+}
+.cta-main-wrap-service-sec .cta-main-content{
+    margin: 0 0 10px;
+}
+.cta-main-wrap-service-sec .cta-right-img{
+    position: relative;
+    right: -125px;
+    bottom: -30px;
+    text-align: right;
+}
+.cta-main-wrap-service-sec .cta-right-img img{
+    width: 75%;
+}
+/*Main CTA Section Responsive Css End Here*/
+
+/*Portfolio Publish Section Responsive Css Start Here*/
+section.our-portfolio-wrap-service-sec{
+    padding: 30px 0;
+}
+.our-portfolio-wrap-service-sec .portfolio-publish-head{
+    width: 100%;
+    margin: 0 auto 20px;
+}
+.our-portfolio-wrap-service-sec .portfolio-publish-tablist .portfolio-publish-tablist-buttons{
+    margin: 0 0 20px;
+}
+.our-portfolio-wrap-service-sec .portfolio-publish-tablist-buttons ul.nav-pills{
+    justify-content: center;
+}
+.our-portfolio-wrap-service-sec .portfolio-publish-tablist-buttons ul.nav-pills li.nav-item button.nav-link{
+    font-size: 16px;
+}
+/*Portfolio Publish Section Responsive Css End Here*/
+
+/*CTA Banner Section Responsive Css Start Here*/
+.cta-main-wrap-service-sec .cta-banner-wrap .cta-banner-content{
+    text-align: center;
+    margin: 0 0 20px;
+}
+/*CTA Banner Section Responsive Css End Here*/
+
+/**************************************************************************
+ --------------- Home Page Folds Responsive Css End Here ------------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+}
+@media only screen and (min-width: 300px) and (max-width: 575px){
+
+/*Website Custom Style Responsive Css For Single Items Start Here*/
+
+/*Heading & Para Style Responsive Css*/
+.service-page .heading-one{
+    font-size: 36px;
+    line-height: 44px;
+}
+.service-page .heading-two{
+    font-size: 32px;
+    line-height: 38px;
+}
+.service-page .heading-three{
+    font-size: 28px;
+    line-height: 36px;
+}
+.service-page .heading-four{
+    font-size: 24px;
+    line-height: 32px;
+}
+.service-page .heading-five{
+    font-size: 20px;
+    line-height: 28px;
+}
+.service-page .heading-six{
+    font-size: 18px;
+    line-height: 26px;
+}
+.service-page p{
+    font-size: 16px;
+    line-height: 22px;
+}
+.service-page li{
+    font-size: 16px;
+    line-height: 22px;
+}
+/*Heading & Para Style Responsive Css*/
+
+/*Buttons Style Responsive Css*/
+.service-page .website-main-buttons{
+    justify-content: center;
+}
+.service-page .website-main-buttons a.read-more-btn,
+.service-page .website-main-buttons button.popup-btn,
+.service-page .website-main-buttons button.chat-btn,
+.service-page .website-main-buttons a.call-btn{
+    font-size: 16px;
+    width: 150px;
+    margin: 0 5px 0;
+}
+/*Buttons Style Responsive Css*/
+
+/*Website Custom Style Responsive Css For Single Items End Here*/
+
+/**************************************************************************
+ --------------- Home Page Folds Responsive Css Start Here ----------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+
+/*Banner Main Section Responsive Css Start Here*/
+section.banner-main-service-sec{
+    padding: 150px 0 50px;
+}
+.banner-main-service-sec::after{
+    height: 30%;
+}
+.banner-main-service-sec .banner-inner-content{
+    padding: 0;
+    margin: 0 0 20px;
+    text-align: center;
+}
+.banner-inner-content ul{
+    display: grid;
+    justify-content: center;
+    text-align: left;
+}
+.banner-main-service-sec .banner-brands-area{
+    padding: 20px 0;
+    text-align: center;
+}
+.banner-main-service-sec .banner-brands-area .heading-three{
+    color: #fff;
+}
+.banner-main-service-sec .banner-brands-area .banner-brands-items{
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+/*Banner Main Form Start*/
+.banner-main-service-sec .banner-form-inner h5{
+    font-size: 20px;
+    line-height: 28px;
+}
+.banner-main-service-sec .banner-form-inner form .form-group .form-select option{
+    font-size: 10px;
+}
+.banner-main-service-sec .file-upload-box .upload-box-area{
+    height: 125px;
+    flex-direction: column;
+    gap: 10px;
+}
+.banner-main-service-sec .upload-box-area label.custom-file-upload{
+    width: 100%;
+    border-radius: 5px 5px 0px 0px;
+}
+.banner-main-service-sec .file-upload-box .upload-box-area span{
+    font-size: 12px;
+}
+.banner-main-service-sec .banner-form-inner form .form-group-select .form-check .form-check-input{
+    width: 20px;
+    height: 20px;
+    margin: 0 5px 0 0;
+}
+.banner-main-service-sec .banner-form-inner form .form-group-select .form-check .form-check-label{
+    font-size: 13px;
+    line-height: 19px;
+}
+.banner-main-service-sec .banner-form-inner .form-group-btns{
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.banner-main-service-sec .form-group-btns button.submit-btn{
+    font-size: 16px;
+    width: 150px;
+    margin: 0 5px 0;
+}
+.banner-main-service-sec .form-group-btns button.reset-btn{
+    font-size: 16px;
+    width: 150px;
+    margin: 0 5px 0;
+}
+/*Banner Main Form End*/
+/*Banner Main Section Responsive Css End Here*/
+
+/*Counter Satisfy Section Responsive Css Start Here*/
+section.counter-satisfy-wrap-service-sec{
+    padding: 30px 0;
+}
+.counter-satisfy-wrap-service-sec .counter-satisfy-inner .counter-satisfy-box{
+    padding: 20px 10px;
+    margin: 0 0 20px;
+}
+.counter-satisfy-wrap-service-sec .counter-satisfy-box .counter-box-head h4{
+    font-size: 38px;
+    line-height: 46px;
+}
+/*Counter Satisfy Section Responsive Css End Here*/
+
+/*Portfolio Section Responsive Css Start Here*/
+section.our-portfolio-wrap-service-sec{
+    padding: 50px 0;
+}
+.our-portfolio-wrap-service-sec .portfolio-sec-head{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: end;
+    gap: 20px;
+    margin: 0 0 50px;
+}
+.our-portfolio-wrap-service-sec .portfolio-sec-head .portfolio-head-cont{
+    width: 100%;
+}
+.our-portfolio-wrap-service-sec .portfolio-head-cont .heading-two{
+    color: #1b1b1b;
+    font-weight: 600;
+    margin: 0 0 10px;
+}
+.our-portfolio-wrap-service-sec .portfolio-head-cont p{
+    color: #5D5D5D;
+    font-weight: 400;
+}
+.our-portfolio-wrap-service-sec .portfolio-sec-head .portfolio-head-btn{}
+.our-portfolio-wrap-service-sec .portfolio-head-btn a.project-btn{
+    color: #3394F8;
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 500;
+    margin: 0;
+    border-bottom: 1px solid #3394F8;
+    transition: all .3s ease-in-out;
+}
+.our-portfolio-wrap-service-sec .portfolio-head-btn a.project-btn:hover{
+    color: #1b1b1b;
+}
+.our-portfolio-wrap-service-sec .portfolio-sec-inner{}
+.our-portfolio-wrap-service-sec .portfolio-sec-inner .portfolio-inner-box{
+    border-radius: 15px;
+    margin: 0 0 20px;
+}
+.our-portfolio-wrap-service-sec .portfolio-inner-box .portfolio-box-img{
+    display: flex;
+    align-items: end;
+    gap: 10px;
+    justify-content: space-between;
+    padding: 20px 30px;
+    border-radius: 12px;
+    height: 225px;
+}
+.our-portfolio-wrap-service-sec .portfolio-box-img img{
+    width: 60%;
+    height: 100%;
+}
+.our-portfolio-wrap-service-sec .portfolio-inner-box .portfolio-box-content{
+    padding: 20px 30px;
+    margin: -50px 0 0 0;
+}
+.our-portfolio-wrap-service-sec .portfolio-box-content img{
+    width: 85px;
+    height: 85px;
+    object-fit: contain;
+    margin: 0 0 20px;
+}
+.our-portfolio-wrap-service-sec .portfolio-box-content p{
+    color: #fff;
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 400;
+}
+/*Portfolio Section Responsive Css End Here*/
+
+/*Customer FeedBack Section Responsive Css Start Here*/
+section.customer-feedback-wrap-service-sec{
+    background: #D7D7D7;
+    padding: 100px 0;
+}
+.customer-feedback-wrap-service-sec .customer-feedback-head{
+    margin: 0 0 50px;
+    text-align: center;
+}
+.customer-feedback-wrap-service-sec .customer-feedback-head .heading-one{
+    color: #1b1b1b;
+    font-weight: 600;
+    margin: 0 0 20px;
+}
+.customer-feedback-wrap-service-sec .customer-feedback-head p{
+    color: #5D5D5D;
+    font-weight: 400;
+}
+.customer-feedback-wrap-service-sec .customer-feedback-inner{}
+.customer-feedback-wrap-service-sec .customer-feedback-inner .feedback-inner-head{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 0 0 20px;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-head .feedback-inner-left{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-left .heading-four{
+    color: #3394F8;
+    font-weight: 600;
+    margin: 0 20px 0 0;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-left span{
+    color: #1b1b1b;
+    font-size: 16px;
+    line-height: 22px;
+    font-weight: 500;
+    margin: 0 10px 0 0;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-left .rating-star-icons{
+    display: flex;
+    align-items: center;
+    margin: 0 10px 0 0;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-left small{
+    color: #3394F8;
+    font-size: 10px;
+    line-height: 16px;
+    font-weight: 600;
+    margin: 10px 0 0;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-head .feedback-inner-right{
+    display: flex;
+    align-items: center;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-right small{
+    color: #3394F8;
+    font-size: 10px;
+    line-height: 16px;
+    font-weight: 600;
+    margin: 10px 5px 0 0;
+}
+.customer-feedback-wrap-service-sec .feedback-inner-right img{
+    width: 55px;
+    height: 15px;
+    object-fit: contain;
+}
+.customer-feedback-wrap-service-sec .customer-feedback-inner .testimonials-serv-slider{}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-arrow{
+    top: 50%;
+    position: absolute;
+    background: none;
+    border: none;
+    font-size: 0;
+    z-index: 9;
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-prev{
+    left: -30px;
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-prev::before{
+    content: '\f104';
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-next{
+    right: -30px;
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-next::before{
+    content: '\f105';
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-prev::before,
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-next::before{
+    font-family: 'Font Awesome 6 Pro';
+    background: #3394F8;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    width: 25px;
+    height: 25px;
+    line-height: 25px;
+    border-radius: 100%;
+    text-align: center;
+    display: block;
+    opacity: 1;
+    transition: all .3s ease-in-out;
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .slick-arrow:hover::before{
+    background: #1b1b1b;
+}
+.customer-feedback-wrap-service-sec .testimonials-serv-slider .feedback-slider-box{
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 0px 20px -20px #000000;
+    padding: 20px 20px;
+    margin: 20px 15px;
+    transition: all .3s ease-in-out;
+    position: relative;
+    user-select: text;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-box:hover{
+    transform: translateY(-10px);
+}
+.customer-feedback-wrap-service-sec .feedback-slider-box .feedback-slider-head{
+    display: flex;
+    align-items: center;
+    margin: 0 0 30px;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-head span{
+    color: #1b1b1b;
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 600;
+    margin: 0 10px 0 0;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-head .rating-star-icons{
+    display: flex;
+    align-items: center;
+}
+.customer-feedback-wrap-service-sec .rating-star-icons img{
+    width: 18px;
+    height: 18px;
+    margin: 0 2px 0px 0;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-box .feedback-slider-content{
+    margin: 20px 0;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-content p{
+    color: #ADADAD;
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 400;
+    padding: 0 10px 10px;
+    min-height: 200px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-content p::-webkit-scrollbar-track{
+    -webkit-box-shadow: inset 0 0px 0px rgba(0,0,0,0.0);
+    border-radius: 0px;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-content p::-webkit-scrollbar{
+    width: 3px;
+    background: #b2b2b2;
+    border-radius: 0px;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-content p::-webkit-scrollbar-thumb{
+    background-color: #1b1b1b;
+    border-radius: 0px;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-box .feedback-slider-verify{
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    padding: 10px 0;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-verify img{
+    width: 15px;
+    height: 15px;
+    margin: 0 5px 0px 0;
+}
+.customer-feedback-wrap-service-sec .feedback-slider-verify span{
+    color: #424242;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    display: block;
+    margin: 0;
+}
+/*Customer FeedBack Section Responsive Css End Here*/
+
+/**************************************************************************
+ --------------- Home Page Folds Responsive Css End Here ------------------
+ --------------------------------------------------------------------------
+**************************************************************************/
+}

@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Best Sellers LLC – values taken from the live site (2026-11-18) */
+:root {
+  --brand-primary: #3CC1CA;
+  --brand-color-1: #0D6EFD;
+  --brand-color-2: #808080;
+  --brand-color-3: #666666;
+  --brand-color-4: #282828;
+  --brand-color-5: #F7F3EF;
+  --brand-font-heading: 'Playfair Display';
+  --brand-font-body: 'Inter';
+}

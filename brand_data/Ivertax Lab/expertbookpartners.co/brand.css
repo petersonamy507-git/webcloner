@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700;800&display=swap');
+
+/* Expert Book Partners – values taken from the live site (2026-11-18) */
+:root {
+  --brand-primary: #F4A721;
+  --brand-color-1: #301A3B;
+  --brand-color-2: #4C4D51;
+  --brand-color-3: #777777;
+  --brand-font-heading: 'Oswald';
+  --brand-font-body: 'Oswald';
+}

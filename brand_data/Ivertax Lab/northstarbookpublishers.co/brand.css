@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Merriweather:wght@400;500;600;700;800&display=swap');
+
+/* Northstar Book Publishers – values taken from the live site (2026-11-18) */
+:root {
+  --brand-primary: #041838;
+  --brand-color-1: #3293FC;
+  --brand-color-2: #222E41;
+  --brand-color-3: #05193C;
+  --brand-color-4: #030919;
+  --brand-color-5: #1A976A;
+  --brand-font-heading: 'Poppins';
+  --brand-font-body: 'Poppins';
+}

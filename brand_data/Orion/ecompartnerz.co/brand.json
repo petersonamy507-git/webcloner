@@ -1,0 +1,80 @@
+{
+  "schema_version": "2.0",
+  "group": "Orion",
+  "domain": "ecompartnerz.co",
+  "company": {
+    "name": "eCom Partnerz",
+    "website": "https://ecompartnerz.co",
+    "tagline": "Automate ecommerce operations to scale faster, sell smarter",
+    "about": "From product sync to fulfillment and campaigns to reporting, our automation services connect systems seamlessly, saving time, cutting costs, and driving consistent ecommerce growth.",
+    "copyright": null
+  },
+  "seo": {
+    "title": "Ecommerce Automation Services | Grow Your Online Business – Ecom Partnerz",
+    "description": "Boost your online business with expert ecommerce automation services. Increase sales, reduce manual tasks & scale faster with Ecom Partnerz."
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 (323) 622-4385",
+        "e164": "+13236224385"
+      }
+    ],
+    "emails": [
+      "info@ecompartnerz.co"
+    ],
+    "address": {
+      "street": "912 Howard St",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94103",
+      "as_shown": "912 Howard St, San Francisco, CA 94103, USA"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": "#00D767",
+    "observed": [
+      "#FD5B30",
+      "#0E1C1F",
+      "#2B3438",
+      "#07111D",
+      "#212529"
+    ]
+  },
+  "fonts": {
+    "heading": "Unbounded",
+    "body": null,
+    "loaded_from_google_fonts": [],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.png",
+      "source_url": "https://ecompartnerz.co/assets/images/logo.png"
+    },
+    "logo_black": {
+      "file": "logos/logo_black.png",
+      "source_url": "https://ecompartnerz.co/assets/images/black-logo.png"
+    },
+    "favicon": {
+      "file": "logos/favicon.png",
+      "source_url": "https://ecompartnerz.co/favicon.png"
+    }
+  },
+  "services": [
+    "Amazon Automation",
+    "Shopify Automation",
+    "Walmart Automation",
+    "Tiktok Shop",
+    "Youtube Automation"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://ecompartnerz.co",
+    "notes": [
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "schema_version": "2.0",
+  "group": "Orion",
+  "domain": "ny-publishers.com",
+  "company": {
+    "name": "NY Publishers",
+    "website": "https://www.ny-publishers.com",
+    "tagline": "Book Publishers in New York –A Bestseller Awaits.",
+    "about": "NY Publishers, where your story comes to life.",
+    "copyright": null
+  },
+  "seo": {
+    "title": "Ny Publishers | No 1 Book Publishers in New York, USA",
+    "description": "Book Publishers in New York, USA can help! From ebook conversion to cover design. Find the best self-publishing services by NY Publishers - Get Your Book Published."
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1-929-224-5924",
+        "e164": "+19292245924"
+      }
+    ],
+    "emails": [
+      "query@ny-publishers.com"
+    ],
+    "address": {
+      "street": "445 Broad Hollow Rd",
+      "city": "Melville",
+      "state": "NY",
+      "zip": "11747",
+      "as_shown": "445 Broad Hollow Rd Melville, NY 11747"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": "#064877",
+    "observed": [
+      "#8F9CB5",
+      "#DBDBDB",
+      "#333333",
+      "#212529"
+    ]
+  },
+  "fonts": {
+    "heading": "Titillium Web",
+    "body": null,
+    "loaded_from_google_fonts": [],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.png",
+      "source_url": "https://www.ny-publishers.com/assets/images/NEW%20YORK%20PUBLISHERS-01.png"
+    },
+    "favicon": {
+      "file": "logos/favicon.png",
+      "source_url": "https://www.ny-publishers.com/assets/images/favicon.png"
+    }
+  },
+  "services": [
+    "Book Writing",
+    "Book Editing",
+    "Book Publishing",
+    "Book Marketing"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://www.ny-publishers.com",
+    "notes": [
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}

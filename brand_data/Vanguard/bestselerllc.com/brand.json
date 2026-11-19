@@ -1,0 +1,91 @@
+{
+  "schema_version": "2.0",
+  "group": "Vanguard",
+  "domain": "bestselerllc.com",
+  "company": {
+    "name": "Best Sellers LLC",
+    "website": "https://bestselerllc.com",
+    "tagline": "We Are On A Mission To Make Your Book The Next Bestseller",
+    "about": null,
+    "copyright": "© Copyright 2026. Best Sellers LLC"
+  },
+  "seo": {
+    "title": "Bestsellers LLC - Leading Book Marketing Agency in the US",
+    "description": "From Amazon marketing services to social media marketing services and self-publishing book marketing, at Best Sellers LLC., we do it all. Explore more."
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 888 469 3930",
+        "e164": "+18884693930"
+      }
+    ],
+    "emails": [
+      "info@bestselerllc.com"
+    ],
+    "address": {
+      "street": "125 S Wacker Dr # 500",
+      "city": "Chicago",
+      "state": "IL",
+      "zip": "60606",
+      "as_shown": "125 S Wacker Dr # 500 Chicago, IL 60606, USA"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": "#3CC1CA",
+    "observed": [
+      "#0D6EFD",
+      "#808080",
+      "#666666",
+      "#282828",
+      "#F7F3EF"
+    ]
+  },
+  "fonts": {
+    "heading": "Playfair Display",
+    "body": "Inter",
+    "loaded_from_google_fonts": [],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.webp",
+      "source_url": "https://bestselerllc.com/assets/images/light.webp"
+    },
+    "logo_white": {
+      "file": "logos/logo_white.png",
+      "source_url": "https://bestselerllc.com/assets/images/logo-white.png"
+    },
+    "favicon": {
+      "file": "logos/favicon.webp",
+      "source_url": "https://bestselerllc.com/assets/images/favicon.webp"
+    }
+  },
+  "services": [
+    "Amazon Marketing",
+    "SMM",
+    "Email Marketing",
+    "Authors Website",
+    "Influencer Marketing",
+    "Book Video Trailers",
+    "Audiobook Services",
+    "SEO Services",
+    "Self Publishing",
+    "PR Campaigns",
+    "Author Interviews",
+    "Media Coverage",
+    "Book Writing",
+    "Book Publishing",
+    "Book Printing",
+    "Book Cover Design"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://bestselerllc.com",
+    "notes": [
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800&display=swap');
+
+/* eCom Partnerz – values taken from the live site (2026-11-18) */
+:root {
+  --brand-primary: #00D767;
+  --brand-color-1: #FD5B30;
+  --brand-color-2: #0E1C1F;
+  --brand-color-3: #2B3438;
+  --brand-color-4: #07111D;
+  --brand-color-5: #212529;
+  --brand-font-heading: 'Unbounded';
+}
