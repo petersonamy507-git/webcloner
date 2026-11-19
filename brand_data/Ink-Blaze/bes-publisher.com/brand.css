@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
+
+/* BES Publishers – values taken from the live site (2026-11-18) */
+:root {
+  --brand-color-1: #101010;
+  --brand-color-2: #1A1A1A;
+  --brand-color-3: #F1F1F1;
+  --brand-color-4: #212529;
+  --brand-font-heading: 'Schibsted Grotesk';
+}

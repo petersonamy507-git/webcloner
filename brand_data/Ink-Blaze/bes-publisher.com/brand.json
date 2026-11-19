@@ -1,0 +1,79 @@
+{
+  "schema_version": "2.0",
+  "group": "Ink-Blaze",
+  "domain": "bes-publisher.com",
+  "company": {
+    "name": "BES Publishers",
+    "website": "https://www.bes-publisher.com",
+    "tagline": "Work With The Best Book Publisher In USA",
+    "about": "BES Publishers is a trusted book publishing company in America, helping authors worldwide with expert writers, designers, and marketers to publish impactful books that inspire, educate, and entertain global readers.",
+    "copyright": "Copyright © 2026 BES Publishers All Rights Reserved."
+  },
+  "seo": {
+    "title": "Publish Your Book Globally with Best Book Publisher in USA",
+    "description": "Get your book self-publish online on 70+ platforms with BES Publishers, we can help you write, edit, format, and design your ebook at affordable rates."
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 888 502 7038",
+        "e164": "+18885027038"
+      }
+    ],
+    "emails": [
+      "info@bes-publisher.com"
+    ],
+    "address": {
+      "street": "201 Mission, The East Cut, Suite 1200",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94105",
+      "as_shown": "201 Mission, The East Cut, Suite 1200, San Francisco, CA 94105, United States"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": null,
+    "observed": [
+      "#101010",
+      "#1A1A1A",
+      "#F1F1F1",
+      "#212529"
+    ]
+  },
+  "fonts": {
+    "heading": "Schibsted Grotesk",
+    "body": null,
+    "loaded_from_google_fonts": [
+      "Inter",
+      "Roboto",
+      "Poppins"
+    ],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.png",
+      "source_url": "https://www.bes-publisher.com/assets/images/logo.png"
+    },
+    "favicon": {
+      "file": "logos/favicon.png",
+      "source_url": "https://www.bes-publisher.com/assets/images/favicon.png"
+    }
+  },
+  "services": [
+    "Book Writing",
+    "Book Editing & Proofreading",
+    "Book Cover Design",
+    "Book Marketing",
+    "Book Publishing"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://www.bes-publisher.com",
+    "notes": [
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}

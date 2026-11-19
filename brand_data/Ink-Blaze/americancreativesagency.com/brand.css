@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* American Creatives Agency – values taken from the live site (2026-11-18) */
+:root {
+  --brand-color-1: #01022A;
+  --brand-color-2: #0135EC;
+  --brand-color-3: #007BFF;
+  --brand-color-4: #212529;
+  --brand-font-heading: 'Plus Jakarta Sans';
+}

@@ -1,0 +1,87 @@
+{
+  "schema_version": "2.0",
+  "group": "Apex",
+  "domain": "websitedesigntree.co",
+  "company": {
+    "name": "Website Design Tree",
+    "website": "https://www.websitedesigntree.co",
+    "tagline": "Enhance Your Business With Custom Web And App Development",
+    "about": "We are a custom software company and digital consultancy that empowers thought leaders, growth companies and visionary startups to unlock their greater profitability and company valuation through strategic technology tools.",
+    "copyright": "© websitedesigntree"
+  },
+  "seo": {
+    "title": "Website Development Company | Captivating Design Solution",
+    "description": "We offer custom design services in line with your company's persona and leverage cutting-edge technology and creative instincts to produce compelling web designs for your business that are indeed out of this world"
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1-323-672-3562",
+        "e164": "+13236723562"
+      },
+      {
+        "display": "+1-323-982-3879",
+        "e164": "+13239823879"
+      }
+    ],
+    "emails": [
+      "info@websitedesigntree.com"
+    ],
+    "address": {
+      "street": "161 W Altadena Drive unit #578",
+      "city": "Altadena",
+      "state": "CA",
+      "zip": "91001",
+      "as_shown": "Mailing Address: 161 W Altadena Drive unit #578 Altadena, CA 91001"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": "#FA130D",
+    "observed": [
+      "#3D60A6",
+      "#464C51",
+      "#7B7B7B",
+      "#F5F6F7",
+      "#212529"
+    ]
+  },
+  "fonts": {
+    "heading": "Bai Jamjuree",
+    "body": null,
+    "loaded_from_google_fonts": [
+      "Bai Jamjuree",
+      "Libre Franklin"
+    ],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700;800&family=Libre+Franklin:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.png",
+      "source_url": "https://www.websitedesigntree.co/assets/images/logo.png"
+    },
+    "favicon": {
+      "file": "logos/favicon.png",
+      "source_url": "https://www.websitedesigntree.co/favicon.png"
+    }
+  },
+  "services": [
+    "Custom Website Design",
+    "Wordpress Development",
+    "Ecommerce Website Development",
+    "Web Application Development",
+    "Mobile Application Development",
+    "Branding",
+    "Video Animation",
+    "Search Engine Optimization"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://www.websitedesigntree.co",
+    "notes": [
+      "The site shows a .com email (info@websitedesigntree.com) on the .co domain.",
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700;800&family=Libre+Franklin:wght@400;500;600;700;800&display=swap');
+
+/* Website Design Tree – values taken from the live site (2026-11-18) */
+:root {
+  --brand-primary: #FA130D;
+  --brand-color-1: #3D60A6;
+  --brand-color-2: #464C51;
+  --brand-color-3: #7B7B7B;
+  --brand-color-4: #F5F6F7;
+  --brand-color-5: #212529;
+  --brand-font-heading: 'Bai Jamjuree';
+}

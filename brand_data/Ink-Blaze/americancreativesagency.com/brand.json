@@ -1,0 +1,76 @@
+{
+  "schema_version": "2.0",
+  "group": "Ink-Blaze",
+  "domain": "americancreativesagency.com",
+  "company": {
+    "name": "American Creatives Agency",
+    "website": "https://americancreativesagency.com",
+    "tagline": "Elevate Your Brand Presence With CREATIVE WEBSITES",
+    "about": "Catering to your business transition needs with a systematic and strategic plan that guarantees a significant return on investment.",
+    "copyright": "© American Creatives Agency All Rights Reserved."
+  },
+  "seo": {
+    "title": "Top Web Design Company in New York City",
+    "description": null
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 (888) 202-3472",
+        "e164": "+18882023472"
+      }
+    ],
+    "emails": [
+      "info@americancreativesagency.com"
+    ],
+    "address": null,
+    "address_2": null
+  },
+  "colors": {
+    "primary": null,
+    "observed": [
+      "#01022A",
+      "#0135EC",
+      "#007BFF",
+      "#212529"
+    ]
+  },
+  "fonts": {
+    "heading": "Plus Jakarta Sans",
+    "body": null,
+    "loaded_from_google_fonts": [],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo_white": {
+      "file": "logos/logo_white.webp",
+      "source_url": "https://americancreativesagency.com/images/AWA-White.webp"
+    }
+  },
+  "services": [
+    "Logo Design",
+    "Website Design",
+    "Branding Design",
+    "SEO",
+    "E-commerce",
+    "Website Development",
+    "eCommerce Solution",
+    "Digital Marketing",
+    "Web Application",
+    "Mobile Application",
+    "Video Animation",
+    "Web Maintenance",
+    "Domain & Hosting",
+    "Grant Writing"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://americancreativesagency.com",
+    "notes": [
+      "No street address on the site.",
+      "The site's meta description is the template text 'Homepage Description', so it is left empty.",
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}
