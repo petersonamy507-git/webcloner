@@ -1,0 +1,78 @@
+{
+  "schema_version": "2.0",
+  "group": "Ink-Blaze",
+  "domain": "bluemountpublishers.co",
+  "company": {
+    "name": "Blue Mount Publisher",
+    "website": "https://www.bluemountpublishers.co",
+    "tagline": "Best Book Publishers for Self-Publishing Success",
+    "about": "Your Partner in Navigating the Publishing World—From First Draft to Final Shelf, We've Got Your Back",
+    "copyright": "Copyrights © 2026. Powered by Blue Mount Publisher"
+  },
+  "seo": {
+    "title": "Hire the Best Book Publishers for Quality & Author Success",
+    "description": "Need to hire book publisher? Our top book publishers in USA offer expert editing, design & distribution. Start your journey now!"
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 888 783 4318",
+        "e164": "+18887834318"
+      }
+    ],
+    "emails": [
+      "info@bluemountpublishers.co"
+    ],
+    "address": {
+      "street": "641 Flower St",
+      "city": "Los Angeles",
+      "state": "CA",
+      "zip": "90017",
+      "as_shown": "641 Flower St Los Angeles, CA 90017"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": null,
+    "observed": [
+      "#0066CC",
+      "#1197F9",
+      "#F8F9FA",
+      "#212529"
+    ]
+  },
+  "fonts": {
+    "heading": "Montserrat",
+    "body": null,
+    "loaded_from_google_fonts": [
+      "Montserrat",
+      "Inter",
+      "Red Hat Display"
+    ],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Red+Hat+Display:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.webp",
+      "source_url": "https://www.bluemountpublishers.co/assets/images/logo.webp"
+    },
+    "favicon": {
+      "file": "logos/favicon.png",
+      "source_url": "https://www.bluemountpublishers.co/assets/images/favicon.png"
+    }
+  },
+  "services": [
+    "Book Publishing",
+    "Book Writing",
+    "Book Editing",
+    "Book Marketing"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://www.bluemountpublishers.co",
+    "notes": [
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}

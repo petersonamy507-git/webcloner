@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Red+Hat+Display:wght@400;500;600;700;800&display=swap');
+
+/* Blue Mount Publisher – values taken from the live site (2026-11-18) */
+:root {
+  --brand-color-1: #0066CC;
+  --brand-color-2: #1197F9;
+  --brand-color-3: #F8F9FA;
+  --brand-color-4: #212529;
+  --brand-font-heading: 'Montserrat';
+}
