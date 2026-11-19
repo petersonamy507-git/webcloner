@@ -1,0 +1,323 @@
+@media only screen and (max-width: 980px) and (min-width: 320px) {
+    section {
+        overflow: hidden;
+    }
+
+    /* Nav Mobile Screen  */
+    header .nav-bar ul.menu li {
+        padding: 15px 30px !important;
+        text-align: left;
+        transition: 0.25s ease-in;
+        display: block !important;
+    }
+
+    .nav-bar ul.menu li a:hover, .nav-bar ul.menu li a.active, .nav-bar ul.menu li a:focus {
+        color: #0C0C0C;
+    }
+
+    #menu-list {
+        display: block;
+    }
+
+    .mobile-screen {
+        position: relative;
+        display: block;
+    }
+
+    .mobile-screen #list-btn {
+        display: block;
+        color: #0C0C0C;
+        position: absolute;
+        top: -57px;
+        right: 10px;
+        font-size: 35px;
+        transition: all 0.4s ease;
+        transition: all 0.5s;
+        -webkit-transition: all 0.25s;
+        /* animation: heartBeat 4s linear infinite; */
+        z-index: 99999999;
+    }
+
+    a#cross {
+        position: fixed;
+        top: 5px;
+        right: 20px;
+        font-size: 35px;
+        z-index: 9999999999;
+        display: none;
+        color: #0C0C0C;
+        -webkit-transition: 0.5s;
+        transition: all 0.5s;
+        animation: heartBeat 2s linear infinite;
+    }
+
+    nav.mobile-view {
+        background: #F9BA0D;
+        position: fixed;
+        height: 100%;
+        width: 100% !important;
+        left: 150%;
+        top: 0;
+        bottom: 0;
+        padding-top: 70px;
+        z-index: 99911 !important;
+        overflow: hidden;
+        overflow-y: scroll;
+        display: none;
+        transition: .8s ease-In-Out;
+        -webkit-transition: .8s ease-In-Out;
+    }
+
+    /* End Nav Mobile Screen */
+    /* Dropdown */
+    header nav ul li.dropdown:hover .dropdown-menu {
+        left: 10px;
+        top: 38px;
+        background: #F3F3F3;
+        width: 94%;
+    }
+
+    header nav ul li .dropdown-menu a {
+        color: #0C0C0C !important;
+    }
+
+    /* Submenu  */
+    .submenu-list:hover .dropdown-menu-submenu {
+        position: absolute;
+        left: 110px;
+        top: 30px;
+        z-index: 999 !important;
+    }
+
+    .submenu-list:hover .dropdown-menu-submenu a {
+        color: #fff !important;
+    }
+
+    .top-bar {
+        text-align: center;
+    }
+
+    /* Submenu */
+    /* Dropdown End*/
+    footer ul.menu li a {
+        line-height: 29px;
+        font-size: 14px;
+    }
+
+    .copyright {
+        text-align: center;
+        margin: 0;
+        padding: 20px 0;
+    }
+
+    footer ul.menu li.f-logo {
+        position: relative;
+        top: 0;
+        left: 0;
+        padding-bottom: 19px;
+    }
+
+    footer nav ul.menu {
+        padding: 5px 0;
+    }
+
+    footer img.f-logo {
+        max-width: 70%;
+    }
+
+    .main-banner {
+        margin-top: -220px;
+        padding: 250px 0 50px;
+    }
+
+    h1 {
+        font-size: 31px;
+        line-height: 33px;
+        letter-spacing: -1px;
+    }
+
+    h2 {
+        font-size: 28px !important;
+        line-height: 31px;
+        letter-spacing: -1px;
+    }
+
+    p {
+        font-size: 15px !important;
+        line-height: 22px !important;
+    }
+
+    .nav-bar a.logo img {
+        max-width: 40%;
+    }
+
+    h1 span {
+        display: contents;
+    }
+
+    .banner h6.text-center {
+        text-align: right !important;
+    }
+
+    .btn.btn-blue {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        font-size: 13px;
+        padding: 5px 10px;
+    }
+
+    .nav-bar ul.menu {
+        text-align: center;
+        padding-top: 10px;
+        display: block;
+    }
+
+    .nav-bar ul.menu li {
+        padding-bottom: 10px;
+    }
+
+    .nav-bar.sticky-nav-bar ul.menu {
+        display: none;
+    }
+
+    .sticky-nav-bar {
+        padding: 0px 0 10px !important;
+    }
+
+    .btn-blue, .btn-red, .btn-white-border {
+        padding: 10px 20px !important;
+        font-size: 12px;
+    }
+
+    .btn-blue i, .btn-red i, .btn-white-border i {
+        font-size: 15px;
+    }
+
+    .get-started-form.main-form {
+        margin: 10px auto 0;
+        width: 100%;
+    }
+
+    .d-block {
+        display: contents !important;
+    }
+
+    .services .ser-box {
+        width: 90%;
+        margin: 20px auto;
+        height: auto !important;
+    }
+
+    .top-bar ul.menu.social-icons {
+        display: block;
+    }
+
+    .top-bar .side-bar-one::after {
+        display: none;
+    }
+
+    .social-icons li a {
+        font-size: 14px;
+    }
+
+    .nav-bar {
+        padding: 20px 0 0;
+    }
+
+    .cta-signup {
+        width: 100%;
+    }
+
+    br {
+        display: none;
+    }
+
+    .why-choose p, .why-choose li {
+        font-size: 12px !important;
+    }
+
+    .why-choose h3 {
+        font-size: 13px;
+    }
+
+    .left, .right {
+        width: 50%;
+    }
+
+    .cta-signup h2 {
+        padding: 30px 10px;
+    }
+
+    .client-info .ser-box.ser-box {
+        width: 100%;
+    }
+
+    .gray-box {
+        margin-bottom: 20px;
+        height: auto;
+    }
+
+    .copyright ul.menu.d-inline-block {
+        text-align: center;
+    }
+
+    .get-started-form.main-form h3 {
+        font-size: 25px;
+    }
+
+    .borrow-tab ul.nav.nav-tabs li a {
+        font-size: 14px;
+        padding: 10px 20px;
+    }
+
+    .tab-content {
+        padding: 20px;
+    }
+}
+
+@media only screen and (max-width: 1400px) and (min-width:980px) {
+    .logo img {
+        max-width: 100%;
+    }
+
+    .circle-box img {
+        right: -10px;
+    }
+
+    .circle-box.b-four img, .circle-box.b-five img {
+        right: -5px;
+    }
+}
+
+/* Tablet */
+@media only screen and (max-width: 980px) and (min-width: 768px) {
+
+
+    .container {
+        width: auto;
+    }
+}
+
+
+@media only screen and (max-width: 767px){
+ 
+
+section#portfolio P {
+    width: 100% !important;
+    margin-bottom: 40px !important;
+}
+
+section#testmonial {
+    padding: 0 20px;
+}
+
+.packages_sec_wraper.top {
+    display: none;
+}
+
+section.nav-bar.sticky-nav-bar {
+    padding: 10px 0 !important;
+}
+
+    
+}

@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+/* Express Book Publishing – values taken from the live site (2026-11-18) */
+:root {
+  --brand-primary: #007FFF;
+  --brand-color-1: #FFD509;
+  --brand-color-2: #FECE14;
+  --brand-color-3: #222E41;
+  --brand-color-4: #07163F;
+  --brand-color-5: #030919;
+  --brand-font-heading: 'Poppins';
+  --brand-font-body: 'Poppins';
+}

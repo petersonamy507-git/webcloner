@@ -1,0 +1,520 @@
+.popupform.popjuly {
+    width: 956px;
+    height: 528px;
+    background: url("../images/bg2.webp") center top no-repeat !important;
+}
+.col-md-4.logo {
+    position: absolute;
+    left: 35px;
+    top: 16px;
+}
+.popjuly .row {
+    justify-content: center;
+}
+
+.popjuly .popup-content {
+    background: url("../images/barnettbg.png") center top no-repeat;
+    width: 410px;
+    height: 487px;
+    float: initial;
+    margin-right: 81px;
+    margin-top: 18px;
+    padding: 30px 20px;
+    border-radius: 10px;
+    margin-left: 271px !important;
+}
+.carousel__button svg {
+    width: var(--carousel-button-svg-width, 50%);
+    height: var(--carousel-button-svg-height, 50%);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: var(--carousel-button-svg-stroke-width, 1.5);
+    stroke-linejoin: bevel;
+    stroke-linecap: round;
+    filter: var(--carousel-button-svg-filter, none);
+    pointer-events: none
+}
+.fancybox-close-small, .popupform button.carousel__button.is-close {
+    background: #007FFF;
+    height: 30px;
+    width: 30px;
+    padding: 0px;
+    border-radius: 4px;
+    opacity: 1;
+    top: -13px !important;
+    right: 16px !important;
+    position: absolute !important;
+}
+.custom-pop .btn-blue,
+.popjuly .custom-pop .btn-blue,
+h4.exclusive {
+    background: #000000;
+    box-shadow: rgb(82 81 81) 2px 5px 9px;
+    /* font-family: Poppins !important; */
+}
+
+.custom-pop .btn-blue,
+.popjuly .custom-pop .btn-blue {
+    padding-bottom: 32px;
+    font-weight: bolder;
+    width: 319.96px;
+    padding-top: 9px;
+    background: #fece14;
+    color: #000 !important;
+    position: relative;
+}
+.popjuly .custom-pop .btn-blue:hover {
+    color: #fff !important;
+    background: #000;
+}
+.popjuly .custom-pop .btn-blue,
+h4.exclusive {
+    color: rgb(255, 255, 255);
+}
+.popjuly .popup-content p {
+    width: auto;
+    margin: 0px 0px 10px;
+    background: no-repeat;
+    font-size: 25px;
+    color: rgb(255, 255, 255);
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: 700;
+}
+
+.popjuly .popup-content h3 span {
+    color: rgb(0 0 0);
+    font-weight: 800;
+}
+
+.popjuly .popup-content form {
+    padding: 0px 20px;
+    margin-top: -70px;
+}
+
+.popjuly .custom-pop .form-control {
+    height: 44px;
+    font-size: 14px;
+    margin: 0px 0px 10px;
+}
+
+.popjuly .custom-pop textarea.form-control {
+    height: 80px;
+    font-family: 'Sofia Pro';
+}
+
+.popjuly .custom-pop .btn-blue {
+    font-size: 16px;
+    border-radius: 9px;
+    border: 1px;
+    margin-top: -29px;
+    top: 31px;
+    height: 41.26px;
+}
+h4.Unravel,h2.Legacy {
+    font-weight: 700;
+}
+h4.Unravel, h4.exclusive, h2.Legacy, h2.limited, h3.Craft{
+    position: relative;
+}
+h2.Legacy {
+    left: -540px;
+    top: -125px;
+    font-size: 23px;
+    color: rgb(0, 0, 0);
+    margin-left: 129px;
+    margin-top: 38px;
+    line-height: 35px;
+    letter-spacing: 1px;
+    width: 90%;
+    padding: 4px;
+    background: rgb(254, 206, 20);
+    border-radius: 42px;
+    margin-bottom: 5px;
+    /* font-family: Poppins !important; */
+}
+h4.exclusive, h2.limited {
+    font-weight: 700;
+    border-radius: 3px;
+}
+h4.exclusive {
+    font-size: 13px;
+    width: 44%;
+    top: -24px;
+    font-family: 'Sofia Pro' !important;
+    left: 101px;
+    padding-bottom: 9px;
+    padding-top: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: -25px;
+    text-align: center;
+}
+.popupform {
+    padding: 0px;
+    overflow: visible;
+}
+.custom-pop {
+    padding: 0px;
+    overflow: hidden;
+}
+h3.Craft {
+    color: rgb(255 255 255);
+    font-weight: 500;
+    width: 98%;
+    margin-top: -14px;
+    top: -60px;
+    letter-spacing: 0px;
+    padding: 4px 4px 1px;
+    line-height: 24px;
+    font-size: 20px;
+}
+h4.Unravel {
+    left: -515px;
+    top: -120px;
+    color: rgb(255, 255, 255);
+    /* font-family: Poppins; */
+    margin-left: 50px;
+    letter-spacing: -1px;
+    width: 433px;
+    font-size: 34px;
+    margin-bottom: 64px;
+    line-height: 42px;
+    text-transform: uppercase !important;
+}
+h2.limited {
+    font-size: 18px;
+    color: #ffffff;
+    left: 1px;
+    top: -52px;
+    padding-bottom: 12px;
+    padding-top: 12px;
+    margin-top: 25px;
+}
+.popup-content {
+    width: 85%;
+    text-align: center;
+    padding-top: 68px;
+    margin-left: 50px;
+}
+@media (max-width: 850px) and (min-width: 320px) {
+
+    .popjuly .popup-content .h1 .exclusive,
+    .popup-content h2.Craft,
+    h3.Craft {
+        font-size: 15px;
+        /* font-family: Poppins; */
+        position: relative;
+        text-transform: uppercase;
+    }
+
+    .popjuly .popup-content .h1 .exclusive {
+        color: rgb(255, 255, 255);
+        background: #007FFF;
+        width: 44%;
+        top: -14px;
+        left: 101px;
+        font-weight: 700;
+        padding-bottom: 3px;
+        border-radius: 3px;
+        padding-top: 0px;
+        box-shadow: rgb(29, 29, 29) 2px 5px 9px;
+        letter-spacing: 1px;
+        text-align: center;
+    }
+
+    .popup-content h2.Craft,
+    h3.Craft {
+        color: rgb(255 255 255);
+        font-weight: 600;
+        width: 98%;
+        margin-top: -14px;
+        top: -60px;
+        letter-spacing: 0px;
+        padding: 4px 4px 1px;
+        line-height: 20px;
+    }
+
+    .popupform.popjuly .popup-content {
+        left: 0px;
+        max-width: 100%;
+    }
+
+    .popjuly .popup-content br {
+        display: none;
+    }
+
+    .popjuly .popup-content h3 {
+        font-size: 14px;
+    }
+
+    .popupform .popupjuly {
+        width: 100%;
+        height: fit-content;
+        background: rgb(94, 132, 255);
+        padding: 50px 20px;
+    }
+
+    .popupform.popjuly {
+        border: 3px solid rgb(255, 255, 255);
+        background: url("assets/images/bg2.webp") center top no-repeat;
+        width: 956px;
+        height: 666px;
+    }
+
+    .popjuly .row {
+        justify-content: center;
+    }
+
+    .popjuly .popup-content {
+        background: url("_e261e261.html?phpecho$siteurl?>assets/images/barnettbg.png") center top no-repeat;
+        width: 410px;
+        height: 485px;
+        float: initial;
+        margin-right: 84px;
+        margin-top: 9px;
+        padding: 30px 20px;
+        border-radius: 10px;
+        margin-left: 249px !important;
+    }
+
+    .custom-pop .btn-blue,
+    .popjuly .custom-pop .btn-blue,
+    h1.exclusive {
+        background: #007FFF;
+        box-shadow: rgb(29, 29, 29) 2px 5px 9px;
+        font-family: Poppins !important;
+    }
+
+    .custom-pop .btn-blue,
+    .popjuly .custom-pop .btn-blue {
+        padding-bottom: 32px;
+        font-weight: bolder;
+        width: 319.96px;
+        padding-top: 9px;
+    }
+
+    .custom-pop .form-control {
+        height: 40px;
+        color: rgb(0, 0, 0);
+        font-size: 14px;
+        margin: 0px 0px 10px;
+        border-radius: 12px;
+    }
+
+    .popup-content h2 span {
+        color: rgb(254, 20, 20);
+    }
+
+    .custom-pop .btn-blue {
+        font-size: 16px;
+        color: rgb(255, 255, 255);
+        border-radius: 9px;
+        border: 1px;
+        margin-top: -29px;
+        position: relative;
+        top: -12px;
+        height: 41.26px;
+    }
+
+    .col-md-4.logo {
+        position: absolute;
+        left: 0;
+        top: -70px;
+    }
+
+    .popjuly .custom-pop .btn-blue,
+    h1.exclusive {
+        color: rgb(255, 255, 255);
+    }
+
+    .btn-blue::after {
+        background: rgb(254, 206, 20);
+        color: rgb(0, 0, 0);
+        text-decoration: none;
+        border-radius: 50px;
+    }
+
+    .popjuly .popup-content p {
+        width: auto;
+        margin: 0px 0px 10px;
+        background: no-repeat;
+        font-size: 25px;
+        color: rgb(255, 255, 255);
+        text-transform: uppercase;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    .popjuly .popup-content h3 span {
+        color: rgb(0 0 0);
+        font-weight: 700;
+    }
+
+    .popjuly .popup-content form {
+        padding: 0px 20px;
+        margin-top: -70px;
+    }
+
+    .popjuly .custom-pop .form-control {
+        height: 44px;
+        font-size: 14px;
+        margin: 0px 0px 10px;
+    }
+
+    .popjuly .custom-pop textarea.form-control {
+        height: 80px;
+    }
+
+    .popjuly .custom-pop .btn-blue {
+        font-size: 16px;
+        border-radius: 9px;
+        border: 1px;
+        margin-top: -29px;
+        position: relative;
+        top: 31px;
+        height: 41.26px;
+    }
+
+    h1.exclusive,
+    h2.limited {
+        text-transform: uppercase;
+        border-radius: 3px;
+        position: relative;
+        font-weight: 700;
+    }
+
+    h1.exclusive {
+        font-size: 13px;
+        width: 44%;
+        top: -24px;
+        left: 101px;
+        padding-bottom: 9px;
+        padding-top: 18px;
+        letter-spacing: 1px;
+        margin-top: -25px;
+        text-align: center;
+    }
+
+    h2.limited {
+        font-size: 24px;
+        /* font-family: Poppins; */
+        color: rgb(255 255 255);
+        left: 1px;
+        top: -33px;
+        padding-bottom: 15px;
+        padding-top: 10px;
+        margin-top: 25px;
+    }
+
+    span.red {
+        font-weight: 700;
+        color: red;
+    }
+
+    h2.Legacy {
+        position: relative;
+        left: -509px;
+        top: -136px;
+        font-size: 23px;
+        color: rgb(0, 0, 0);
+        font-weight: 700;
+        margin-left: 129px;
+        margin-top: 38px;
+        line-height: 35px;
+        letter-spacing: 1px;
+        width: 79%;
+        background: rgb(254, 206, 20);
+        border-radius: 42px;
+        font-family: Poppins !important;
+    }
+
+    h1.Unravel {
+        position: relative;
+        left: -500px;
+        top: -135px;
+        color: rgb(255, 255, 255);
+        font-weight: 700;
+        /* font-family: Poppins; */
+        margin-left: 50px;
+        letter-spacing: -1px;
+        width: 433px;
+        font-size: 37px;
+        text-transform: inherit;
+        margin-bottom: 64px;
+        line-height: 42px;
+    }
+
+    .fancybox-close-small,
+    .popupform button.carousel__button.is-close {
+        background: #007FFF;
+        height: 30px;
+        width: 30px;
+        padding: 0px;
+        border-radius: 4px;
+        opacity: 1;
+        top: -13px !important;
+        right: 16px !important;
+        position: absolute !important;
+    }
+    
+    .popupform.popjuly button.carousel__button.is-close {
+        top: 53px !important;
+        right: 273px !important;
+    }
+    .popjuly.popup-content {
+        padding: 50px 20px;
+        width: 329px !important;
+        height: fit-content;
+        background: #5e84ff
+    }
+    .popupform.popjuly {
+        background: #000 !important;
+        width: 100%;
+        height: auto;
+        padding: 90px 10px 10px
+    }
+
+    .popupform.popjuly button.carousel__button.is-close {
+        top: 0 !important;
+        right: 0 !important
+    }
+    .popjuly .custom-pop .btn-blue {
+        height: auto;
+        padding: 10px 15px;
+        left: -20px
+    }
+    
+    .popupform.popjuly .popup-content {
+        margin: 0 !important;
+        background: url(../images/barnettbg.png) center top no-repeat
+    }
+    .fancybox__content {
+        margin: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
+        padding: 36px;
+        color: var(--fancybox-content-color, #374151);
+        background: var(--fancybox-content-bg, #fff);
+        position: relative;
+        align-self: center;
+        display: flex
+    ;
+        flex-direction: column;
+        z-index: 20;
+    }
+    .fancybox__slide::before, .fancybox__slide::after {
+        content: "";
+        flex: 0 0 0;
+        margin: auto;
+    }
+    h4.exclusive {
+        top: -2px;
+        left: 80px;
+    }
+}
+.fancybox__container.is-animated[aria-hidden=false] .fancybox__backdrop,.fancybox__container.is-animated[aria-hidden=false] .fancybox__caption,.fancybox__container.is-animated[aria-hidden=false] .fancybox__nav,.fancybox__container.is-animated[aria-hidden=false] .carousel__dots,.fancybox__container.is-animated[aria-hidden=false] .carousel__button.is-close {
+    animation: .15s ease backwards fancybox-fadeIn
+}
+
+.fancybox__container.is-animated.is-closing .fancybox__backdrop,.fancybox__container.is-animated.is-closing .fancybox__caption,.fancybox__container.is-animated.is-closing .fancybox__nav,.fancybox__container.is-animated.is-closing .carousel__dots,.fancybox__container.is-animated.is-closing .carousel__button.is-close {
+    animation: .15s ease both fancybox-fadeOut
+}

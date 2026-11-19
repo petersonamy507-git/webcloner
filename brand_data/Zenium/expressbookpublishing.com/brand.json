@@ -1,0 +1,81 @@
+{
+  "schema_version": "2.0",
+  "group": "Zenium",
+  "domain": "expressbookpublishing.com",
+  "company": {
+    "name": "Express Book Publishing",
+    "website": "https://www.expressbookpublishing.com",
+    "tagline": "Where Beautiful Books are Made",
+    "about": null,
+    "copyright": "© 2025 Express Book Publishing - All Rights Reserved"
+  },
+  "seo": {
+    "title": "#1 Book Publishing Company | Express Book Publishing",
+    "description": null
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 323 916 8192",
+        "e164": "+13239168192"
+      }
+    ],
+    "emails": [
+      "contact@expressbookpublishing.com"
+    ],
+    "address": {
+      "street": "1504 5th St",
+      "city": "Sacramento",
+      "state": "CA",
+      "zip": "95814",
+      "as_shown": "1504 5th St Sacramento, CA 95814, USA"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": "#007FFF",
+    "observed": [
+      "#FFD509",
+      "#FECE14",
+      "#222E41",
+      "#07163F",
+      "#030919"
+    ]
+  },
+  "fonts": {
+    "heading": "Poppins",
+    "body": "Poppins",
+    "loaded_from_google_fonts": [],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.png",
+      "source_url": "https://www.expressbookpublishing.com/assets/images/logo-header.png"
+    },
+    "favicon": {
+      "file": "logos/favicon.png",
+      "source_url": "https://www.expressbookpublishing.com/favicon.png"
+    }
+  },
+  "services": [
+    "Ghostwriting",
+    "Genre",
+    "Marketing",
+    "Publication",
+    "Printing",
+    "Cover Design",
+    "Editing",
+    "Video Trailer",
+    "Audio Book",
+    "Author Website"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://www.expressbookpublishing.com",
+    "notes": [
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}

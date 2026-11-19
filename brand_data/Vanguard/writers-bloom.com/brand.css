@@ -1,0 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+/* writers-bloom.com – values taken from the live site (2026-11-18) */
+:root {
+  --brand-font-body: 'Poppins';
+}

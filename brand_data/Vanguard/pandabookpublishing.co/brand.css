@@ -1,0 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+/* Panda Book Publishing – values taken from the live site (2026-11-18) */
+:root {
+  --brand-color-1: #2B2B2B;
+  --brand-color-2: #CCCCCC;
+  --brand-color-3: #212529;
+  --brand-font-heading: 'Poppins';
+}

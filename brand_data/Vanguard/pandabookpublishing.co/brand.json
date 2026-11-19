@@ -1,0 +1,84 @@
+{
+  "schema_version": "2.0",
+  "group": "Vanguard",
+  "domain": "pandabookpublishing.co",
+  "company": {
+    "name": "Panda Book Publishing",
+    "website": "https://www.pandabookpublishing.co",
+    "tagline": "Complete Book Solutions For Every Author",
+    "about": "At Panda Book Publishing, We Turn The Complex Journey Of Publishing Into An Inspiring Experience. Our Expert Team Guides You From Manuscript To A Polished, Market-Ready Book With Creativity, Precision, And Dedicated Support.",
+    "copyright": null
+  },
+  "seo": {
+    "title": "Panda Book Publishing | Professional Book Publishing Services",
+    "description": "Panda Book Publishing offers professional writing, editing, design, publishing and marketing services to help authors turn their ideas into successful books."
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 888 330 3552",
+        "e164": "+18883303552"
+      }
+    ],
+    "emails": [
+      "info@pandabookpublishing.com"
+    ],
+    "address": {
+      "street": "90 Park Ave",
+      "city": "New York",
+      "state": "NY",
+      "zip": "10016",
+      "as_shown": "90 Park Ave, New York, NY 10016"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": null,
+    "observed": [
+      "#2B2B2B",
+      "#CCCCCC",
+      "#212529"
+    ]
+  },
+  "fonts": {
+    "heading": "Poppins",
+    "body": null,
+    "loaded_from_google_fonts": [
+      "Poppins"
+    ],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.webp",
+      "source_url": "https://www.pandabookpublishing.co/assets/images/logo.webp"
+    },
+    "logo_large": {
+      "file": "logos/logo_large.webp",
+      "source_url": "https://www.pandabookpublishing.co/assets/images/biglogo.webp"
+    }
+  },
+  "services": [
+    "Ghostwriting & Co-Writing",
+    "Manuscript Formatting & Setup",
+    "Custom Book Covers",
+    "Social Media Promotions",
+    "Editing & Proofreading",
+    "ISBN & Copyright Assistance",
+    "Typography & Layout Design",
+    "Amazon & Online Ads",
+    "Book Coaching & Development",
+    "Global Distribution",
+    "Print & EBook Versions",
+    "Author Branding & Publicity"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://www.pandabookpublishing.co",
+    "notes": [
+      "The site shows a .com email (info@pandabookpublishing.com) on the .co domain.",
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}

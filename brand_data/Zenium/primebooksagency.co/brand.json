@@ -1,0 +1,76 @@
+{
+  "schema_version": "2.0",
+  "group": "Zenium",
+  "domain": "primebooksagency.co",
+  "company": {
+    "name": "Prime Books Agency",
+    "website": "https://primebooksagency.co",
+    "tagline": "Crafting Ideas into Bestsellers.",
+    "about": "Prime Books Agency- Your trusted partner for exceptional ghostwriting, editing, design, publishing, and marketing solutions.",
+    "copyright": "Copyright 2025 Prime Books Agency | All Rights Reserved."
+  },
+  "seo": {
+    "title": "Prime Books Agency | Book & eBook Self Publishing Services",
+    "description": null
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 323 996 7483",
+        "e164": "+13239967483"
+      }
+    ],
+    "emails": [
+      "info@primebooksagency.co"
+    ],
+    "address": {
+      "street": "1060 S Hope St",
+      "city": "Los Angeles",
+      "state": "CA",
+      "zip": "90015",
+      "as_shown": "1060 S Hope St Los Angeles, CA 90015"
+    },
+    "address_2": null
+  },
+  "colors": {
+    "primary": null,
+    "observed": [
+      "#007BFF",
+      "#EFEFEF",
+      "#212529"
+    ]
+  },
+  "fonts": {
+    "heading": null,
+    "body": null,
+    "loaded_from_google_fonts": [],
+    "google_fonts_url": null
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.png",
+      "source_url": "https://primebooksagency.co/images/logo1.png"
+    },
+    "favicon": {
+      "file": "logos/favicon.ico",
+      "source_url": "https://primebooksagency.co/images/favicon.ico"
+    }
+  },
+  "services": [
+    "Amazon Publishing",
+    "Book Editing Services",
+    "Book Marketing Services",
+    "Writing Services",
+    "Audiobook Production"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://primebooksagency.co",
+    "notes": [
+      "The site uses a generic sans-serif font, so no font is listed.",
+      "The site's meta description is the template text 'Homepage Description', so it is left empty.",
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}

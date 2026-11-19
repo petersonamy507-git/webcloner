@@ -1,0 +1,93 @@
+{
+  "schema_version": "2.0",
+  "group": "Zenium",
+  "domain": "houseofbest-sellers.com",
+  "company": {
+    "name": "House of Bestsellers",
+    "website": "https://www.houseofbest-sellers.com",
+    "tagline": "Your Book Could Be the Next Big Thing!",
+    "about": "Your Trusted Global Partner for Writing, Publishing, and Marketing Books.",
+    "copyright": null
+  },
+  "seo": {
+    "title": "Professional Book Writing Services | House of Bestsellers",
+    "description": "Transform your ideas into compelling narratives with House of Bestsellers. Our book writing services cover writing and publishing, delivering expert-crafted books and eBooks."
+  },
+  "contact": {
+    "phones": [
+      {
+        "display": "+1 (323) 916 8484",
+        "e164": "+13239168484"
+      }
+    ],
+    "emails": [
+      "contact@houseofbest-sellers.com"
+    ],
+    "address": {
+      "street": "117 E Broadway",
+      "city": "Glendale",
+      "state": "CA",
+      "zip": "91205",
+      "as_shown": "117 E Broadway, Glendale, CA 91205"
+    },
+    "address_2": {
+      "street": "4 West 43rd St #615, 500 Fifth Avenue",
+      "city": "New York",
+      "state": "NY",
+      "zip": "10036",
+      "as_shown": "4 West 43rd St #615, 500 Fifth Avenue, New York, NY 10036"
+    }
+  },
+  "colors": {
+    "primary": "#EF1012",
+    "observed": [
+      "#D92C2C",
+      "#231F20",
+      "#F5F5F5",
+      "#212529"
+    ]
+  },
+  "fonts": {
+    "heading": "Lexend Deca",
+    "body": "Lexend Deca",
+    "loaded_from_google_fonts": [
+      "Josefin Sans",
+      "Lexend Deca"
+    ],
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;500;600;700;800&family=Josefin+Sans:wght@400;500;600;700;800&display=swap"
+  },
+  "logos": {
+    "logo": {
+      "file": "logos/logo.webp",
+      "source_url": "https://www.houseofbest-sellers.com/img/new-logo.webp"
+    },
+    "logo_footer": {
+      "file": "logos/logo_footer.webp",
+      "source_url": "https://www.houseofbest-sellers.com/img/footer-logo.webp"
+    },
+    "favicon": {
+      "file": "logos/favicon.png",
+      "source_url": "https://www.houseofbest-sellers.com/favicon.png"
+    }
+  },
+  "services": [
+    "Book Writing Service",
+    "Book Editing Service",
+    "Book Publishing Service",
+    "Book Marketing Service",
+    "Book Printing Service",
+    "Audiobook Service",
+    "Social Media For Author",
+    "Ebook Cover Design",
+    "Author Website Design",
+    "Book Illustration"
+  ],
+  "stats": [],
+  "source": {
+    "checked_on": "2026-11-18",
+    "page": "https://www.houseofbest-sellers.com",
+    "notes": [
+      "Every value here was read from the live homepage. null means the site does not show it."
+    ]
+  }
+}
